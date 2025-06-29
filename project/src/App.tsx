@@ -11,6 +11,8 @@ const AuthLayout = lazy(() => import('./layouts/AuthLayout'));
 // Auth Pages
 const LoginPage = lazy(() => import('./pages/auth/LoginPage'));
 const ForgotPasswordPage = lazy(() => import('./pages/auth/ForgotPasswordPage'));
+const RegisterPage = lazy(() => import('./pages/auth/RegisterPage'));
+
 
 // Admin Pages
 const AdminDashboard = lazy(() => import('./pages/admin/Dashboard'));
@@ -49,6 +51,7 @@ function App() {
         <Route element={<AuthLayout />}>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/register" element={<RegisterPage />} />
         </Route>
 
         {/* Admin Routes */}
