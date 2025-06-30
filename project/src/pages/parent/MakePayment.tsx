@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CreditCard, Building, Copy, CheckCircle, AlertCircle, Info } from 'lucide-react';
+import { CreditCard, Building, Copy, AlertCircle, Info } from 'lucide-react';
 import { useToast } from '../../contexts/ToastContext';
 
 interface PaymentOption {

@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { X, Upload, FileText, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
+import { X, Upload, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import { useToast } from '../../contexts/ToastContext';
 
 interface PaymentProofModalProps {
@@ -38,10 +38,10 @@ const PaymentProofModal = ({ isOpen, onClose, onSubmit, loading = false }: Payme
 
   const paymentTypes = [
     'SPP Bulanan',
-    'Uang Pangkal',
-    'Uang Kegiatan',
+    'Formulir',
+    'Uang Kegiatan, Alat, Bahan',
     'Uang Seragam',
-    'Uang Buku',
+    'Uang Sarana',
     'Lainnya',
   ];
 

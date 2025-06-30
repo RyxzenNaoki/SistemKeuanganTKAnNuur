@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Search, Download, Eye, Calendar, CheckCircle, Clock, AlertTriangle, Filter } from 'lucide-react';
+import { Search, Download, Eye, Calendar, CheckCircle, Clock, AlertTriangle } from 'lucide-react';
 
 interface PaymentRecord {
   id: string;
