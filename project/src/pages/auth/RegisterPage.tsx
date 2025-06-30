@@ -13,6 +13,7 @@ const RegisterPage = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirm, setConfirm] = useState('');
+    const [role, setRole] = useState('parent');
     const [loading, setLoading] = useState(false);
 
     const handleRegister = async (e: React.FormEvent) => {
@@ -28,31 +29,37 @@ const RegisterPage = () => {
         try {
             const userCred = await createUserWithEmailAndPassword(auth, email, password);
 
-            // Simpan user ke Firestore dengan role default 'parent'
             await setDoc(doc(db, 'users', userCred.user.uid), {
                 email,
-                role: 'parent',
+                role,
                 createdAt: serverTimestamp(),
             });
 
-            showToast('success', 'Registrasi berhasil! Silakan login.');
+            showToast('success', 'Registrasi berhasil!');
             navigate('/login');
         } catch (error: unknown) {
+            if (error instanceof Error && 'code' in error) {
+                const firebaseError = error as { code: string; message: string };
 
-            if (error instanceof Error) {
-                showToast('error', error.message);
+                if (firebaseError.code === 'auth/email-already-in-use') {
+                    showToast('error', 'Email sudah digunakan. Silakan login.');
+                } else if (firebaseError.code === 'auth/invalid-email') {
+                    showToast('error', 'Format email tidak valid.');
+                } else if (firebaseError.code === 'auth/weak-password') {
+                    showToast('error', 'Password minimal 6 karakter.');
+                } else {
+                    showToast('error', firebaseError.message || 'Registrasi gagal.');
+                }
             } else {
-                showToast('error', 'Terjadi kesalahan tidak diketahui.');
+                showToast('error', 'Terjadi kesalahan saat mendaftar.');
             }
-        } finally {
-            setLoading(false);
         }
-    };
+    }
 
     return (
         <div>
             <h2 className="text-2xl font-bold text-center text-gray-900 mb-6">
-                Daftar Akun Baru
+                Daftar Akun
             </h2>
 
             <form onSubmit={handleRegister}>
@@ -86,7 +93,7 @@ const RegisterPage = () => {
                     />
                 </div>
 
-                <div className="mb-6">
+                <div className="mb-4">
                     <label htmlFor="confirm" className="block text-sm font-medium text-gray-700 mb-1">
                         Konfirmasi Password
                     </label>
@@ -99,6 +106,23 @@ const RegisterPage = () => {
                         onChange={(e) => setConfirm(e.target.value)}
                         placeholder="••••••••"
                     />
+                </div>
+
+                <div className="mb-6">
+                    <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-1">
+                        Peran
+                    </label>
+                    <select
+                        id="role"
+                        className="input"
+                        value={role}
+                        onChange={(e) => setRole(e.target.value)}
+                    >
+                        <option value="parent">Orang Tua</option>
+                        <option value="admin">Admin</option>
+                        <option value="bendahara">Bendahara</option>
+                        <option value="guru">Guru</option>
+                    </select>
                 </div>
 
                 <button
