@@ -16,7 +16,7 @@ import {
   doc,
   getDoc,
 } from 'firebase/firestore';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { auth, db } from '../firebase/config';
 
 type UserRole = 'admin' | 'bendahara' | 'parent' | 'guru' | null;
@@ -49,6 +49,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [userRole, setUserRole] = useState<UserRole>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -62,8 +63,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             setUserRole(role);
 
             // 🔁 Auto-redirect based on role
-            if (role === 'admin') navigate('/admin/dashboard');
-            else if (role === 'parent') navigate('/parent/dashboard');
+            if (role === 'admin' && !location.pathname.startsWith('/admin')) {
+              navigate('/admin/dashboard');
+            } else if (role === 'parent' && !location.pathname.startsWith('/parent')) {
+              navigate('/parent/dashboard');
+            }
           } else {
             console.warn('User document not found');
             setUserRole(null);
@@ -80,7 +84,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     });
 
     return unsubscribe;
-  }, [navigate]);
+  }, [location.pathname, navigate]);
 
   const signIn = async (email: string, password: string) => {
     await signInWithEmailAndPassword(auth, email, password);
