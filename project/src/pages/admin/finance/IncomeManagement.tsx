@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { PlusCircle, Search, Edit2, Trash2, FileText, Download, Filter } from 'lucide-react';
 import { useToast } from '../../../contexts/ToastContext';
+import IncomeModal from '../../../components/admin/IncomeModal';
 
 interface Income {
   id: string;
-  date: string;
+  date: Date;
   category: 'spp' | 'registration' | 'donation' | 'other';
   description: string;
   amount: number;
@@ -12,20 +13,23 @@ interface Income {
   paymentMethod: 'transfer' | 'cash';
   status: 'verified' | 'pending' | 'rejected';
   receiptNumber: string;
+  notes?: string;
 }
 
 const IncomeManagement = () => {
   const { showToast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
-  const [showAddModal, setShowAddModal] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [selectedIncome, setSelectedIncome] = useState<Income | null>(null);
+  const [modalLoading, setModalLoading] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
 
   // Sample data - replace with actual data from Firebase
-  const [incomes] = useState<Income[]>([
+  const [incomes, setIncomes] = useState<Income[]>([
     {
       id: '1',
-      date: '2025-06-15',
+      date: new Date('2025-06-15'),
       category: 'spp',
       description: 'SPP Bulan Juni 2025',
       amount: 500000,
@@ -36,7 +40,7 @@ const IncomeManagement = () => {
     },
     {
       id: '2',
-      date: '2025-06-14',
+      date: new Date('2025-06-14'),
       category: 'registration',
       description: 'Uang Pangkal TA 2025/2026',
       amount: 2500000,
@@ -45,7 +49,6 @@ const IncomeManagement = () => {
       status: 'pending',
       receiptNumber: 'REG-2025-06-001',
     },
-    // Add more sample data as needed
   ]);
 
   const formatCurrency = (amount: number) => {
@@ -92,19 +95,87 @@ const IncomeManagement = () => {
   });
 
   const handleAddIncome = () => {
-    setShowAddModal(true);
+    setSelectedIncome(null);
+    setShowModal(true);
+  };
+
+  const handleEditIncome = (income: Income) => {
+    setSelectedIncome(income);
+    setShowModal(true);
+  };
+
+  const handleSaveIncome = async (incomeData: Omit<Income, 'id'>) => {
+    try {
+      setModalLoading(true);
+      
+      if (selectedIncome) {
+        // Update existing income
+        setIncomes(prev => prev.map(income => 
+          income.id === selectedIncome.id 
+            ? { ...income, ...incomeData }
+            : income
+        ));
+        showToast('success', 'Data pemasukan berhasil diperbarui');
+      } else {
+        // Add new income
+        const newIncome: Income = {
+          id: Date.now().toString(),
+          ...incomeData,
+        };
+        setIncomes(prev => [...prev, newIncome]);
+        showToast('success', 'Pemasukan baru berhasil ditambahkan');
+      }
+      
+      setShowModal(false);
+    } catch (error) {
+      console.error('Error saving income:', error);
+      showToast('error', 'Gagal menyimpan data pemasukan');
+    } finally {
+      setModalLoading(false);
+    }
+  };
+
+  const handleDeleteIncome = (income: Income) => {
+    if (!window.confirm(`Apakah Anda yakin ingin menghapus pemasukan ${income.description}?`)) {
+      return;
+    }
+
+    setIncomes(prev => prev.filter(inc => inc.id !== income.id));
+    showToast('success', 'Pemasukan berhasil dihapus');
   };
 
   const handleExportData = () => {
-    // Implement export functionality
     showToast('info', 'Mengunduh data pemasukan...');
   };
+
+  const totalIncome = filteredIncomes.reduce((sum, income) => sum + income.amount, 0);
+  const verifiedCount = filteredIncomes.filter(income => income.status === 'verified').length;
+  const pendingCount = filteredIncomes.filter(income => income.status === 'pending').length;
 
   return (
     <div className="page-transition">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Manajemen Pemasukan</h1>
         <p className="text-gray-600">Kelola data pemasukan keuangan sekolah</p>
+      </div>
+
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        <div className="card p-4">
+          <h3 className="text-sm font-medium text-gray-500 mb-2">Total Pemasukan</h3>
+          <p className="text-2xl font-bold text-gray-900">{formatCurrency(totalIncome)}</p>
+          <div className="mt-2 text-sm text-success-600">Periode yang dipilih</div>
+        </div>
+        <div className="card p-4">
+          <h3 className="text-sm font-medium text-gray-500 mb-2">Terverifikasi</h3>
+          <p className="text-2xl font-bold text-success-600">{verifiedCount}</p>
+          <div className="mt-2 text-sm text-gray-600">dari {filteredIncomes.length} transaksi</div>
+        </div>
+        <div className="card p-4">
+          <h3 className="text-sm font-medium text-gray-500 mb-2">Menunggu Verifikasi</h3>
+          <p className="text-2xl font-bold text-warning-600">{pendingCount}</p>
+          <div className="mt-2 text-sm text-warning-600">Perlu ditinjau</div>
+        </div>
       </div>
 
       {/* Actions Bar */}
@@ -149,17 +220,17 @@ const IncomeManagement = () => {
           </div>
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex gap-2 w-full sm:w-auto">
           <button
             onClick={handleExportData}
-            className="btn btn-secondary flex items-center"
+            className="btn btn-secondary flex items-center flex-1 sm:flex-none"
           >
             <Download className="h-5 w-5 mr-2" />
             Export
           </button>
           <button
             onClick={handleAddIncome}
-            className="btn btn-primary flex items-center"
+            className="btn btn-primary flex items-center flex-1 sm:flex-none"
           >
             <PlusCircle className="h-5 w-5 mr-2" />
             Tambah Pemasukan
@@ -186,9 +257,11 @@ const IncomeManagement = () => {
             <tbody>
               {filteredIncomes.map((income) => (
                 <tr key={income.id}>
-                  <td>{new Date(income.date).toLocaleDateString('id-ID')}</td>
+                  <td>{income.date.toLocaleDateString('id-ID')}</td>
                   <td>{income.receiptNumber}</td>
-                  <td>{getCategoryLabel(income.category)}</td>
+                  <td>
+                    <span className="badge badge-secondary">{getCategoryLabel(income.category)}</span>
+                  </td>
                   <td>{income.description}</td>
                   <td>{income.student}</td>
                   <td className="font-medium">{formatCurrency(income.amount)}</td>
@@ -209,14 +282,14 @@ const IncomeManagement = () => {
                         <FileText className="h-4 w-4" />
                       </button>
                       <button
-                        onClick={() => {/* Handle edit */}}
+                        onClick={() => handleEditIncome(income)}
                         className="p-1 text-gray-500 hover:text-primary-600 transition-colors"
                         title="Edit"
                       >
                         <Edit2 className="h-4 w-4" />
                       </button>
                       <button
-                        onClick={() => {/* Handle delete */}}
+                        onClick={() => handleDeleteIncome(income)}
                         className="p-1 text-gray-500 hover:text-error-600 transition-colors"
                         title="Hapus"
                       >
@@ -237,27 +310,14 @@ const IncomeManagement = () => {
         )}
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
-        <div className="card p-4">
-          <h3 className="text-sm font-medium text-gray-500 mb-2">Total Pemasukan Bulan Ini</h3>
-          <p className="text-2xl font-bold text-gray-900">{formatCurrency(15000000)}</p>
-          <div className="mt-2 text-sm text-success-600">+12.5% dari bulan lalu</div>
-        </div>
-        <div className="card p-4">
-          <h3 className="text-sm font-medium text-gray-500 mb-2">SPP Terkumpul</h3>
-          <p className="text-2xl font-bold text-gray-900">85%</p>
-          <div className="mt-2 text-sm text-gray-600">29 dari 34 siswa</div>
-        </div>
-        <div className="card p-4">
-          <h3 className="text-sm font-medium text-gray-500 mb-2">Menunggu Verifikasi</h3>
-          <p className="text-2xl font-bold text-gray-900">3</p>
-          <div className="mt-2 text-sm text-warning-600">Pembayaran perlu dicek</div>
-        </div>
-      </div>
-
-      {/* Add/Edit Income Modal would go here */}
-      {/* Implementation of modal component omitted for brevity */}
+      {/* Income Modal */}
+      <IncomeModal
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        onSave={handleSaveIncome}
+        incomeData={selectedIncome}
+        loading={modalLoading}
+      />
     </div>
   );
 };

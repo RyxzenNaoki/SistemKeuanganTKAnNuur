@@ -1,4 +1,4 @@
-# TK Ceria Financial Management System
+# TK An Nuur Rumah Cahaya Financial Management System
 
 A comprehensive financial management system for kindergarten schools built with React, TypeScript, and Firebase.
 

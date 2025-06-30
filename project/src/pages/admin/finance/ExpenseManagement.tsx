@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import { PlusCircle, Search, Download, Edit2, Trash2, TrendingDown, Calendar, FileText, Filter } from 'lucide-react';
 import { useToast } from '../../../contexts/ToastContext';
+import ExpenseModal from '../../../components/admin/ExpenseModal';
 
 interface Expense {
   id: string;
   description: string;
   amount: number;
   category: string;
-  date: string;
+  date: Date;
   status: 'pending' | 'approved' | 'rejected';
   notes?: string;
   attachments?: string[];
@@ -17,16 +18,18 @@ const ExpenseManagement = () => {
   const { showToast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
-  const [showAddModal, setShowAddModal] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
+  const [modalLoading, setModalLoading] = useState(false);
 
   // Sample data - replace with actual data from Firestore
-  const [expenses] = useState<Expense[]>([
+  const [expenses, setExpenses] = useState<Expense[]>([
     {
       id: '1',
       description: 'Pembayaran Listrik',
       amount: 750000,
       category: 'Utilitas',
-      date: '2025-06-15',
+      date: new Date('2025-06-15'),
       status: 'approved',
       notes: 'Pembayaran listrik bulan Juni 2025',
     },
@@ -35,7 +38,7 @@ const ExpenseManagement = () => {
       description: 'Alat Tulis Kantor',
       amount: 500000,
       category: 'ATK',
-      date: '2025-06-14',
+      date: new Date('2025-06-14'),
       status: 'approved',
       notes: 'Pembelian ATK untuk administrasi',
     },
@@ -44,7 +47,7 @@ const ExpenseManagement = () => {
       description: 'Perbaikan AC',
       amount: 1200000,
       category: 'Maintenance',
-      date: '2025-06-13',
+      date: new Date('2025-06-13'),
       status: 'pending',
       notes: 'Service AC ruang kelas Mawar',
     },
@@ -56,6 +59,8 @@ const ExpenseManagement = () => {
     'Maintenance',
     'Gaji',
     'Operasional',
+    'Transport',
+    'Konsumsi',
     'Lain-lain',
   ];
 
@@ -70,6 +75,8 @@ const ExpenseManagement = () => {
 
   // Calculate total expenses
   const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0);
+  const approvedCount = expenses.filter(expense => expense.status === 'approved').length;
+  const pendingCount = expenses.filter(expense => expense.status === 'pending').length;
 
   // Filter expenses
   const filteredExpenses = expenses.filter(expense => {
@@ -90,9 +97,58 @@ const ExpenseManagement = () => {
     }
   };
 
+  const handleAddExpense = () => {
+    setSelectedExpense(null);
+    setShowModal(true);
+  };
+
+  const handleEditExpense = (expense: Expense) => {
+    setSelectedExpense(expense);
+    setShowModal(true);
+  };
+
+  const handleSaveExpense = async (expenseData: Omit<Expense, 'id'>) => {
+    try {
+      setModalLoading(true);
+      
+      if (selectedExpense) {
+        // Update existing expense
+        setExpenses(prev => prev.map(expense => 
+          expense.id === selectedExpense.id 
+            ? { ...expense, ...expenseData }
+            : expense
+        ));
+        showToast('success', 'Data pengeluaran berhasil diperbarui');
+      } else {
+        // Add new expense
+        const newExpense: Expense = {
+          id: Date.now().toString(),
+          ...expenseData,
+        };
+        setExpenses(prev => [...prev, newExpense]);
+        showToast('success', 'Pengeluaran baru berhasil ditambahkan');
+      }
+      
+      setShowModal(false);
+    } catch (error) {
+      console.error('Error saving expense:', error);
+      showToast('error', 'Gagal menyimpan data pengeluaran');
+    } finally {
+      setModalLoading(false);
+    }
+  };
+
+  const handleDeleteExpense = (expense: Expense) => {
+    if (!window.confirm(`Apakah Anda yakin ingin menghapus pengeluaran ${expense.description}?`)) {
+      return;
+    }
+
+    setExpenses(prev => prev.filter(exp => exp.id !== expense.id));
+    showToast('success', 'Pengeluaran berhasil dihapus');
+  };
+
   const handleExport = () => {
     showToast('info', 'Mengunduh data pengeluaran...');
-    // Implement export functionality
   };
 
   return (
@@ -124,6 +180,27 @@ const ExpenseManagement = () => {
 
         <div className="card p-6">
           <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-medium text-gray-900">Status Pengeluaran</h3>
+            <FileText className="h-5 w-5 text-gray-400" />
+          </div>
+          <div className="space-y-2">
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-gray-600">Approved</span>
+              <span className="text-sm font-medium text-success-600">{approvedCount}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-gray-600">Pending</span>
+              <span className="text-sm font-medium text-warning-600">{pendingCount}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-gray-600">Total</span>
+              <span className="text-sm font-medium text-gray-900">{expenses.length}</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="card p-6">
+          <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-medium text-gray-900">Kategori Teratas</h3>
             <FileText className="h-5 w-5 text-gray-400" />
           </div>
@@ -133,33 +210,12 @@ const ExpenseManagement = () => {
               <span className="text-sm font-medium text-gray-900">35%</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Gaji</span>
+              <span className="text-sm text-gray-600">Maintenance</span>
               <span className="text-sm font-medium text-gray-900">30%</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Maintenance</span>
+              <span className="text-sm text-gray-600">ATK</span>
               <span className="text-sm font-medium text-gray-900">20%</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="card p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-medium text-gray-900">Status Pengeluaran</h3>
-            <FileText className="h-5 w-5 text-gray-400" />
-          </div>
-          <div className="space-y-2">
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Approved</span>
-              <span className="text-sm font-medium text-success-600">80%</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Pending</span>
-              <span className="text-sm font-medium text-warning-600">15%</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Rejected</span>
-              <span className="text-sm font-medium text-error-600">5%</span>
             </div>
           </div>
         </div>
@@ -205,7 +261,7 @@ const ExpenseManagement = () => {
             Export
           </button>
           <button
-            onClick={() => setShowAddModal(true)}
+            onClick={handleAddExpense}
             className="btn btn-primary flex items-center flex-1 sm:flex-none"
           >
             <PlusCircle className="h-5 w-5 mr-2" />
@@ -236,7 +292,7 @@ const ExpenseManagement = () => {
                   <td>
                     <span className="badge badge-secondary">{expense.category}</span>
                   </td>
-                  <td>{new Date(expense.date).toLocaleDateString('id-ID')}</td>
+                  <td>{expense.date.toLocaleDateString('id-ID')}</td>
                   <td className="font-medium text-error-600">
                     {formatCurrency(expense.amount)}
                   </td>
@@ -251,14 +307,14 @@ const ExpenseManagement = () => {
                   <td>
                     <div className="flex items-center space-x-2">
                       <button
-                        onClick={() => {/* Handle edit */}}
+                        onClick={() => handleEditExpense(expense)}
                         className="p-1 text-gray-500 hover:text-primary-600 transition-colors"
                         title="Edit"
                       >
                         <Edit2 className="h-4 w-4" />
                       </button>
                       <button
-                        onClick={() => {/* Handle delete */}}
+                        onClick={() => handleDeleteExpense(expense)}
                         className="p-1 text-gray-500 hover:text-error-600 transition-colors"
                         title="Hapus"
                       >
@@ -277,14 +333,22 @@ const ExpenseManagement = () => {
             <TrendingDown className="mx-auto h-12 w-12 text-gray-400" />
             <h3 className="mt-2 text-sm font-medium text-gray-900">Tidak ada data pengeluaran</h3>
             <p className="mt-1 text-sm text-gray-500">
-              Mulai dengan menambahkan pengeluaran baru.
+              {searchTerm || selectedCategory !== 'all' 
+                ? 'Tidak ada pengeluaran yang sesuai dengan filter'
+                : 'Mulai dengan menambahkan pengeluaran baru.'}
             </p>
           </div>
         )}
       </div>
 
-      {/* Add/Edit Expense Modal would go here */}
-      {/* Implementation of modal component omitted for brevity */}
+      {/* Expense Modal */}
+      <ExpenseModal
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        onSave={handleSaveExpense}
+        expenseData={selectedExpense}
+        loading={modalLoading}
+      />
     </div>
   );
 };

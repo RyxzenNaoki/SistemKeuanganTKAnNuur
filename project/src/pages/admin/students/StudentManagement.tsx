@@ -133,7 +133,7 @@ const StudentManagement = () => {
     <div className="page-transition">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Data Siswa</h1>
-        <p className="text-gray-600">Kelola data siswa TK Ceria</p>
+        <p className="text-gray-600">Kelola data siswa TK An Nuur Rumah Cahaya</p>
       </div>
 
       {/* Summary Cards */}

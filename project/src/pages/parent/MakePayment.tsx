@@ -47,17 +47,17 @@ const MakePayment = () => {
     {
       bank: 'Bank BCA',
       accountNumber: '1234567890',
-      accountName: 'TK Ceria',
+      accountName: 'TK An Nuur Rumah Cahaya',
     },
     {
       bank: 'Bank Mandiri',
       accountNumber: '0987654321',
-      accountName: 'TK Ceria',
+      accountName: 'TK An Nuur Rumah Cahaya',
     },
     {
       bank: 'Bank BRI',
       accountNumber: '1122334455',
-      accountName: 'TK Ceria',
+      accountName: 'TK An Nuur Rumah Cahaya',
     },
   ];
 

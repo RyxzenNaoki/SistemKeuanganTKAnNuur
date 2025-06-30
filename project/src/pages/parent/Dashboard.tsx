@@ -185,15 +185,15 @@ const ParentDashboard = () => {
             <div className="space-y-2">
               <div>
                 <p className="text-sm text-gray-600">Bank BCA</p>
-                <p className="text-sm font-medium">1234567890 (TK Ceria)</p>
+                <p className="text-sm font-medium">1234567890 (TK An Nuur Rumah Cahaya)</p>
               </div>
               <div>
                 <p className="text-sm text-gray-600">Bank Mandiri</p>
-                <p className="text-sm font-medium">0987654321 (TK Ceria)</p>
+                <p className="text-sm font-medium">0987654321 (TK An Nuur Rumah Cahaya)</p>
               </div>
               <div>
                 <p className="text-sm text-gray-600">Bank BRI</p>
-                <p className="text-sm font-medium">1122334455 (TK Ceria)</p>
+                <p className="text-sm font-medium">1122334455 (TK An Nuur Rumah Cahaya)</p>
               </div>
             </div>
           </div>

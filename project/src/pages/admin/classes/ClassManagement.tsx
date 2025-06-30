@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { PlusCircle, Search, Edit2, Trash2, Users } from 'lucide-react';
+import { useToast } from '../../../contexts/ToastContext';
+import ClassModal from '../../../components/admin/ClassModal';
 
 interface Class {
   id: string;
@@ -7,20 +9,27 @@ interface Class {
   teacher: string;
   studentCount: number;
   academicYear: string;
+  capacity: number;
+  description?: string;
 }
 
 const ClassManagement = () => {
+  const { showToast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
-  const [showAddModal, setShowAddModal] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [selectedClass, setSelectedClass] = useState<Class | null>(null);
+  const [modalLoading, setModalLoading] = useState(false);
 
   // Sample data - in real app, this would come from Firestore
-  const [classes] = useState<Class[]>([
+  const [classes, setClasses] = useState<Class[]>([
     {
       id: '1',
       name: 'TK A - Melati',
       teacher: 'Ibu Sri Wahyuni',
       studentCount: 15,
       academicYear: '2024/2025',
+      capacity: 20,
+      description: 'Kelas untuk anak usia 4-5 tahun',
     },
     {
       id: '2',
@@ -28,8 +37,18 @@ const ClassManagement = () => {
       teacher: 'Ibu Ratna Sari',
       studentCount: 18,
       academicYear: '2024/2025',
+      capacity: 20,
+      description: 'Kelas untuk anak usia 5-6 tahun',
     },
-    // Add more sample data as needed
+    {
+      id: '3',
+      name: 'TK B - Anggrek',
+      teacher: 'Ibu Dewi Lestari',
+      studentCount: 16,
+      academicYear: '2024/2025',
+      capacity: 20,
+      description: 'Kelas untuk anak usia 5-6 tahun',
+    },
   ]);
 
   const filteredClasses = classes.filter(cls =>
@@ -37,11 +56,119 @@ const ClassManagement = () => {
     cls.teacher.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const handleAddClass = () => {
+    setSelectedClass(null);
+    setShowModal(true);
+  };
+
+  const handleEditClass = (classData: Class) => {
+    setSelectedClass(classData);
+    setShowModal(true);
+  };
+
+  const handleSaveClass = async (classData: Omit<Class, 'id' | 'createdAt' | 'updatedAt'>) => {
+    try {
+      setModalLoading(true);
+      
+      if (selectedClass) {
+        // Update existing class
+        setClasses(prev => prev.map(cls => 
+          cls.id === selectedClass.id 
+            ? { ...cls, ...classData }
+            : cls
+        ));
+        showToast('success', 'Data kelas berhasil diperbarui');
+      } else {
+        // Add new class
+        const newClass: Class = {
+          id: Date.now().toString(),
+          ...classData,
+        };
+        setClasses(prev => [...prev, newClass]);
+        showToast('success', 'Kelas baru berhasil ditambahkan');
+      }
+      
+      setShowModal(false);
+    } catch (error) {
+      console.error('Error saving class:', error);
+      showToast('error', 'Gagal menyimpan data kelas');
+    } finally {
+      setModalLoading(false);
+    }
+  };
+
+  const handleDeleteClass = (classData: Class) => {
+    if (!window.confirm(`Apakah Anda yakin ingin menghapus kelas ${classData.name}?`)) {
+      return;
+    }
+
+    setClasses(prev => prev.filter(cls => cls.id !== classData.id));
+    showToast('success', 'Kelas berhasil dihapus');
+  };
+
   return (
     <div className="page-transition">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Data Kelas</h1>
         <p className="text-gray-600">Kelola data kelas TK Ceria</p>
+      </div>
+
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div className="card p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-500">Total Kelas</p>
+              <p className="text-2xl font-bold text-gray-900">{classes.length}</p>
+            </div>
+            <div className="p-2 bg-primary-100 rounded-lg">
+              <Users className="h-6 w-6 text-primary-600" />
+            </div>
+          </div>
+        </div>
+        
+        <div className="card p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-500">Total Siswa</p>
+              <p className="text-2xl font-bold text-success-600">
+                {classes.reduce((sum, cls) => sum + cls.studentCount, 0)}
+              </p>
+            </div>
+            <div className="p-2 bg-success-100 rounded-lg">
+              <Users className="h-6 w-6 text-success-600" />
+            </div>
+          </div>
+        </div>
+
+        <div className="card p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-500">Kapasitas Total</p>
+              <p className="text-2xl font-bold text-primary-600">
+                {classes.reduce((sum, cls) => sum + cls.capacity, 0)}
+              </p>
+            </div>
+            <div className="p-2 bg-primary-100 rounded-lg">
+              <Users className="h-6 w-6 text-primary-600" />
+            </div>
+          </div>
+        </div>
+
+        <div className="card p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-500">Tingkat Hunian</p>
+              <p className="text-2xl font-bold text-warning-600">
+                {Math.round((classes.reduce((sum, cls) => sum + cls.studentCount, 0) / 
+                  classes.reduce((sum, cls) => sum + cls.capacity, 0)) * 100)}%
+              </p>
+            </div>
+            <div className="p-2 bg-warning-100 rounded-lg">
+              <Users className="h-6 w-6 text-warning-600" />
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Actions Bar */}
@@ -60,8 +187,8 @@ const ClassManagement = () => {
 
         {/* Add Class Button */}
         <button
-          onClick={() => setShowAddModal(true)}
-          className="btn btn-primary flex items-center"
+          onClick={handleAddClass}
+          className="btn btn-primary flex items-center w-full sm:w-auto"
         >
           <PlusCircle className="h-5 w-5 mr-2" />
           Tambah Kelas
@@ -72,21 +199,21 @@ const ClassManagement = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredClasses.map((cls) => (
           <div key={cls.id} className="card p-6">
-            <div className="flex justify-between items-start">
+            <div className="flex justify-between items-start mb-4">
               <div>
                 <h3 className="text-lg font-semibold text-gray-900">{cls.name}</h3>
                 <p className="text-gray-600 text-sm mt-1">{cls.teacher}</p>
               </div>
               <div className="flex space-x-2">
                 <button
-                  onClick={() => {/* Handle edit */}}
+                  onClick={() => handleEditClass(cls)}
                   className="p-1 text-gray-500 hover:text-primary-600 transition-colors"
                   title="Edit"
                 >
                   <Edit2 className="h-4 w-4" />
                 </button>
                 <button
-                  onClick={() => {/* Handle delete */}}
+                  onClick={() => handleDeleteClass(cls)}
                   className="p-1 text-gray-500 hover:text-error-600 transition-colors"
                   title="Hapus"
                 >
@@ -95,9 +222,22 @@ const ClassManagement = () => {
               </div>
             </div>
 
-            <div className="mt-4 flex items-center text-gray-700">
-              <Users className="h-5 w-5 mr-2" />
-              <span>{cls.studentCount} Siswa</span>
+            <div className="space-y-3">
+              <div className="flex items-center text-gray-700">
+                <Users className="h-5 w-5 mr-2" />
+                <span>{cls.studentCount}/{cls.capacity} Siswa</span>
+              </div>
+
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div 
+                  className="bg-primary-600 h-2 rounded-full" 
+                  style={{ width: `${(cls.studentCount / cls.capacity) * 100}%` }}
+                />
+              </div>
+
+              {cls.description && (
+                <p className="text-sm text-gray-600">{cls.description}</p>
+              )}
             </div>
 
             <div className="mt-4 pt-4 border-t border-gray-200">
@@ -112,12 +252,22 @@ const ClassManagement = () => {
 
       {filteredClasses.length === 0 && (
         <div className="text-center py-12">
-          <p className="text-gray-500">Tidak ada data kelas yang ditemukan</p>
+          <Users className="mx-auto h-12 w-12 text-gray-400" />
+          <h3 className="mt-2 text-sm font-medium text-gray-900">Tidak ada data kelas</h3>
+          <p className="mt-1 text-sm text-gray-500">
+            {searchTerm ? 'Tidak ada kelas yang sesuai dengan pencarian' : 'Belum ada kelas yang ditambahkan'}
+          </p>
         </div>
       )}
 
-      {/* Add/Edit Class Modal would go here */}
-      {/* Implementation of modal component omitted for brevity */}
+      {/* Class Modal */}
+      <ClassModal
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        onSave={handleSaveClass}
+        classData={selectedClass}
+        loading={modalLoading}
+      />
     </div>
   );
 };

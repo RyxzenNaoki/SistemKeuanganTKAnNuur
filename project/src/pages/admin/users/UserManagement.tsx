@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { User, UserPlus, Edit, Trash2, Search, Shield } from 'lucide-react';
 import { useToast } from '../../../contexts/ToastContext';
+import UserModal from '../../../components/admin/UserModal';
 
 interface UserData {
   id: string;
@@ -14,11 +15,12 @@ interface UserData {
 const UserManagement = () => {
   const { showToast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
-  const [showAddModal, setShowAddModal] = useState(false);
+  const [showModal, setShowModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserData | null>(null);
+  const [modalLoading, setModalLoading] = useState(false);
 
   // Sample data - replace with actual data from Firebase
-  const [users] = useState<UserData[]>([
+  const [users, setUsers] = useState<UserData[]>([
     {
       id: '1',
       name: 'Admin Utama',
@@ -67,17 +69,56 @@ const UserManagement = () => {
   };
 
   const handleAddUser = () => {
-    setShowAddModal(true);
     setSelectedUser(null);
+    setShowModal(true);
   };
 
   const handleEditUser = (user: UserData) => {
     setSelectedUser(user);
-    setShowAddModal(true);
+    setShowModal(true);
+  };
+
+  const handleSaveUser = async (userData: Omit<UserData, 'id' | 'lastLogin'>) => {
+    try {
+      setModalLoading(true);
+      
+      if (selectedUser) {
+        // Update existing user
+        setUsers(prev => prev.map(user => 
+          user.id === selectedUser.id 
+            ? { ...user, ...userData }
+            : user
+        ));
+        showToast('success', 'Data pengguna berhasil diperbarui');
+      } else {
+        // Add new user
+        const newUser: UserData = {
+          id: Date.now().toString(),
+          ...userData,
+          lastLogin: undefined,
+        };
+        setUsers(prev => [...prev, newUser]);
+        showToast('success', 'Pengguna baru berhasil ditambahkan');
+      }
+      
+      setShowModal(false);
+    } catch (error) {
+      console.error('Error saving user:', error);
+      showToast('error', 'Gagal menyimpan data pengguna');
+    } finally {
+      setModalLoading(false);
+    }
   };
 
   const handleDeleteUser = (userId: string) => {
-    // Implement delete functionality
+    const user = users.find(u => u.id === userId);
+    if (!user) return;
+
+    if (!window.confirm(`Apakah Anda yakin ingin menghapus pengguna ${user.name}?`)) {
+      return;
+    }
+
+    setUsers(prev => prev.filter(user => user.id !== userId));
     showToast('success', 'Pengguna berhasil dihapus');
   };
 
@@ -95,6 +136,63 @@ const UserManagement = () => {
         <p className="text-gray-600">Kelola akun pengguna dan hak akses sistem</p>
       </div>
 
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div className="card p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-500">Total Pengguna</p>
+              <p className="text-2xl font-bold text-gray-900">{users.length}</p>
+            </div>
+            <div className="p-2 bg-primary-100 rounded-lg">
+              <User className="h-6 w-6 text-primary-600" />
+            </div>
+          </div>
+        </div>
+        
+        <div className="card p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-500">Admin</p>
+              <p className="text-2xl font-bold text-error-600">
+                {users.filter(u => u.role === 'admin').length}
+              </p>
+            </div>
+            <div className="p-2 bg-error-100 rounded-lg">
+              <Shield className="h-6 w-6 text-error-600" />
+            </div>
+          </div>
+        </div>
+
+        <div className="card p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-500">Guru</p>
+              <p className="text-2xl font-bold text-success-600">
+                {users.filter(u => u.role === 'guru').length}
+              </p>
+            </div>
+            <div className="p-2 bg-success-100 rounded-lg">
+              <User className="h-6 w-6 text-success-600" />
+            </div>
+          </div>
+        </div>
+
+        <div className="card p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-500">Orang Tua</p>
+              <p className="text-2xl font-bold text-primary-600">
+                {users.filter(u => u.role === 'parent').length}
+              </p>
+            </div>
+            <div className="p-2 bg-primary-100 rounded-lg">
+              <User className="h-6 w-6 text-primary-600" />
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Search and Add User */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div className="relative flex-1 max-w-md">
@@ -109,7 +207,7 @@ const UserManagement = () => {
         </div>
         <button
           onClick={handleAddUser}
-          className="btn btn-primary flex items-center gap-2"
+          className="btn btn-primary flex items-center gap-2 w-full sm:w-auto"
         >
           <UserPlus className="h-5 w-5" />
           <span>Tambah Pengguna</span>
@@ -117,8 +215,8 @@ const UserManagement = () => {
       </div>
 
       {/* Users Table */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <div className="overflow-x-auto">
+      <div className="card">
+        <div className="table-container">
           <table className="table">
             <thead>
               <tr>
@@ -195,14 +293,20 @@ const UserManagement = () => {
             <User className="mx-auto h-12 w-12 text-gray-400" />
             <h3 className="mt-2 text-sm font-medium text-gray-900">Tidak ada pengguna</h3>
             <p className="mt-1 text-sm text-gray-500">
-              Tidak ada pengguna yang sesuai dengan pencarian Anda.
+              {searchTerm ? 'Tidak ada pengguna yang sesuai dengan pencarian' : 'Belum ada pengguna yang ditambahkan'}
             </p>
           </div>
         )}
       </div>
 
-      {/* Add/Edit User Modal would go here */}
-      {/* Implement modal component for adding/editing users */}
+      {/* User Modal */}
+      <UserModal
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        onSave={handleSaveUser}
+        userData={selectedUser}
+        loading={modalLoading}
+      />
     </div>
   );
 };

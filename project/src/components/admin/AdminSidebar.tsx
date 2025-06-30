@@ -47,7 +47,7 @@ const AdminSidebar = ({ isOpen, setIsOpen }: AdminSidebarProps) => {
             <div className="bg-primary-600 p-1.5 rounded-md">
               <GraduationCap className="h-6 w-6 text-white" />
             </div>
-            <span className="font-semibold text-lg text-gray-900">TK Ceria</span>
+            <span className="font-semibold text-lg text-gray-900">TK An Nuur Rumah Cahaya</span>
           </div>
           <button
             onClick={() => setIsOpen(false)}
