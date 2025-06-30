@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { LogIn, Loader2 } from 'lucide-react';
 
 const LoginPage = () => {
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
   const { signIn } = useAuth();
   const { showToast } = useToast();
   const [email, setEmail] = useState('');
