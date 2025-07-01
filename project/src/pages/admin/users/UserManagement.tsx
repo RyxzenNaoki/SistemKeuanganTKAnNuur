@@ -46,6 +46,7 @@ const loadUsers = async () => {
         name: data.name,
         email: data.email,
         role: data.role,
+        status: data.status || 'active',
         lastLogin: data.lastLogin ?? '-',
       } as UserData;
     });
