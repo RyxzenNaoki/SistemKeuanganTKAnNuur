@@ -46,7 +46,6 @@ const loadUsers = async () => {
         name: data.name,
         email: data.email,
         role: data.role,
-        status: data.status,
         lastLogin: data.lastLogin ?? '-',
       } as UserData;
     });
@@ -134,11 +133,12 @@ const loadUsers = async () => {
 
 
   const filteredUsers = users.filter(
-    (user) =>
-      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.role.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  (user) =>
+    (user.name?.toLowerCase() ?? '').includes(searchTerm.toLowerCase()) ||
+    (user.email?.toLowerCase() ?? '').includes(searchTerm.toLowerCase()) ||
+    (user.role?.toLowerCase() ?? '').includes(searchTerm.toLowerCase())
+);
+
 
   return (
     <div className="page-transition">
