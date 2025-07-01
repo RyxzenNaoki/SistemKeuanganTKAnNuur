@@ -18,8 +18,6 @@ interface UserData {
   name: string;
   email: string;
   role: 'admin' | 'bendahara' | 'guru' | 'parent';
-  status: 'active' | 'inactive';
-  lastLogin?: string;
 }
 
 const UserManagement = () => {
@@ -46,8 +44,6 @@ const loadUsers = async () => {
         name: data.name,
         email: data.email,
         role: data.role,
-        status: data.status || 'active',
-        lastLogin: data.lastLogin ?? '-',
       } as UserData;
     });
     setUsers(fetchedUsers);
@@ -70,12 +66,6 @@ const loadUsers = async () => {
       default:
         return 'bg-gray-100 text-gray-800';
     }
-  };
-
-  const getStatusColor = (status: string) => {
-    return status === 'active'
-      ? 'bg-success-100 text-success-800'
-      : 'bg-gray-100 text-gray-800';
   };
 
   const handleAddUser = () => {
@@ -235,8 +225,6 @@ const loadUsers = async () => {
                 <th>Pengguna</th>
                 <th>Email</th>
                 <th>Peran</th>
-                <th>Status</th>
-                <th>Login Terakhir</th>
                 <th>Aksi</th>
               </tr>
             </thead>
@@ -263,18 +251,6 @@ const loadUsers = async () => {
                       <Shield className="h-3 w-3 mr-1" />
                       {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
                     </span>
-                  </td>
-                  <td className="whitespace-nowrap">
-                    <span
-                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
-                        user.status
-                      )}`}
-                    >
-                      {user.status === 'active' ? 'Aktif' : 'Nonaktif'}
-                    </span>
-                  </td>
-                  <td className="whitespace-nowrap text-sm text-gray-500">
-                    {user.lastLogin || '-'}
                   </td>
                   <td className="whitespace-nowrap">
                     <div className="flex items-center gap-2">

@@ -6,7 +6,6 @@ interface User {
     name: string;
     email: string;
     role: 'admin' | 'bendahara' | 'guru' | 'parent';
-    status: 'active' | 'inactive';
     password?: string;
     createdAt?: Date;
     updatedAt?: Date;
@@ -25,7 +24,6 @@ const UserModal = ({ isOpen, onClose, onSave, userData, loading = false }: UserM
         name: '',
         email: '',
         role: 'parent' as 'admin' | 'bendahara' | 'guru' | 'parent',
-        status: 'active' as 'active' | 'inactive',
         password: '',
         confirmPassword: '',
     });
@@ -38,7 +36,6 @@ const UserModal = ({ isOpen, onClose, onSave, userData, loading = false }: UserM
                 name: userData.name,
                 email: userData.email,
                 role: userData.role,
-                status: userData.status,
                 password: '',
                 confirmPassword: '',
             });
@@ -47,7 +44,6 @@ const UserModal = ({ isOpen, onClose, onSave, userData, loading = false }: UserM
                 name: '',
                 email: '',
                 role: 'parent',
-                status: 'active',
                 password: '',
                 confirmPassword: '',
             });
@@ -102,7 +98,6 @@ const UserModal = ({ isOpen, onClose, onSave, userData, loading = false }: UserM
                 name: formData.name,
                 email: formData.email,
                 role: formData.role,
-                status: formData.status,
                 ...(formData.password ? { password: formData.password } : {})
             };
 
@@ -216,22 +211,6 @@ const UserModal = ({ isOpen, onClose, onSave, userData, loading = false }: UserM
                                         <option value="guru">Guru</option>
                                         <option value="bendahara">Bendahara</option>
                                         <option value="admin">Administrator</option>
-                                    </select>
-                                </div>
-
-                                {/* Status */}
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Status
-                                    </label>
-                                    <select
-                                        name="status"
-                                        value={formData.status}
-                                        onChange={handleInputChange}
-                                        className="input"
-                                    >
-                                        <option value="active">Aktif</option>
-                                        <option value="inactive">Nonaktif</option>
                                     </select>
                                 </div>
                             </div>
