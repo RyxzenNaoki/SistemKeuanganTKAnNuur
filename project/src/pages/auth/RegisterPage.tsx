@@ -10,6 +10,7 @@ const RegisterPage = () => {
     const navigate = useNavigate();
     const { showToast } = useToast();
 
+    const [name, setName] = useState('');    
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirm, setConfirm] = useState('');
@@ -63,6 +64,20 @@ const RegisterPage = () => {
             </h2>
 
             <form onSubmit={handleRegister}>
+                 <div className="mb-4">
+                    <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                        Nama Lengkap
+                    </label>
+                    <input
+                        id="name"
+                        type="text"
+                        required
+                        className="input"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        placeholder="Masukkan nama lengkap Anda"
+                    />
+                </div>
                 <div className="mb-4">
                     <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
                         Email

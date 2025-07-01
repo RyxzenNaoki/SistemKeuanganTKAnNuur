@@ -1,8 +1,19 @@
 import { useState, useEffect } from 'react';
 import { PlusCircle, Search, Edit2, Trash2, CheckCircle, XCircle, Loader2 } from 'lucide-react';
-import { StudentService, Student } from '../../../services/studentService';
+import { Student } from '../../../services/studentService';
 import { useToast } from '../../../contexts/ToastContext';
 import StudentModal from '../../../components/admin/StudentModal';
+import {
+  collection,
+  getDocs,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  doc,
+  Timestamp
+} from 'firebase/firestore';
+import { db } from '../../../firebase/config';
+
 
 const StudentManagement = () => {
   const { showToast } = useToast();
@@ -27,17 +38,26 @@ const StudentManagement = () => {
   }, [students, searchTerm, selectedClass, selectedStatus]);
 
   const loadStudents = async () => {
-    try {
-      setLoading(true);
-      const studentsData = await StudentService.getAllStudents();
-      setStudents(studentsData);
-    } catch (error) {
-      console.error('Error loading students:', error);
-      showToast('error', 'Gagal memuat data siswa');
-    } finally {
-      setLoading(false);
-    }
-  };
+  try {
+    setLoading(true);
+    const snapshot = await getDocs(collection(db, 'students'));
+    const data = snapshot.docs.map(docSnap => {
+      const data = docSnap.data();
+      return {
+        id: docSnap.id,
+        ...data,
+        registrationDate: data.registrationDate?.toDate() || new Date(),
+      } as Student;
+    });
+    setStudents(data);
+  } catch (error) {
+    console.error('Error loading students:', error);
+    showToast('error', 'Gagal memuat data siswa');
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   const filterStudents = () => {
     let filtered = students;
@@ -75,43 +95,46 @@ const StudentManagement = () => {
   };
 
   const handleSaveStudent = async (studentData: Omit<Student, 'id' | 'createdAt' | 'updatedAt'>) => {
-    try {
-      setModalLoading(true);
-      
-      if (selectedStudent) {
-        // Update existing student
-        await StudentService.updateStudent(selectedStudent.id!, studentData);
-        showToast('success', 'Data siswa berhasil diperbarui');
-      } else {
-        // Add new student
-        await StudentService.addStudent(studentData);
-        showToast('success', 'Siswa baru berhasil ditambahkan');
-      }
-      
-      await loadStudents(); // Reload data
-      setShowModal(false);
-    } catch (error) {
-      console.error('Error saving student:', error);
-      showToast('error', 'Gagal menyimpan data siswa');
-    } finally {
-      setModalLoading(false);
+  try {
+    setModalLoading(true);
+
+    const payload = {
+      ...studentData,
+      registrationDate: Timestamp.fromDate(new Date()),
+    };
+
+    if (selectedStudent?.id) {
+      const ref = doc(db, 'students', selectedStudent.id);
+      await updateDoc(ref, payload);
+      showToast('success', 'Data siswa berhasil diperbarui');
+    } else {
+      await addDoc(collection(db, 'students'), payload);
+      showToast('success', 'Siswa baru berhasil ditambahkan');
     }
-  };
+
+    await loadStudents();
+    setShowModal(false);
+  } catch (error) {
+    console.error('Error saving student:', error);
+    showToast('error', 'Gagal menyimpan data siswa');
+  } finally {
+    setModalLoading(false);
+  }
+};
 
   const handleDeleteStudent = async (student: Student) => {
-    if (!window.confirm(`Apakah Anda yakin ingin menghapus data ${student.name}?`)) {
-      return;
-    }
+  if (!window.confirm(`Apakah Anda yakin ingin menghapus data ${student.name}?`)) return;
 
-    try {
-      await StudentService.deleteStudent(student.id!);
-      showToast('success', 'Data siswa berhasil dihapus');
-      await loadStudents(); // Reload data
-    } catch (error) {
-      console.error('Error deleting student:', error);
-      showToast('error', 'Gagal menghapus data siswa');
-    }
-  };
+  try {
+    await deleteDoc(doc(db, 'students', student.id!));
+    showToast('success', 'Data siswa berhasil dihapus');
+    await loadStudents();
+  } catch (error) {
+    console.error('Error deleting student:', error);
+    showToast('error', 'Gagal menghapus data siswa');
+  }
+};
+
 
   const getUniqueClasses = () => {
     const classes = [...new Set(students.map(student => student.class))];

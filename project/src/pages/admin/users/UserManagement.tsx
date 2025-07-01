@@ -1,4 +1,14 @@
-import { useState } from 'react';
+import {
+  collection,
+  getDocs,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  doc,
+  Timestamp,
+} from 'firebase/firestore';
+import { db } from '../../../firebase/config';
+import { useState, useEffect} from 'react';
 import { User, UserPlus, Edit, Trash2, Search, Shield } from 'lucide-react';
 import { useToast } from '../../../contexts/ToastContext';
 import UserModal from '../../../components/admin/UserModal';
@@ -20,32 +30,32 @@ const UserManagement = () => {
   const [modalLoading, setModalLoading] = useState(false);
 
   // Sample data - replace with actual data from Firebase
-  const [users, setUsers] = useState<UserData[]>([
-    {
-      id: '1',
-      name: 'Admin Utama',
-      email: 'admin@tkceria.com',
-      role: 'admin',
-      status: 'active',
-      lastLogin: '2025-06-15 08:30',
-    },
-    {
-      id: '2',
-      name: 'Bendahara Sekolah',
-      email: 'bendahara@tkceria.com',
-      role: 'bendahara',
-      status: 'active',
-      lastLogin: '2025-06-14 15:45',
-    },
-    {
-      id: '3',
-      name: 'Guru Kelas Mawar',
-      email: 'guru.mawar@tkceria.com',
-      role: 'guru',
-      status: 'active',
-      lastLogin: '2025-06-15 07:15',
-    },
-  ]);
+  const [users, setUsers] = useState<UserData[]>([]);
+
+  useEffect(() => {
+  loadUsers();
+}, []);
+
+const loadUsers = async () => {
+  try {
+    const snapshot = await getDocs(collection(db, 'users'));
+    const fetchedUsers = snapshot.docs.map(docSnap => {
+      const data = docSnap.data();
+      return {
+        id: docSnap.id,
+        name: data.name,
+        email: data.email,
+        role: data.role,
+        status: data.status,
+        lastLogin: data.lastLogin ?? '-',
+      } as UserData;
+    });
+    setUsers(fetchedUsers);
+  } catch (error) {
+    console.error('Gagal memuat pengguna:', error);
+    showToast('error', 'Gagal memuat data pengguna');
+  }
+};
 
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
@@ -79,48 +89,49 @@ const UserManagement = () => {
   };
 
   const handleSaveUser = async (userData: Omit<UserData, 'id' | 'lastLogin'>) => {
-    try {
-      setModalLoading(true);
-      
-      if (selectedUser) {
-        // Update existing user
-        setUsers(prev => prev.map(user => 
-          user.id === selectedUser.id 
-            ? { ...user, ...userData }
-            : user
-        ));
-        showToast('success', 'Data pengguna berhasil diperbarui');
-      } else {
-        // Add new user
-        const newUser: UserData = {
-          id: Date.now().toString(),
-          ...userData,
-          lastLogin: undefined,
-        };
-        setUsers(prev => [...prev, newUser]);
-        showToast('success', 'Pengguna baru berhasil ditambahkan');
-      }
-      
-      setShowModal(false);
-    } catch (error) {
-      console.error('Error saving user:', error);
-      showToast('error', 'Gagal menyimpan data pengguna');
-    } finally {
-      setModalLoading(false);
-    }
-  };
+  try {
+    setModalLoading(true);
 
-  const handleDeleteUser = (userId: string) => {
-    const user = users.find(u => u.id === userId);
-    if (!user) return;
-
-    if (!window.confirm(`Apakah Anda yakin ingin menghapus pengguna ${user.name}?`)) {
-      return;
+    if (selectedUser?.id) {
+      await updateDoc(doc(db, 'users', selectedUser.id), {
+        ...userData,
+      });
+      showToast('success', 'Data pengguna berhasil diperbarui');
+    } else {
+      await addDoc(collection(db, 'users'), {
+        ...userData,
+        createdAt: Timestamp.now(),
+      });
+      showToast('success', 'Pengguna baru berhasil ditambahkan');
     }
 
-    setUsers(prev => prev.filter(user => user.id !== userId));
+    setShowModal(false);
+    await loadUsers();
+  } catch (error) {
+    console.error('Error saving user:', error);
+    showToast('error', 'Gagal menyimpan data pengguna');
+  } finally {
+    setModalLoading(false);
+  }
+};
+
+
+  const handleDeleteUser = async (userId: string) => {
+  const user = users.find(u => u.id === userId);
+  if (!user) return;
+
+  if (!window.confirm(`Apakah Anda yakin ingin menghapus pengguna ${user.name}?`)) return;
+
+  try {
+    await deleteDoc(doc(db, 'users', userId));
     showToast('success', 'Pengguna berhasil dihapus');
-  };
+    await loadUsers();
+  } catch (error) {
+    console.error('Error deleting user:', error);
+    showToast('error', 'Gagal menghapus pengguna');
+  }
+};
+
 
   const filteredUsers = users.filter(
     (user) =>

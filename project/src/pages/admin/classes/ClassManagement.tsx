@@ -1,4 +1,14 @@
-import { useState } from 'react';
+import {
+  collection,
+  getDocs,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  doc,
+  Timestamp,
+} from 'firebase/firestore';
+import { db } from '../../../firebase/config';
+import { useState, useEffect } from 'react';
 import { PlusCircle, Search, Edit2, Trash2, Users } from 'lucide-react';
 import { useToast } from '../../../contexts/ToastContext';
 import ClassModal from '../../../components/admin/ClassModal';
@@ -13,43 +23,38 @@ interface Class {
   description?: string;
 }
 
+
+
 const ClassManagement = () => {
   const { showToast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [selectedClass, setSelectedClass] = useState<Class | null>(null);
   const [modalLoading, setModalLoading] = useState(false);
+  const [classes, setClasses] = useState<Class[]>([]);
 
-  // Sample data - in real app, this would come from Firestore
-  const [classes, setClasses] = useState<Class[]>([
-    {
-      id: '1',
-      name: 'TK A - Melati',
-      teacher: 'Ibu Sri Wahyuni',
-      studentCount: 15,
-      academicYear: '2024/2025',
-      capacity: 20,
-      description: 'Kelas untuk anak usia 4-5 tahun',
-    },
-    {
-      id: '2',
-      name: 'TK B - Mawar',
-      teacher: 'Ibu Ratna Sari',
-      studentCount: 18,
-      academicYear: '2024/2025',
-      capacity: 20,
-      description: 'Kelas untuk anak usia 5-6 tahun',
-    },
-    {
-      id: '3',
-      name: 'TK B - Anggrek',
-      teacher: 'Ibu Dewi Lestari',
-      studentCount: 16,
-      academicYear: '2024/2025',
-      capacity: 20,
-      description: 'Kelas untuk anak usia 5-6 tahun',
-    },
-  ]);
+
+  useEffect(() => {
+  loadClasses();
+}, []);
+
+const loadClasses = async () => {
+  try {
+    const snapshot = await getDocs(collection(db, 'classes'));
+    const classData = snapshot.docs.map((docSnap) => {
+      const data = docSnap.data();
+      return {
+        id: docSnap.id,
+        ...data,
+      } as Class;
+    });
+    setClasses(classData);
+  } catch (error) {
+    console.error('Error loading classes:', error);
+    showToast('error', 'Gagal memuat data kelas');
+  }
+};
+
 
   const filteredClasses = classes.filter(cls =>
     cls.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -66,45 +71,46 @@ const ClassManagement = () => {
     setShowModal(true);
   };
 
-  const handleSaveClass = async (classData: Omit<Class, 'id' | 'createdAt' | 'updatedAt'>) => {
-    try {
-      setModalLoading(true);
-      
-      if (selectedClass) {
-        // Update existing class
-        setClasses(prev => prev.map(cls => 
-          cls.id === selectedClass.id 
-            ? { ...cls, ...classData }
-            : cls
-        ));
-        showToast('success', 'Data kelas berhasil diperbarui');
-      } else {
-        // Add new class
-        const newClass: Class = {
-          id: Date.now().toString(),
-          ...classData,
-        };
-        setClasses(prev => [...prev, newClass]);
-        showToast('success', 'Kelas baru berhasil ditambahkan');
-      }
-      
-      setShowModal(false);
-    } catch (error) {
-      console.error('Error saving class:', error);
-      showToast('error', 'Gagal menyimpan data kelas');
-    } finally {
-      setModalLoading(false);
-    }
-  };
-
-  const handleDeleteClass = (classData: Class) => {
-    if (!window.confirm(`Apakah Anda yakin ingin menghapus kelas ${classData.name}?`)) {
-      return;
+  const handleSaveClass = async (
+  classData: Omit<Class, 'id'>
+) => {
+  try {
+    setModalLoading(true);
+    if (selectedClass?.id) {
+      await updateDoc(doc(db, 'classes', selectedClass.id), classData);
+      showToast('success', 'Data kelas berhasil diperbarui');
+    } else {
+      await addDoc(collection(db, 'classes'), {
+        ...classData,
+        createdAt: Timestamp.now(),
+      });
+      showToast('success', 'Kelas baru berhasil ditambahkan');
     }
 
-    setClasses(prev => prev.filter(cls => cls.id !== classData.id));
+    await loadClasses();
+    setShowModal(false);
+  } catch (error) {
+    console.error('Error saving class:', error);
+    showToast('error', 'Gagal menyimpan data kelas');
+  } finally {
+    setModalLoading(false);
+  }
+};
+
+
+ const handleDeleteClass = async (classData: Class) => {
+  if (!window.confirm(`Apakah Anda yakin ingin menghapus kelas ${classData.name}?`)) return;
+
+  try {
+    await deleteDoc(doc(db, 'classes', classData.id));
     showToast('success', 'Kelas berhasil dihapus');
-  };
+    await loadClasses();
+  } catch (error) {
+    console.error('Error deleting class:', error);
+    showToast('error', 'Gagal menghapus kelas');
+  }
+};
+
 
   return (
     <div className="page-transition">
