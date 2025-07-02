@@ -1,4 +1,7 @@
-import { useState } from 'react';
+import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, Timestamp } from 'firebase/firestore';
+import { db } from '../../../firebase/config';
+import dayjs from 'dayjs';
+import { useState, useEffect } from 'react';
 import { PlusCircle, Search, Edit2, Trash2, Calendar, AlertCircle, CheckCircle, Clock } from 'lucide-react';
 import { useToast } from '../../../contexts/ToastContext';
 import PaymentScheduleModal from '../../../components/admin/PaymentScheduleModal';
@@ -22,48 +25,42 @@ const PaymentSchedule = () => {
   const [modalLoading, setModalLoading] = useState(false);
 
   // Sample data - in real app, this would come from Firestore
-  const [payments, setPayments] = useState<Payment[]>([
-    {
-      id: '1',
-      type: 'SPP Bulanan',
-      amount: 500000,
-      dueDate: new Date('2025-07-10'),
-      description: 'SPP Bulan Juli 2025',
-      status: 'upcoming',
-      studentName: 'Budi Santoso',
-      class: 'TK B - Mawar',
-    },
-    {
-      id: '2',
-      type: 'Uang Kegiatan',
-      amount: 150000,
-      dueDate: new Date('2025-07-15'),
-      description: 'Kegiatan Hari Anak',
-      status: 'upcoming',
-      studentName: 'Siti Rahayu',
-      class: 'TK A - Melati',
-    },
-    {
-      id: '3',
-      type: 'SPP Bulanan',
-      amount: 500000,
-      dueDate: new Date('2025-06-10'),
-      description: 'SPP Bulan Juni 2025',
-      status: 'paid',
-      studentName: 'Ahmad Fadli',
-      class: 'TK B - Mawar',
-    },
-    {
-      id: '4',
-      type: 'SPP Bulanan',
-      amount: 500000,
-      dueDate: new Date('2025-06-10'),
-      description: 'SPP Bulan Juni 2025',
-      status: 'overdue',
-      studentName: 'Rina Putri',
-      class: 'TK A - Melati',
-    },
-  ]);
+  const [payments, setPayments] = useState<Payment[]>([]);
+
+  useEffect(() => {
+  const fetchPayments = async () => {
+    try {
+      const snapshot = await getDocs(collection(db, 'payments'));
+      const data = snapshot.docs.map(doc => {
+        const d = doc.data();
+        const dueDate = d.dueDate?.toDate?.() || new Date();
+        const status = getAutoStatus(dueDate, d.status);
+        return {
+          id: doc.id,
+          type: d.type,
+          amount: d.amount,
+          dueDate,
+          description: d.description,
+          status,
+          studentName: d.studentName,
+          class: d.class,
+        };
+      });
+      setPayments(data);
+    } catch (err) {
+      console.error('Failed to load payments:', err);
+      showToast('error', 'Gagal memuat data jadwal');
+    }
+  };
+  fetchPayments();
+}, []);
+
+const getAutoStatus = (dueDate: Date, currentStatus: string): Payment['status'] => {
+  const today = new Date();
+  if (currentStatus === 'paid') return 'paid';
+  return dayjs(dueDate).isBefore(dayjs(today), 'day') ? 'overdue' : 'upcoming';
+};
+
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('id-ID', {
@@ -124,44 +121,51 @@ const PaymentSchedule = () => {
   };
 
   const handleSavePayment = async (paymentData: Omit<Payment, 'id'>) => {
-    try {
-      setModalLoading(true);
-      
-      if (selectedPayment) {
-        // Update existing payment
-        setPayments(prev => prev.map(payment => 
-          payment.id === selectedPayment.id 
-            ? { ...payment, ...paymentData }
-            : payment
-        ));
-        showToast('success', 'Jadwal pembayaran berhasil diperbarui');
-      } else {
-        // Add new payment
-        const newPayment: Payment = {
-          id: Date.now().toString(),
-          ...paymentData,
-        };
-        setPayments(prev => [...prev, newPayment]);
-        showToast('success', 'Jadwal pembayaran baru berhasil ditambahkan');
-      }
-      
-      setShowModal(false);
-    } catch (error) {
-      console.error('Error saving payment:', error);
-      showToast('error', 'Gagal menyimpan jadwal pembayaran');
-    } finally {
-      setModalLoading(false);
-    }
-  };
+  try {
+    setModalLoading(true);
+    const now = Timestamp.now();
 
-  const handleDeletePayment = (payment: Payment) => {
-    if (!window.confirm(`Apakah Anda yakin ingin menghapus jadwal pembayaran ${payment.description}?`)) {
-      return;
+    if (selectedPayment) {
+      await updateDoc(doc(db, 'payments', selectedPayment.id), {
+        ...paymentData,
+        dueDate: Timestamp.fromDate(paymentData.dueDate),
+        updatedAt: now,
+      });
+      showToast('success', 'Jadwal pembayaran diperbarui');
+    } else {
+      await addDoc(collection(db, 'payments'), {
+        ...paymentData,
+        dueDate: Timestamp.fromDate(paymentData.dueDate),
+        createdAt: now,
+        updatedAt: now,
+      });
+      showToast('success', 'Jadwal pembayaran ditambahkan');
     }
 
+    setShowModal(false);
+    window.location.reload(); // atau fetchPayments() jika dibuat terpisah
+  } catch (err) {
+    console.error('Failed to save:', err);
+    showToast('error', 'Gagal menyimpan jadwal');
+  } finally {
+    setModalLoading(false);
+  }
+};
+
+
+  const handleDeletePayment = async (payment: Payment) => {
+  if (!window.confirm(`Yakin hapus jadwal "${payment.description}"?`)) return;
+
+  try {
+    await deleteDoc(doc(db, 'payments', payment.id));
     setPayments(prev => prev.filter(p => p.id !== payment.id));
-    showToast('success', 'Jadwal pembayaran berhasil dihapus');
-  };
+    showToast('success', 'Jadwal dihapus');
+  } catch (err) {
+    console.error('Failed to delete:', err);
+    showToast('error', 'Gagal menghapus jadwal');
+  }
+};
+
 
   // Calculate summary statistics
   const upcomingCount = payments.filter(p => p.status === 'upcoming').length;

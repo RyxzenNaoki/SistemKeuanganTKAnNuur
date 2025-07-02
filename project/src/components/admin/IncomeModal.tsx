@@ -4,7 +4,7 @@ import { X, Save, Loader2 } from 'lucide-react';
 interface Income {
   id?: string;
   date: Date;
-  category: 'spp' | 'registration' | 'donation' | 'other';
+  category: 'spp' | 'registration' | 'activity' | 'uniform' | 'book' | 'other';
   description: string;
   amount: number;
   student: string;
@@ -27,7 +27,7 @@ interface IncomeModalProps {
 const IncomeModal = ({ isOpen, onClose, onSave, incomeData, loading = false }: IncomeModalProps) => {
   const [formData, setFormData] = useState({
     date: new Date(),
-    category: 'spp' as 'spp' | 'registration' | 'donation' | 'other',
+    category: 'spp' as 'spp' | 'registration' | 'activity' | 'uniform' | 'book' | 'other',
     description: '',
     amount: 0,
     student: '',
@@ -56,7 +56,7 @@ const IncomeModal = ({ isOpen, onClose, onSave, incomeData, loading = false }: I
       // Generate receipt number for new income
       const now = new Date();
       const receiptNumber = `INC-${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(Date.now()).slice(-3)}`;
-      
+
       setFormData({
         date: new Date(),
         category: 'spp',
@@ -86,7 +86,7 @@ const IncomeModal = ({ isOpen, onClose, onSave, incomeData, loading = false }: I
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) return;
 
     try {
@@ -101,24 +101,26 @@ const IncomeModal = ({ isOpen, onClose, onSave, incomeData, loading = false }: I
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: name === 'amount' ? parseFloat(value) || 0 : 
-               name === 'date' ? new Date(value) : value
+      [name]: name === 'amount' ? parseFloat(value) || 0 :
+        name === 'date' ? new Date(value) : value
     }));
-    
+
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
   };
 
-  const getCategoryLabel = (category: string) => {
-    const categories = {
-      spp: 'SPP Bulanan',
-      registration: 'Uang Pangkal',
-      donation: 'Donasi',
-      other: 'Lainnya',
-    };
-    return categories[category as keyof typeof categories] || category;
-  };
+  // const getCategoryLabel = (category: string) => {
+  //   const categories = {
+  //     spp: 'SPP Bulanan',
+  //     registration: 'Uang Pangkal',
+  //     activity: 'Uang Kegiatan',
+  //     uniform: 'Uang Seragam',
+  //     book: 'Uang Buku',
+  //     other: 'Lainnya',
+  //   };
+  //   return categories[category as keyof typeof categories] || category;
+  // };
 
   if (!isOpen) return null;
 
@@ -186,7 +188,9 @@ const IncomeModal = ({ isOpen, onClose, onSave, incomeData, loading = false }: I
                   >
                     <option value="spp">SPP Bulanan</option>
                     <option value="registration">Uang Pangkal</option>
-                    <option value="donation">Donasi</option>
+                    <option value="activity">Uang Kegiatan</option>
+                    <option value="uniform">Uang Seragam</option>
+                    <option value="book">Uang Buku</option>
                     <option value="other">Lainnya</option>
                   </select>
                 </div>

@@ -1,12 +1,22 @@
-import { useState } from 'react';
-import { PlusCircle, Search, Edit2, Trash2, FileText, Download, Filter } from 'lucide-react';
+import {
+  collection,
+  getDocs,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  doc,
+  Timestamp,
+} from 'firebase/firestore';
+import { db } from '../../../firebase/config';
+import { useState, useEffect } from 'react';
+import { PlusCircle, Search, Edit2, Trash2, FileText, Download } from 'lucide-react';
 import { useToast } from '../../../contexts/ToastContext';
 import IncomeModal from '../../../components/admin/IncomeModal';
 
 interface Income {
   id: string;
   date: Date;
-  category: 'spp' | 'registration' | 'donation' | 'other';
+  category: 'spp' | 'registration' | 'activity' | 'uniform' | 'book' | 'other';
   description: string;
   amount: number;
   student: string;
@@ -26,30 +36,29 @@ const IncomeManagement = () => {
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
 
   // Sample data - replace with actual data from Firebase
-  const [incomes, setIncomes] = useState<Income[]>([
-    {
-      id: '1',
-      date: new Date('2025-06-15'),
-      category: 'spp',
-      description: 'SPP Bulan Juni 2025',
-      amount: 500000,
-      student: 'Budi Santoso',
-      paymentMethod: 'transfer',
-      status: 'verified',
-      receiptNumber: 'SPP-2025-06-001',
-    },
-    {
-      id: '2',
-      date: new Date('2025-06-14'),
-      category: 'registration',
-      description: 'Uang Pangkal TA 2025/2026',
-      amount: 2500000,
-      student: 'Siti Rahayu',
-      paymentMethod: 'transfer',
-      status: 'pending',
-      receiptNumber: 'REG-2025-06-001',
-    },
-  ]);
+  const [incomes, setIncomes] = useState<Income[]>([]);
+
+  useEffect(() => {
+    loadIncomes();
+  }, []);
+
+  const loadIncomes = async () => {
+    try {
+      const snapshot = await getDocs(collection(db, 'incomes'));
+      const fetchedIncomes = snapshot.docs.map((docSnap) => {
+        const data = docSnap.data();
+        return {
+          id: docSnap.id,
+          ...data,
+          date: data.date?.toDate?.() || new Date(),
+        } as Income;
+      });
+      setIncomes(fetchedIncomes);
+    } catch (error) {
+      console.error('Error loading incomes:', error);
+      showToast('error', 'Gagal memuat data pemasukan');
+    }
+  };
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('id-ID', {
@@ -107,25 +116,21 @@ const IncomeManagement = () => {
   const handleSaveIncome = async (incomeData: Omit<Income, 'id'>) => {
     try {
       setModalLoading(true);
-      
-      if (selectedIncome) {
-        // Update existing income
-        setIncomes(prev => prev.map(income => 
-          income.id === selectedIncome.id 
-            ? { ...income, ...incomeData }
-            : income
-        ));
+
+      const payload = {
+        ...incomeData,
+        date: Timestamp.fromDate(incomeData.date),
+      };
+
+      if (selectedIncome?.id) {
+        await updateDoc(doc(db, 'incomes', selectedIncome.id), payload);
         showToast('success', 'Data pemasukan berhasil diperbarui');
       } else {
-        // Add new income
-        const newIncome: Income = {
-          id: Date.now().toString(),
-          ...incomeData,
-        };
-        setIncomes(prev => [...prev, newIncome]);
+        await addDoc(collection(db, 'incomes'), payload);
         showToast('success', 'Pemasukan baru berhasil ditambahkan');
       }
-      
+
+      await loadIncomes();
       setShowModal(false);
     } catch (error) {
       console.error('Error saving income:', error);
@@ -135,14 +140,20 @@ const IncomeManagement = () => {
     }
   };
 
-  const handleDeleteIncome = (income: Income) => {
-    if (!window.confirm(`Apakah Anda yakin ingin menghapus pemasukan ${income.description}?`)) {
-      return;
-    }
 
-    setIncomes(prev => prev.filter(inc => inc.id !== income.id));
-    showToast('success', 'Pemasukan berhasil dihapus');
+  const handleDeleteIncome = async (income: Income) => {
+    if (!window.confirm(`Apakah Anda yakin ingin menghapus pemasukan ${income.description}?`)) return;
+
+    try {
+      await deleteDoc(doc(db, 'incomes', income.id));
+      showToast('success', 'Pemasukan berhasil dihapus');
+      await loadIncomes();
+    } catch (error) {
+      console.error('Error deleting income:', error);
+      showToast('error', 'Gagal menghapus pemasukan');
+    }
   };
+
 
   const handleExportData = () => {
     showToast('info', 'Mengunduh data pemasukan...');
@@ -200,10 +211,11 @@ const IncomeManagement = () => {
               onChange={(e) => setSelectedCategory(e.target.value)}
               className="input"
             >
-              <option value="all">Semua Kategori</option>
               <option value="spp">SPP Bulanan</option>
               <option value="registration">Uang Pangkal</option>
-              <option value="donation">Donasi</option>
+              <option value="activity">Uang Kegiatan</option>
+              <option value="uniform">Uang Seragam</option>
+              <option value="book">Uang Buku</option>
               <option value="other">Lainnya</option>
             </select>
 
@@ -275,7 +287,7 @@ const IncomeManagement = () => {
                   <td>
                     <div className="flex items-center space-x-2">
                       <button
-                        onClick={() => {/* Handle view receipt */}}
+                        onClick={() => {/* Handle view receipt */ }}
                         className="p-1 text-gray-500 hover:text-primary-600 transition-colors"
                         title="Lihat Kwitansi"
                       >

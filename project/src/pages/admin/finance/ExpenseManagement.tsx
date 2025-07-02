@@ -1,4 +1,6 @@
-import { useState } from 'react';
+import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, Timestamp } from 'firebase/firestore';
+import { db } from '../../../firebase/config';
+import { useState, useEffect } from 'react';
 import { PlusCircle, Search, Download, Edit2, Trash2, TrendingDown, Calendar, FileText, Filter } from 'lucide-react';
 import { useToast } from '../../../contexts/ToastContext';
 import ExpenseModal from '../../../components/admin/ExpenseModal';
@@ -23,35 +25,29 @@ const ExpenseManagement = () => {
   const [modalLoading, setModalLoading] = useState(false);
 
   // Sample data - replace with actual data from Firestore
-  const [expenses, setExpenses] = useState<Expense[]>([
-    {
-      id: '1',
-      description: 'Pembayaran Listrik',
-      amount: 750000,
-      category: 'Utilitas',
-      date: new Date('2025-06-15'),
-      status: 'approved',
-      notes: 'Pembayaran listrik bulan Juni 2025',
-    },
-    {
-      id: '2',
-      description: 'Alat Tulis Kantor',
-      amount: 500000,
-      category: 'ATK',
-      date: new Date('2025-06-14'),
-      status: 'approved',
-      notes: 'Pembelian ATK untuk administrasi',
-    },
-    {
-      id: '3',
-      description: 'Perbaikan AC',
-      amount: 1200000,
-      category: 'Maintenance',
-      date: new Date('2025-06-13'),
-      status: 'pending',
-      notes: 'Service AC ruang kelas Mawar',
-    },
-  ]);
+  const [expenses, setExpenses] = useState<Expense[]>([]);
+
+  useEffect(() => {
+    loadExpenses();
+  }, []);
+
+  const loadExpenses = async () => {
+    try {
+      const snapshot = await getDocs(collection(db, 'expenses'));
+      const data = snapshot.docs.map(docSnap => {
+        const data = docSnap.data();
+        return {
+          id: docSnap.id,
+          ...data,
+          date: data.date?.toDate?.() || new Date(),
+        } as Expense;
+      });
+      setExpenses(data);
+    } catch (error) {
+      console.error('Error loading expenses:', error);
+      showToast('error', 'Gagal memuat data pengeluaran');
+    }
+  };
 
   const categories = [
     'Utilitas',
@@ -110,25 +106,21 @@ const ExpenseManagement = () => {
   const handleSaveExpense = async (expenseData: Omit<Expense, 'id'>) => {
     try {
       setModalLoading(true);
-      
+
+      const payload = {
+        ...expenseData,
+        date: Timestamp.fromDate(expenseData.date),
+      };
+
       if (selectedExpense) {
-        // Update existing expense
-        setExpenses(prev => prev.map(expense => 
-          expense.id === selectedExpense.id 
-            ? { ...expense, ...expenseData }
-            : expense
-        ));
+        await updateDoc(doc(db, 'expenses', selectedExpense.id), payload);
         showToast('success', 'Data pengeluaran berhasil diperbarui');
       } else {
-        // Add new expense
-        const newExpense: Expense = {
-          id: Date.now().toString(),
-          ...expenseData,
-        };
-        setExpenses(prev => [...prev, newExpense]);
+        await addDoc(collection(db, 'expenses'), payload);
         showToast('success', 'Pengeluaran baru berhasil ditambahkan');
       }
-      
+
+      await loadExpenses();
       setShowModal(false);
     } catch (error) {
       console.error('Error saving expense:', error);
@@ -138,14 +130,20 @@ const ExpenseManagement = () => {
     }
   };
 
-  const handleDeleteExpense = (expense: Expense) => {
-    if (!window.confirm(`Apakah Anda yakin ingin menghapus pengeluaran ${expense.description}?`)) {
-      return;
-    }
 
-    setExpenses(prev => prev.filter(exp => exp.id !== expense.id));
-    showToast('success', 'Pengeluaran berhasil dihapus');
+  const handleDeleteExpense = async (expense: Expense) => {
+    if (!window.confirm(`Yakin mau hapus pengeluaran "${expense.description}"?`)) return;
+
+    try {
+      await deleteDoc(doc(db, 'expenses', expense.id));
+      showToast('success', 'Pengeluaran berhasil dihapus');
+      await loadExpenses();
+    } catch (error) {
+      console.error('Error deleting expense:', error);
+      showToast('error', 'Gagal menghapus pengeluaran');
+    }
   };
+
 
   const handleExport = () => {
     showToast('info', 'Mengunduh data pengeluaran...');
@@ -333,7 +331,7 @@ const ExpenseManagement = () => {
             <TrendingDown className="mx-auto h-12 w-12 text-gray-400" />
             <h3 className="mt-2 text-sm font-medium text-gray-900">Tidak ada data pengeluaran</h3>
             <p className="mt-1 text-sm text-gray-500">
-              {searchTerm || selectedCategory !== 'all' 
+              {searchTerm || selectedCategory !== 'all'
                 ? 'Tidak ada pengeluaran yang sesuai dengan filter'
                 : 'Mulai dengan menambahkan pengeluaran baru.'}
             </p>

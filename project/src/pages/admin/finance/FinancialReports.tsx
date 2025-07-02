@@ -1,415 +1,263 @@
-import { useState } from 'react';
-import { Download, FileText, Calendar, TrendingUp, TrendingDown, DollarSign, Filter } from 'lucide-react';
-import {
-  LineChart,
-  Line,
-  BarChart,
-  Bar,
-  PieChart,
-  Pie,
-  Cell,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-} from 'recharts';
+// FinancialReports.tsx — versi fix semua error + fitur export CSV + CHART ditampilkan
+
+import { useEffect, useState } from 'react';
+import { collection, getDocs } from 'firebase/firestore';
+import { db } from '../../../firebase/config';
+import { FileText } from 'lucide-react';
+import { saveAs } from 'file-saver';
 import { useToast } from '../../../contexts/ToastContext';
+import dayjs from 'dayjs';
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
 
-// Sample data for demonstration
-const monthlyData = [
-  { month: 'Jan', pemasukan: 25000000, pengeluaran: 18000000, saldo: 7000000 },
-  { month: 'Feb', pemasukan: 28000000, pengeluaran: 19500000, saldo: 8500000 },
-  { month: 'Mar', pemasukan: 32000000, pengeluaran: 22000000, saldo: 10000000 },
-  { month: 'Apr', pemasukan: 27000000, pengeluaran: 21000000, saldo: 6000000 },
-  { month: 'Mei', pemasukan: 30000000, pengeluaran: 24000000, saldo: 6000000 },
-  { month: 'Jun', pemasukan: 29000000, pengeluaran: 20000000, saldo: 9000000 },
-];
+// ================= TYPES =================
+type Income = {
+  id?: string;
+  date: Date;
+  category: 'spp' | 'registration' | 'activity' | 'uniform' | 'book' | 'other';
+  description: string;
+  amount: number;
+};
 
-const incomeByCategory = [
-  { name: 'SPP Bulanan', value: 70, amount: 20300000, color: '#a855f7' },
-  { name: 'Uang Pangkal', value: 15, amount: 4350000, color: '#8b5cf6' },
-  { name: 'Kegiatan', value: 10, amount: 2900000, color: '#6d28d9' },
-  { name: 'Lainnya', value: 5, amount: 1450000, color: '#4c1d95' },
-];
+type Expense = {
+  id?: string;
+  date: Date;
+  category: 'Utilitas'|'ATK'|'Maintenance'|'Gaji'|'Operasional'|'Transport'|'Konsumsi'|'Lain-lain';
+  description: string;
+  amount: number;
+};
 
-const expenseByCategory = [
-  { name: 'Gaji', value: 40, amount: 8000000, color: '#ef4444' },
-  { name: 'Utilitas', value: 25, amount: 5000000, color: '#f97316' },
-  { name: 'Maintenance', value: 20, amount: 4000000, color: '#eab308' },
-  { name: 'ATK', value: 10, amount: 2000000, color: '#84cc16' },
-  { name: 'Lainnya', value: 5, amount: 1000000, color: '#06b6d4' },
-];
+type MonthlySummary = {
+  month: string;
+  pemasukan: number;
+  pengeluaran: number;
+  saldo: number;
+};
 
+type CategoryBreakdown = {
+  name: string;
+  amount: number;
+  value: number;
+  color: string;
+};
+
+// ============== COMPONENT ================
 const FinancialReports = () => {
   const { showToast } = useToast();
-  const [selectedPeriod, setSelectedPeriod] = useState('6months');
-  const [reportType, setReportType] = useState('summary');
 
-  // Format currency
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
-      minimumFractionDigits: 0,
-    }).format(amount);
+  const [selectedPeriod, setSelectedPeriod] = useState<'6months' | '12months'>('6months');
+  const [reportType, setReportType] = useState<'summary' | 'detail'>('summary');
+  const [monthlyData, setMonthlyData] = useState<MonthlySummary[]>([]);
+  const [incomeByCategory, setIncomeByCategory] = useState<CategoryBreakdown[]>([]);
+  const [expenseByCategory, setExpenseByCategory] = useState<CategoryBreakdown[]>([]);
+  const [incomes, setIncomes] = useState<Income[]>([]);
+  const [expenses, setExpenses] = useState<Expense[]>([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const incomeSnap = await getDocs(collection(db, 'incomes'));
+        const incomesData: Income[] = incomeSnap.docs.map(doc => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            date: data.date?.toDate?.() || new Date(),
+            category: data.category,
+            description: data.description,
+            amount: data.amount,
+          };
+        });
+
+        const expenseSnap = await getDocs(collection(db, 'expenses'));
+        const expensesData: Expense[] = expenseSnap.docs.map(doc => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            date: data.date?.toDate?.() || new Date(),
+            category: data.category,
+            description: data.description,
+            amount: data.amount,
+          };
+        });
+
+        setIncomes(incomesData);
+        setExpenses(expensesData);
+        processReports(incomesData, expensesData);
+      } catch (error) {
+        console.error('Gagal memuat data:', error);
+        showToast('error', 'Gagal memuat data laporan');
+      }
+    };
+
+    fetchData();
+  }, []);
+
+
+
+  const processReports = (incomes: Income[], expenses: Expense[]) => {
+    const months = Array.from({ length: selectedPeriod === '6months' ? 6 : 12 })
+      .map((_, i) => dayjs().subtract(i, 'month').format('MMM')).reverse();
+
+    const monthMap: Record<string, MonthlySummary> = months.reduce((acc, month) => {
+      acc[month] = { month, pemasukan: 0, pengeluaran: 0, saldo: 0 };
+      return acc;
+    }, {} as Record<string, MonthlySummary>);
+
+    incomes.forEach(income => {
+      const month = dayjs(income.date).format('MMM');
+      if (monthMap[month]) monthMap[month].pemasukan += income.amount || 0;
+    });
+
+    expenses.forEach(exp => {
+      const month = dayjs(exp.date).format('MMM');
+      if (monthMap[month]) monthMap[month].pengeluaran += exp.amount || 0;
+    });
+
+    Object.values(monthMap).forEach(item => {
+      item.saldo = item.pemasukan - item.pengeluaran;
+    });
+
+    setMonthlyData(Object.values(monthMap));
+
+    const groupBy = (data: (Income | Expense)[], key: keyof Income | keyof Expense) => {
+      const grouped: Record<string, number> = {};
+      data.forEach(item => {
+        const cat = item[key] || 'Lainnya';
+        grouped[cat as string] = (grouped[cat as string] || 0) + (item.amount || 0);
+      });
+      return grouped;
+    };
+
+    const incomeCat = groupBy(incomes, 'category');
+    const incomeResult: CategoryBreakdown[] = Object.entries(incomeCat).map(([key, val]) => ({
+      name: key,
+      amount: val,
+      value: Math.round((val / incomes.reduce((s, i) => s + i.amount, 0)) * 100),
+      color: '#' + Math.floor(Math.random() * 16777215).toString(16),
+    }));
+
+    const expenseCat = groupBy(expenses, 'category');
+    const expenseResult: CategoryBreakdown[] = Object.entries(expenseCat).map(([key, val]) => ({
+      name: key,
+      amount: val,
+      value: Math.round((val / expenses.reduce((s, e) => s + e.amount, 0)) * 100),
+      color: '#' + Math.floor(Math.random() * 16777215).toString(16),
+    }));
+
+    setIncomeByCategory(incomeResult);
+    setExpenseByCategory(expenseResult);
   };
 
-  // Calculate totals
-  const totalIncome = monthlyData.reduce((sum, item) => sum + item.pemasukan, 0);
-  const totalExpense = monthlyData.reduce((sum, item) => sum + item.pengeluaran, 0);
-  const netProfit = totalIncome - totalExpense;
+  const exportToCSV = <T extends Record<string, unknown>>(data: T[], filename: string) => {
+    if (data.length === 0) return;
+
+    const csvContent = [
+      Object.keys(data[0]).join(','), // Header
+      ...data.map(item =>
+        Object.values(item)
+          .map(value => `"${String(value).replace(/"/g, '""')}"`)
+          .join(',')
+      ),
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    saveAs(blob, `${filename}.csv`);
+  };
+
 
   const handleExportReport = (type: string) => {
-    showToast('info', `Mengunduh laporan ${type}...`);
-    // Implement export functionality
+    showToast('info', `Mengunduh laporan ${type.toUpperCase()}...`);
+
+    if (type === 'csv') {
+      if (reportType === 'summary') {
+        exportToCSV(monthlyData, 'Ringkasan_Keuangan');
+      } else if (reportType === 'detail') {
+        exportToCSV([...incomes, ...expenses], 'Detail_Transaksi');
+      }
+    }
   };
 
   return (
     <div className="page-transition">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Laporan Keuangan</h1>
-        <p className="text-gray-600">Analisis dan laporan keuangan sekolah</p>
-      </div>
-
-      {/* Controls */}
-      <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div className="flex flex-col sm:flex-row gap-4">
-          {/* Period Filter */}
-          <div className="relative">
-            <Filter className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-            <select
-              value={selectedPeriod}
-              onChange={(e) => setSelectedPeriod(e.target.value)}
-              className="pl-10 input appearance-none"
-            >
-              <option value="3months">3 Bulan Terakhir</option>
-              <option value="6months">6 Bulan Terakhir</option>
-              <option value="1year">1 Tahun Terakhir</option>
-              <option value="custom">Periode Kustom</option>
-            </select>
-          </div>
-
-          {/* Report Type */}
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="text-xl font-semibold text-gray-800">Laporan Keuangan</h1>
+        <div className="flex gap-2">
           <select
-            value={reportType}
-            onChange={(e) => setReportType(e.target.value)}
+            value={selectedPeriod}
+            onChange={(e) =>
+              setSelectedPeriod(e.target.value as '6months' | '12months')
+            }
             className="input"
           >
-            <option value="summary">Ringkasan</option>
-            <option value="detailed">Detail</option>
-            <option value="comparison">Perbandingan</option>
+            <option value="6months">6 Bulan Terakhir</option>
+            <option value="12months">12 Bulan Terakhir</option>
           </select>
-        </div>
-
-        {/* Export Buttons */}
-        <div className="flex gap-2">
           <button
-            onClick={() => handleExportReport('PDF')}
-            className="btn btn-secondary flex items-center"
+            onClick={() => handleExportReport('csv')}
+            className="btn btn-primary flex items-center gap-2"
           >
-            <Download className="h-5 w-5 mr-2" />
-            Export PDF
-          </button>
-          <button
-            onClick={() => handleExportReport('Excel')}
-            className="btn btn-primary flex items-center"
-          >
-            <FileText className="h-5 w-5 mr-2" />
-            Export Excel
+            <FileText className="h-5 w-5" />
+            Export CSV
           </button>
         </div>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-        <div className="card p-6 bg-gradient-to-br from-primary-50 to-primary-100">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-sm font-medium text-primary-600">Total Pemasukan</p>
-              <p className="text-2xl font-bold text-primary-900 mt-1">
-                {formatCurrency(totalIncome)}
-              </p>
-            </div>
-            <div className="p-2 bg-primary-200 rounded-lg">
-              <TrendingUp className="h-6 w-6 text-primary-600" />
-            </div>
-          </div>
-          <div className="mt-4 flex items-center text-sm text-primary-600">
-            <Calendar className="h-4 w-4 mr-1" />
-            <span>6 Bulan Terakhir</span>
-          </div>
+      <div className="flex gap-2 items-center">
+        <label className="text-sm font-medium">Jenis Laporan:</label>
+        <select
+          value={reportType}
+          onChange={(e) => setReportType(e.target.value as 'summary' | 'detail')}
+          className="input"
+        >
+          <option value="summary">Ringkasan</option>
+          <option value="detail">Detail</option>
+        </select>
+      </div>
+
+      {/* CHARTS */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <div className="card p-4">
+          <h2 className="text-lg font-semibold mb-2">Pemasukan per Kategori</h2>
+          <ResponsiveContainer width="100%" height={250}>
+            <PieChart>
+              <Pie data={incomeByCategory} dataKey="value" nameKey="name" outerRadius={80}>
+                {incomeByCategory.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.color} />
+                ))}
+              </Pie>
+              <Tooltip />
+            </PieChart>
+          </ResponsiveContainer>
         </div>
 
-        <div className="card p-6 bg-gradient-to-br from-error-50 to-error-100">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-sm font-medium text-error-600">Total Pengeluaran</p>
-              <p className="text-2xl font-bold text-error-900 mt-1">
-                {formatCurrency(totalExpense)}
-              </p>
-            </div>
-            <div className="p-2 bg-error-200 rounded-lg">
-              <TrendingDown className="h-6 w-6 text-error-600" />
-            </div>
-          </div>
-          <div className="mt-4 flex items-center text-sm text-error-600">
-            <Calendar className="h-4 w-4 mr-1" />
-            <span>6 Bulan Terakhir</span>
-          </div>
-        </div>
-
-        <div className="card p-6 bg-gradient-to-br from-success-50 to-success-100">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-sm font-medium text-success-600">Laba Bersih</p>
-              <p className="text-2xl font-bold text-success-900 mt-1">
-                {formatCurrency(netProfit)}
-              </p>
-            </div>
-            <div className="p-2 bg-success-200 rounded-lg">
-              <DollarSign className="h-6 w-6 text-success-600" />
-            </div>
-          </div>
-          <div className="mt-4 flex items-center text-sm text-success-600">
-            <Calendar className="h-4 w-4 mr-1" />
-            <span>Margin: {((netProfit / totalIncome) * 100).toFixed(1)}%</span>
-          </div>
-        </div>
-
-        <div className="card p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-medium text-gray-900">Rata-rata Bulanan</h3>
-            <FileText className="h-5 w-5 text-gray-400" />
-          </div>
-          <div className="space-y-2">
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Pemasukan</span>
-              <span className="text-sm font-medium text-gray-900">
-                {formatCurrency(totalIncome / 6)}
-              </span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Pengeluaran</span>
-              <span className="text-sm font-medium text-gray-900">
-                {formatCurrency(totalExpense / 6)}
-              </span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Laba</span>
-              <span className="text-sm font-medium text-success-600">
-                {formatCurrency(netProfit / 6)}
-              </span>
-            </div>
-          </div>
+        <div className="card p-4">
+          <h2 className="text-lg font-semibold mb-2">Pengeluaran per Kategori</h2>
+          <ResponsiveContainer width="100%" height={250}>
+            <PieChart>
+              <Pie data={expenseByCategory} dataKey="value" nameKey="name" outerRadius={80}>
+                {expenseByCategory.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.color} />
+                ))}
+              </Pie>
+              <Tooltip />
+            </PieChart>
+          </ResponsiveContainer>
         </div>
       </div>
 
-      {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        {/* Monthly Trend */}
-        <div className="card p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Tren Keuangan Bulanan</h2>
-          <div className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={monthlyData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis />
-                <Tooltip 
-                  formatter={(value) => formatCurrency(value as number)} 
-                  labelFormatter={(label) => `Bulan: ${label}`}
-                />
-                <Legend />
-                <Line 
-                  type="monotone" 
-                  dataKey="pemasukan" 
-                  name="Pemasukan" 
-                  stroke="#a855f7" 
-                  strokeWidth={3}
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="pengeluaran" 
-                  name="Pengeluaran" 
-                  stroke="#ef4444" 
-                  strokeWidth={3}
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="saldo" 
-                  name="Saldo" 
-                  stroke="#22c55e" 
-                  strokeWidth={3}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* Monthly Comparison */}
-        <div className="card p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Perbandingan Bulanan</h2>
-          <div className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={monthlyData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis />
-                <Tooltip 
-                  formatter={(value) => formatCurrency(value as number)} 
-                  labelFormatter={(label) => `Bulan: ${label}`}
-                />
-                <Legend />
-                <Bar dataKey="pemasukan" name="Pemasukan" fill="#a855f7" />
-                <Bar dataKey="pengeluaran" name="Pengeluaran" fill="#ef4444" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-      </div>
-
-      {/* Category Breakdown */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        {/* Income by Category */}
-        <div className="card p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Pemasukan per Kategori</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={incomeByCategory}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={80}
-                    paddingAngle={5}
-                    dataKey="value"
-                  >
-                    {incomeByCategory.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip formatter={(value) => `${value}%`} />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-            <div className="space-y-3">
-              {incomeByCategory.map((item, index) => (
-                <div key={index} className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <div 
-                      className="w-3 h-3 rounded-full mr-2" 
-                      style={{ backgroundColor: item.color }}
-                    />
-                    <span className="text-sm text-gray-600">{item.name}</span>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-sm font-medium text-gray-900">
-                      {formatCurrency(item.amount)}
-                    </div>
-                    <div className="text-xs text-gray-500">{item.value}%</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Expense by Category */}
-        <div className="card p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Pengeluaran per Kategori</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={expenseByCategory}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={80}
-                    paddingAngle={5}
-                    dataKey="value"
-                  >
-                    {expenseByCategory.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip formatter={(value) => `${value}%`} />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-            <div className="space-y-3">
-              {expenseByCategory.map((item, index) => (
-                <div key={index} className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <div 
-                      className="w-3 h-3 rounded-full mr-2" 
-                      style={{ backgroundColor: item.color }}
-                    />
-                    <span className="text-sm text-gray-600">{item.name}</span>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-sm font-medium text-gray-900">
-                      {formatCurrency(item.amount)}
-                    </div>
-                    <div className="text-xs text-gray-500">{item.value}%</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Financial Summary Table */}
-      <div className="card">
-        <div className="p-6 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">Ringkasan Keuangan Bulanan</h2>
-        </div>
-        <div className="table-container">
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Bulan</th>
-                <th>Pemasukan</th>
-                <th>Pengeluaran</th>
-                <th>Laba/Rugi</th>
-                <th>Margin (%)</th>
-                <th>Saldo</th>
-              </tr>
-            </thead>
-            <tbody>
-              {monthlyData.map((item, index) => {
-                const profit = item.pemasukan - item.pengeluaran;
-                const margin = (profit / item.pemasukan) * 100;
-                return (
-                  <tr key={index}>
-                    <td className="font-medium text-gray-900">{item.month} 2025</td>
-                    <td className="font-medium text-success-600">
-                      {formatCurrency(item.pemasukan)}
-                    </td>
-                    <td className="font-medium text-error-600">
-                      {formatCurrency(item.pengeluaran)}
-                    </td>
-                    <td className={`font-medium ${profit >= 0 ? 'text-success-600' : 'text-error-600'}`}>
-                      {formatCurrency(profit)}
-                    </td>
-                    <td className={`font-medium ${margin >= 0 ? 'text-success-600' : 'text-error-600'}`}>
-                      {margin.toFixed(1)}%
-                    </td>
-                    <td className="font-medium text-gray-900">
-                      {formatCurrency(item.saldo)}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+      <div className="card p-4">
+        <h2 className="text-lg font-semibold mb-2">Ringkasan Bulanan</h2>
+        <ResponsiveContainer width="100%" height={300}>
+          <BarChart data={monthlyData}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="month" />
+            <YAxis />
+            <Tooltip />
+            <Legend />
+            <Bar dataKey="pemasukan" fill="#34d399" name="Pemasukan" />
+            <Bar dataKey="pengeluaran" fill="#f87171" name="Pengeluaran" />
+            <Bar dataKey="saldo" fill="#60a5fa" name="Saldo" />
+          </BarChart>
+        </ResponsiveContainer>
       </div>
     </div>
   );
