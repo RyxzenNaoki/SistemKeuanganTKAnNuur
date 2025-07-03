@@ -43,28 +43,28 @@ const NotificationManagement = () => {
       setLoading(false);
     }
   };
-  
+
   const loadNotifications = async () => {
-  try {
-    setLoading(true);
-    const notifSnap = await getDocs(collection(db, 'notifications'));
-    const notifs: Notification[] = notifSnap.docs.map(doc => {
-      const data = doc.data();
-      return {
-        id: doc.id,
-        title: data.title,
-        message: data.message,
-        createdAt: data.createdAt?.toDate?.() ?? new Date(), // parse ke Date
-      };
-    });
-    setNotifications(notifs.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()));
-  } catch (error) {
-    console.error('Failed to load notifications:', error);
-    showToast('error', 'Gagal memuat pemberitahuan');
-  } finally {
-    setLoading(false);
-  }
-};
+    try {
+      setLoading(true);
+      const notifSnap = await getDocs(collection(db, 'notifications'));
+      const notifs: Notification[] = notifSnap.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          title: data.title,
+          message: data.message,
+          createdAt: data.createdAt?.toDate?.() ?? new Date(), // parse ke Date
+        };
+      });
+      setNotifications(notifs.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()));
+    } catch (error) {
+      console.error('Failed to load notifications:', error);
+      showToast('error', 'Gagal memuat pemberitahuan');
+    } finally {
+      setLoading(false);
+    }
+  };
 
 
   const handleDelete = async (id?: string) => {
@@ -110,21 +110,23 @@ const NotificationManagement = () => {
       ) : (
         <div className="grid grid-cols-1 gap-4">
           {notifications.map((notif) => (
-            <div key={notif.id} className="card p-4">
+            <div key={notif.id} className="relative card p-4">
+              <button
+                onClick={() => handleDelete(notif.id!)}
+                className="absolute top-2 right-2 text-sm text-red-500 hover:underline"
+              >
+                Hapus
+              </button>
 
               <h3 className="text-lg font-semibold text-gray-800">{notif.title}</h3>
               <p className="text-gray-600 text-sm mb-1">{notif.message}</p>
-              <p className="text-xs text-gray-400">{notif.createdAt ? dayjs(notif.createdAt).format('DD MMM YYYY, HH:mm') : '-'}</p>
-              <button
-                onClick={() => handleDelete(notif.id)}
-                className="absolute top-2 right-2 text-sm text-red-500 hover:underline">
-                Hapus
-              </button>
+              <p className="text-xs text-gray-400">
+                {notif.createdAt ? dayjs(notif.createdAt).format('DD MMM YYYY, HH:mm') : '-'}
+              </p>
             </div>
-
           ))}
-
         </div>
+
       )}
 
       <NotificationModal
