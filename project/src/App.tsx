@@ -23,6 +23,7 @@ const PaymentSchedule = lazy(() => import('./pages/admin/payments/PaymentSchedul
 const IncomeManagement = lazy(() => import('./pages/admin/finance/IncomeManagement'));
 const ExpenseManagement = lazy(() => import('./pages/admin/finance/ExpenseManagement'));
 const FinancialReports = lazy(() => import('./pages/admin/finance/FinancialReports'));
+const NotificationManagement = lazy(() => import('./pages/admin/notifications/NotificationManagement'));
 
 // Parent Pages
 const ParentDashboard = lazy(() => import('./pages/parent/Dashboard'));
@@ -73,6 +74,7 @@ function App() {
           <Route path="income" element={<IncomeManagement />} />
           <Route path="expenses" element={<ExpenseManagement />} />
           <Route path="reports" element={<FinancialReports />} />
+          <Route path="notifications" element={<NotificationManagement />} />
         </Route>
 
         {/* Parent Routes */}

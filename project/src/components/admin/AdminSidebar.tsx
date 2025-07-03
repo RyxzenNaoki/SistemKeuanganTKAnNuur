@@ -138,6 +138,14 @@ const AdminSidebar = ({ isOpen, setIsOpen }: AdminSidebarProps) => {
               <Calendar className="h-5 w-5" />
               <span>Jadwal Pembayaran</span>
             </Link>
+
+             <Link
+              to="/admin/notifications"
+              className={`sidebar-menu-item ${isActive('/admin/notifications') ? 'active' : ''}`}
+            >
+              <Calendar className="h-5 w-5" />
+              <span>Pemberitahuan</span>
+            </Link>
           </nav>
         </div>
       </div>
