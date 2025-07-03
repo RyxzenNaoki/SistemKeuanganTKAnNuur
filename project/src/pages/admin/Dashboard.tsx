@@ -18,7 +18,7 @@ import { db } from '../../firebase/config';
 import { collection, getDocs } from 'firebase/firestore';
 import { useToast } from '../../contexts/ToastContext';
 import dayjs from 'dayjs';
-import { Loader2 } from 'lucide-react';
+import { Link, Loader2 } from 'lucide-react';
 
 type Income = {
   date: { toDate: () => Date };
@@ -35,9 +35,11 @@ type Student = {
   status: 'active' | 'alumni';
 };
 
-type Payment = {
-  status: string;
-};
+interface Notification {
+  title: string;
+  message: string;
+  createdAt: Date;
+}
 
 type ChartData = {
   month: string;
@@ -62,7 +64,7 @@ const AdminDashboard = () => {
 
   const [monthlyFinanceData, setMonthlyFinanceData] = useState<ChartData[]>([]);
   const [incomeSourceData, setIncomeSourceData] = useState<PieData[]>([]);
-  const [paymentStatusData, setPaymentStatusData] = useState<PieData[]>([]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -76,11 +78,21 @@ const AdminDashboard = () => {
         const studentSnap = await getDocs(collection(db, 'students'));
         const students = studentSnap.docs.map(doc => doc.data() as Student);
 
-        const paymentSnap = await getDocs(collection(db, 'payments'));
-        const payments = paymentSnap.docs.map(doc => doc.data() as Payment);
+        const notifSnap = await getDocs(collection(db, 'notifications'));
+        const notifs = notifSnap.docs.map(doc => {
+          const data = doc.data();
+          return {
+            title: data.title,
+            message: data.message,
+            createdAt: data.createdAt?.toDate?.() ?? new Date(),
+          } as Notification;
+        });
+        setNotifications(notifs);
 
         const totalIncome = incomes.reduce((sum, i) => sum + i.amount, 0);
         const totalExpense = expenses.reduce((sum, e) => sum + e.amount, 0);
+
+
 
         setCurrentBalance(totalIncome - totalExpense);
         setMonthlyIncome(
@@ -97,7 +109,6 @@ const AdminDashboard = () => {
 
         setMonthlyFinanceData(groupMonthlyData(incomes, expenses));
         setIncomeSourceData(countByCategory(incomes, 'category'));
-        setPaymentStatusData(countByCategory(payments, 'status'));
       } catch (error) {
         showToast('error', 'Gagal memuat data dashboard');
         console.error(error);
@@ -174,17 +185,19 @@ const AdminDashboard = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
         <div className="card p-4">
-          <h2 className="text-lg font-semibold mb-2">Status Pembayaran</h2>
-          <ResponsiveContainer width="100%" height={250}>
-            <PieChart>
-              <Pie data={paymentStatusData} dataKey="value" nameKey="name" outerRadius={80}>
-                {paymentStatusData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
-                ))}
-              </Pie>
-              <Tooltip />
-            </PieChart>
-          </ResponsiveContainer>
+          <div className="flex justify-between items-center mb-2">
+            <h2 className="text-lg font-semibold">Pemberitahuan</h2>
+            <Link to="/admin/notifications" className="text-sm text-primary-600 hover:underline">Lihat Semua</Link>
+          </div>
+          <ul className="text-sm text-gray-700 space-y-2 max-h-[230px] overflow-y-auto">
+            {notifications.slice(0, 5).map((notif, idx) => (
+              <li key={idx} className="border-b pb-2">
+                <p className="font-medium">{notif.title}</p>
+                <p className="text-xs text-gray-500">{notif.message}</p>
+              </li>
+            ))}
+            {notifications.length === 0 && <p className="text-gray-500">Belum ada pemberitahuan</p>}
+          </ul>
         </div>
 
         <div className="card p-4">
