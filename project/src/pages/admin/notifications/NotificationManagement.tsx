@@ -29,10 +29,9 @@ const NotificationManagement = () => {
           id: doc.id,
           title: data.title,
           message: data.message,
-          createdAt: data.createdAt?.toDate?.() || new Date(),
+          createdAt: data.createdAt?.toDate?.() ?? new Date(), // auto parse
         };
-      }).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
-
+      });
       setNotifications(notifs);
     } catch (error) {
       console.error('Failed to load notifications:', error);
