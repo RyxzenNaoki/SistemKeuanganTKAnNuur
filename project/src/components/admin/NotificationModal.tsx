@@ -37,10 +37,11 @@ const NotificationModal = ({ isOpen, onClose, onAdded }: NotificationFormProps) 
     }
   };
 
+   if (!isOpen) return null;
+
   return (
-    <div className={`modal ${isOpen ? 'is-active' : ''}`}>
-    <div className="modal-overlay">
-      <div className="modal">
+    <div className="modal-overlay fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+      <div className="modal bg-white p-6 rounded shadow-md w-full max-w-md">
         <h2 className="text-lg font-semibold mb-4">Tambah Pemberitahuan</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -73,7 +74,6 @@ const NotificationModal = ({ isOpen, onClose, onAdded }: NotificationFormProps) 
           </div>
         </form>
       </div>
-    </div>
     </div>
 );
 };

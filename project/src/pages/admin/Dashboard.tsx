@@ -189,15 +189,33 @@ const AdminDashboard = () => {
             <h2 className="text-lg font-semibold">Pemberitahuan</h2>
             <Link to="/admin/notifications" className="text-sm text-primary-600 hover:underline">Lihat Semua</Link>
           </div>
-          <ul className="text-sm text-gray-700 space-y-2 max-h-[230px] overflow-y-auto">
-            {notifications.slice(0, 5).map((notif, idx) => (
-              <li key={idx} className="border-b pb-2">
-                <p className="font-medium">{notif.title}</p>
-                <p className="text-xs text-gray-500">{notif.message}</p>
-              </li>
-            ))}
-            {notifications.length === 0 && <p className="text-gray-500">Belum ada pemberitahuan</p>}
+          <ul className="space-y-2 max-h-[230px] overflow-y-auto">
+            {notifications.slice(0, 5).map((notif, idx) => {
+              const colors = [
+                'bg-red-100 text-red-800',
+                'bg-green-100 text-green-800',
+                'bg-blue-100 text-blue-800',
+                'bg-yellow-100 text-yellow-800',
+                'bg-purple-100 text-purple-800',
+              ];
+              const colorClass = colors[idx % colors.length];
+
+              return (
+                <li
+                  key={idx}
+                  className={`rounded-lg p-3 ${colorClass}`}
+                >
+                  <p className="font-semibold">{notif.title}</p>
+                  <p className="text-sm">{notif.message}</p>
+                </li>
+              );
+            })}
+
+            {notifications.length === 0 && (
+              <p className="text-gray-500">Belum ada pemberitahuan</p>
+            )}
           </ul>
+
         </div>
 
         <div className="card p-4">
