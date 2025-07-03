@@ -23,10 +23,16 @@ const NotificationManagement = () => {
     try {
       setLoading(true);
       const notifSnap = await getDocs(collection(db, 'notifications'));
-      const notifs: Notification[] = notifSnap.docs.map(doc => ({
-        id: doc.id,
-        ...(doc.data() as Notification),
-      })).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+      const notifs: Notification[] = notifSnap.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          title: data.title,
+          message: data.message,
+          createdAt: data.createdAt?.toDate?.() || new Date(),
+        };
+      }).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+
       setNotifications(notifs);
     } catch (error) {
       console.error('Failed to load notifications:', error);
@@ -53,16 +59,16 @@ const NotificationManagement = () => {
   };
 
   const handleDelete = async (id?: string) => {
-  if (!id) return showToast('error', 'ID notifikasi tidak valid');
-  try {
-    await deleteDoc(doc(db, 'notifications', id));
-    showToast('success', 'Pemberitahuan berhasil dihapus');
-    fetchNotifications();
-  } catch (error) {
-    console.error('Gagal menghapus :', error);
-    showToast('error', 'Gagal menghapus notifikasi');
-  }
-};
+    if (!id) return showToast('error', 'ID notifikasi tidak valid');
+    try {
+      await deleteDoc(doc(db, 'notifications', id));
+      showToast('success', 'Pemberitahuan berhasil dihapus');
+      fetchNotifications();
+    } catch (error) {
+      console.error('Gagal menghapus :', error);
+      showToast('error', 'Gagal menghapus notifikasi');
+    }
+  };
 
 
 
@@ -96,14 +102,13 @@ const NotificationManagement = () => {
         <div className="grid grid-cols-1 gap-4">
           {notifications.map((notif) => (
             <div key={notif.id} className="card p-4">
-             
+
               <h3 className="text-lg font-semibold text-gray-800">{notif.title}</h3>
               <p className="text-gray-600 text-sm mb-1">{notif.message}</p>
               <p className="text-xs text-gray-400">{dayjs(notif.createdAt).format('DD MMM YYYY, HH:mm')}</p>
-               <button
+              <button
                 onClick={() => handleDelete(notif.id)}
-                className="absolute top-2 right-2 text-sm text-red-500 hover:underline"
-              >
+                className="absolute top-2 right-2 text-sm text-red-500 hover:underline">
                 Hapus
               </button>
             </div>
