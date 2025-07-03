@@ -96,15 +96,16 @@ const NotificationManagement = () => {
         <div className="grid grid-cols-1 gap-4">
           {notifications.map((notif) => (
             <div key={notif.id} className="card p-4">
-              <button
+             
+              <h3 className="text-lg font-semibold text-gray-800">{notif.title}</h3>
+              <p className="text-gray-600 text-sm mb-1">{notif.message}</p>
+              <p className="text-xs text-gray-400">{dayjs(notif.createdAt).format('DD MMM YYYY, HH:mm')}</p>
+               <button
                 onClick={() => handleDelete(notif.id)}
                 className="absolute top-2 right-2 text-sm text-red-500 hover:underline"
               >
                 Hapus
               </button>
-              <h3 className="text-lg font-semibold text-gray-800">{notif.title}</h3>
-              <p className="text-gray-600 text-sm mb-1">{notif.message}</p>
-              <p className="text-xs text-gray-400">{dayjs(notif.createdAt).format('DD MMM YYYY, HH:mm')}</p>
             </div>
 
           ))}
