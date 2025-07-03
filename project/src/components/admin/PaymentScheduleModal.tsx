@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { X, Save, Loader2 } from 'lucide-react';
 
+
 interface PaymentSchedule {
   id?: string;
   type: string;
@@ -45,9 +46,9 @@ const PaymentScheduleModal = ({ isOpen, onClose, onSave, scheduleData, loading =
   ];
 
   const classes = [
-    'TK A - Melati',
-    'TK B - Mawar',
-    'TK B - Anggrek',
+    'TK A',
+    'TK B',
+    'Daycare',
   ];
 
   useEffect(() => {

@@ -17,7 +17,7 @@ interface UserData {
   id: string;
   name: string;
   email: string;
-  role: 'admin' | 'bendahara' | 'guru' | 'parent';
+  role: 'admin' | 'parent';
 }
 
 const UserManagement = () => {
@@ -57,10 +57,6 @@ const loadUsers = async () => {
     switch (role) {
       case 'admin':
         return 'bg-error-100 text-error-800';
-      case 'bendahara':
-        return 'bg-warning-100 text-warning-800';
-      case 'guru':
-        return 'bg-success-100 text-success-800';
       case 'parent':
         return 'bg-primary-100 text-primary-800';
       default:
@@ -166,19 +162,7 @@ const loadUsers = async () => {
           </div>
         </div>
 
-        <div className="card p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-500">Guru</p>
-              <p className="text-2xl font-bold text-success-600">
-                {users.filter(u => u.role === 'guru').length}
-              </p>
-            </div>
-            <div className="p-2 bg-success-100 rounded-lg">
-              <User className="h-6 w-6 text-success-600" />
-            </div>
-          </div>
-        </div>
+      
 
         <div className="card p-4">
           <div className="flex items-center justify-between">

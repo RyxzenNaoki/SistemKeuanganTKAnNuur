@@ -5,7 +5,7 @@ interface User {
     id?: string;
     name: string;
     email: string;
-    role: 'admin' | 'bendahara' | 'guru' | 'parent';
+    role: 'admin' | 'parent';
     password?: string;
     createdAt?: Date;
     updatedAt?: Date;
@@ -23,7 +23,7 @@ const UserModal = ({ isOpen, onClose, onSave, userData, loading = false }: UserM
     const [formData, setFormData] = useState({
         name: '',
         email: '',
-        role: 'parent' as 'admin' | 'bendahara' | 'guru' | 'parent',
+        role: 'parent' as 'admin'| 'parent',
         password: '',
         confirmPassword: '',
     });
@@ -134,8 +134,6 @@ const UserModal = ({ isOpen, onClose, onSave, userData, loading = false }: UserM
     const getRoleLabel = (role: string) => {
         const roles = {
             admin: 'Administrator',
-            bendahara: 'Bendahara',
-            guru: 'Guru',
             parent: 'Orang Tua',
         };
         return roles[role as keyof typeof roles] || role;
@@ -208,8 +206,6 @@ const UserModal = ({ isOpen, onClose, onSave, userData, loading = false }: UserM
                                         className="input"
                                     >
                                         <option value="parent">Orang Tua</option>
-                                        <option value="guru">Guru</option>
-                                        <option value="bendahara">Bendahara</option>
                                         <option value="admin">Administrator</option>
                                     </select>
                                 </div>
@@ -261,8 +257,6 @@ const UserModal = ({ isOpen, onClose, onSave, userData, loading = false }: UserM
                                 </h5>
                                 <p className="text-xs text-gray-600">
                                     {formData.role === 'admin' && 'Akses penuh ke semua fitur sistem'}
-                                    {formData.role === 'bendahara' && 'Akses ke manajemen keuangan dan laporan'}
-                                    {formData.role === 'guru' && 'Akses ke data siswa dan kelas'}
                                     {formData.role === 'parent' && 'Akses ke portal orang tua dan pembayaran'}
                                 </p>
                             </div>

@@ -162,9 +162,9 @@ const StudentModal = ({ isOpen, onClose, onSave, student, loading = false }: Stu
                     className={`input ${errors.class ? 'border-error-500' : ''}`}
                   >
                     <option value="">Pilih Kelas</option>
-                    <option value="TK A - Melati">TK A - Melati</option>
-                    <option value="TK B - Mawar">TK B - Mawar</option>
-                    <option value="TK B - Anggrek">TK B - Anggrek</option>
+                    <option value="TK A">TK A</option>
+                    <option value="TK B">TK B</option>
+                    <option value="Daycare">Daycare</option>
                   </select>
                   {errors.class && <p className="text-error-600 text-xs mt-1">{errors.class}</p>}
                 </div>
