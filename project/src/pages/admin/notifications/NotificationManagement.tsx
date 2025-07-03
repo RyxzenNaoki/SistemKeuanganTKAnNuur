@@ -32,7 +32,10 @@ const NotificationManagement = () => {
           createdAt: data.createdAt?.toDate?.() ?? new Date(), // auto parse
         };
       });
-      setNotifications(notifs);
+      setNotifications(
+        notifs.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+      );
+
     } catch (error) {
       console.error('Failed to load notifications:', error);
       showToast('error', 'Gagal memuat pemberitahuan');
