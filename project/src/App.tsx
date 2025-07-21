@@ -27,9 +27,7 @@ const NotificationManagement = lazy(() => import('./pages/admin/notifications/No
 
 // Parent Pages
 const ParentDashboard = lazy(() => import('./pages/parent/Dashboard'));
-const PaymentHistory = lazy(() => import('./pages/parent/PaymentHistory'));
-const MakePayment = lazy(() => import('./pages/parent/MakePayment'));
-const UploadPaymentProof = lazy(() => import('./pages/parent/UploadPaymentProof'));
+const Payment = lazy(() => import('./pages/parent/Payment'));
 const ContactAdmin = lazy(() => import('./pages/parent/ContactAdmin'));
 
 function App() {
@@ -89,9 +87,7 @@ function App() {
           }
         >
           <Route index element={<ParentDashboard />} />
-          <Route path="history" element={<PaymentHistory />} />
-          <Route path="make-payment" element={<MakePayment />} />
-          <Route path="upload" element={<UploadPaymentProof />} />
+          <Route path="payment" element={<Payment/>} />
           <Route path="contact" element={<ContactAdmin />} />
         </Route>
 
