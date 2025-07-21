@@ -82,8 +82,19 @@ const Payment = () => {
           <ul className="text-sm text-gray-700 space-y-1">
             <li><strong>Bank:</strong> BNI</li>
             <li><strong>Atas Nama:</strong> TK An Nuur Rumah Cahaya</li>
-            <li><strong>No. Rekening:</strong> 1234567890</li>
+            <li><strong>No. Rekening:</strong> 0795834521</li>
             <li><strong>Catatan:</strong> Sertakan nama siswa dan jenis pembayaran saat transfer.</li>
+          </ul>
+        </div>
+
+        {/* Info Pembayaran */}
+        <div className="card p-4">
+          <h2 className="text-lg font-semibold mb-2">Keterangan</h2>
+          <ul className="text-sm text-gray-700 space-y-1">
+            <li>1. Uang sarana prasarana (Gedung) bisa diangsur selama <strong>3 Bulan</strong></li>
+            <li>2. Perincian Biaya SPP bulanan sebesar Rp 250.000 per bulan terdiri dari SPP dan makan sehat 1x perbulan = Rp 210.000, dan tabungan untuk pelaksanaan pentas seni tahunan = Rp 40.000 perbulan.</li>
+            <li>3. Hari Efektif pembelajaran<strong>5 Hari</strong> dalam seminggu, Senin sampai Jumat.</li>
+            <li>4. Diskon Rp 150.000 uang Gedung untuk calon peserta didik baru saudara kandung alumni TK An Nuur Rumah Cahaya</li>
           </ul>
         </div>
       </div>
