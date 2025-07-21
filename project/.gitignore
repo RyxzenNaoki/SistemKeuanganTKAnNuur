@@ -11,6 +11,7 @@ node_modules
 dist
 dist-ssr
 *.local
+sistemkeuangan-3daf772512a0.json
 
 # Editor directories and files
 .vscode/*

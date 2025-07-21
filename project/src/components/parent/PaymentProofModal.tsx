@@ -1,13 +1,16 @@
 import { useState, useRef } from 'react';
 import { X, Upload, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import { useToast } from '../../contexts/ToastContext';
+import { addDoc, collection } from 'firebase/firestore';
+import { db } from '../../firebase/config';
 
 interface PaymentProofModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: PaymentProofData) => Promise<void>;
   loading?: boolean;
+  payment: PaymentHistoryItem;
 }
+
 
 interface PaymentProofData {
   paymentType: string;
@@ -19,9 +22,20 @@ interface PaymentProofData {
   proofFile: File | null;
 }
 
-const PaymentProofModal = ({ isOpen, onClose, onSubmit, loading = false }: PaymentProofModalProps) => {
+interface PaymentHistoryItem {
+  id: string;
+  amount: number;
+  category: string;
+  date: Date;
+  status: string;
+  notes?: string;
+  receiptUrl?: string;
+}
+
+const PaymentProofModal = ({ isOpen, onClose, loading = false }: PaymentProofModalProps) => {
   const { showToast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
   
   const [formData, setFormData] = useState<PaymentProofData>({
     paymentType: 'SPP Bulanan',
@@ -65,20 +79,52 @@ const PaymentProofModal = ({ isOpen, onClose, onSubmit, loading = false }: Payme
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!validateForm()) return;
+  e.preventDefault();
 
-    try {
-      await onSubmit(formData);
-      showToast('success', 'Bukti pembayaran berhasil diupload!');
-      handleReset();
-      onClose();
-    } catch (error) {
-      console.error('Error submitting payment proof:', error);
-      showToast('error', 'Gagal mengupload bukti pembayaran');
+  if (!validateForm()) return;
+
+  if (!formData.proofFile) {
+    alert('Mohon upload bukti pembayaran');
+    return;
+  }
+
+  try {
+    const uploadForm = new FormData();
+    uploadForm.append('file', formData.proofFile);
+
+    const uploadRes = await fetch('/api/upload', {
+      method: 'POST',
+      body: uploadForm,
+    });
+
+    if (!uploadRes.ok) {
+      throw new Error('Upload ke Google Drive gagal');
     }
-  };
+
+    const uploadData = await uploadRes.json();
+    const driveUrl = uploadData.url;
+
+    await addDoc(collection(db, 'payment_proofs'), {
+      paymentType: formData.paymentType,
+      amount: formData.amount,
+      paymentDate: formData.paymentDate,
+      bankAccount: formData.bankAccount,
+      referenceNumber: formData.referenceNumber,
+      notes: formData.notes || '',
+      fileUrl: driveUrl,
+      uploadedAt: new Date(),
+      status: 'waiting',
+    });
+    
+    alert('Bukti pembayaran berhasil diupload!');
+    handleReset();
+    onClose();
+  } catch (err) {
+    console.error(err);
+    alert('Terjadi kesalahan saat mengupload.');
+  }
+};
+
 
   const handleReset = () => {
     setFormData({
