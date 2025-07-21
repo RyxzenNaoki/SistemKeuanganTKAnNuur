@@ -1,9 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import { 
   X, 
-  Home, 
-  Calendar, 
-  CreditCard, 
+  Home,  
   Upload, 
   MessageSquare,
   GraduationCap
@@ -66,28 +64,10 @@ const ParentSidebar = ({ isOpen, setIsOpen }: ParentSidebarProps) => {
               <span>Beranda</span>
             </Link>
 
-            {/* Payment History */}
+            {/* Payment Page */}
             <Link
-              to="/parent/history"
-              className={`sidebar-menu-item ${isActive('/parent/history') ? 'active' : ''}`}
-            >
-              <Calendar className="h-5 w-5" />
-              <span>Riwayat Pembayaran</span>
-            </Link>
-
-            {/* Make Payment */}
-            <Link
-              to="/parent/make-payment"
-              className={`sidebar-menu-item ${isActive('/parent/make-payment') ? 'active' : ''}`}
-            >
-              <CreditCard className="h-5 w-5" />
-              <span>Pembayaran</span>
-            </Link>
-
-            {/* Upload Payment Proof */}
-            <Link
-              to="/parent/upload"
-              className={`sidebar-menu-item ${isActive('/parent/upload') ? 'active' : ''}`}
+              to="/parent/payment"
+              className={`sidebar-menu-item ${isActive('/parent/payment') ? 'active' : ''}`}
             >
               <Upload className="h-5 w-5" />
               <span>Upload Bukti Pembayaran</span>
