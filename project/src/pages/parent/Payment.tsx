@@ -98,9 +98,9 @@ const Payment = () => {
             <h2 className="text-lg font-semibold mb-2">Keterangan</h2>
             <ul className="text-sm text-gray-700 space-y-1">
               <li>1. Uang sarana prasarana (Gedung) bisa diangsur selama <strong>3 Bulan</strong></li>
-              <li>2. SPP bulanan sebesar Rp 250.000 (terdiri dari SPP, makan sehat, tabungan seni)</li>
+              <li>2. SPP bulanan sebesar Rp 250.000 (terdiri dari SPP, makan sehat, tabungan pentas seni)</li>
               <li>3. Hari efektif: <strong>Senin s.d. Jumat</strong></li>
-              <li>4. Diskon Rp 150.000 untuk saudara kandung alumni</li>
+              <li>4. Diskon Rp 150.000 Uang Gedung untuk saudara kandung alumni</li>
             </ul>
           </div>
         </div>
