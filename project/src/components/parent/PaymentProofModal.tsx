@@ -8,7 +8,7 @@ interface PaymentProofModalProps {
   isOpen: boolean;
   onClose: () => void;
   loading?: boolean;
-  payment: PaymentHistoryItem;
+  payment? : PaymentHistoryItem;
 }
 
 
