@@ -1,8 +1,9 @@
-// upload.js
+import multer from 'multer';
 import { google } from 'googleapis';
-import { IncomingForm } from 'formidable';
-import fs from 'fs';
-import path from 'path';
+import stream from 'stream';
+
+const storage = multer.memoryStorage();
+const upload = multer({ storage });
 
 export const config = {
   api: {
@@ -10,68 +11,59 @@ export const config = {
   },
 };
 
-const serviceAccountBase64 = process.env.GOOGLE_SERVICE_KEY_BASE64;
-if (!serviceAccountBase64) throw new Error('Missing GOOGLE_SERVICE_KEY_BASE64');
-
-const serviceAccountJSON = JSON.parse(
-  Buffer.from(serviceAccountBase64, 'base64').toString('utf-8')
-);
-
-const auth = new google.auth.GoogleAuth({
-  credentials: serviceAccountJSON,
-  scopes: ['https://www.googleapis.com/auth/drive.file'],
-});
-
-const drive = google.drive({ version: 'v3', auth });
-
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+    return res.status(405).send({ message: 'Method Not Allowed' });
   }
 
-  const form = new IncomingForm();
-
-  form.parse(req, async (err, fields, files) => {
-    if (err || !files.file) {
-      return res.status(400).json({ error: 'File not found in request' });
+  upload.single('file')(req, res, async function (err) {
+    if (err) {
+      console.error('Upload Error:', err);
+      return res.status(500).send({ message: 'Upload gagal' });
     }
 
-    const file = files.file[0];
+    const { originalname, buffer, mimetype } = req.file;
 
     try {
-      const fileMeta = {
-        name: file.originalFilename,
-        parents: [process.env.GDRIVE_FOLDER_ID],
+      const oauth2Client = new google.auth.OAuth2(
+        process.env.GOOGLE_CLIENT_ID,
+        process.env.GOOGLE_CLIENT_SECRET,
+        process.env.GOOGLE_REDIRECT_URI
+      );
+
+      oauth2Client.setCredentials({
+        refresh_token: process.env.GOOGLE_REFRESH_TOKEN,
+      });
+
+      const drive = google.drive({ version: 'v3', auth: oauth2Client });
+
+      const bufferStream = new stream.PassThrough();
+      bufferStream.end(buffer);
+
+      const fileMetadata = {
+        name: originalname,
+        parents: [process.env.GOOGLE_FOLDER_ID], // optional, for specific folder
       };
 
       const media = {
-        mimeType: file.mimetype,
-        body: fs.createReadStream(file.filepath),
+        mimeType: mimetype,
+        body: bufferStream,
       };
 
-      const driveRes = await drive.files.create({
-        requestBody: fileMeta,
-        media,
-        fields: 'id',
+      const response = await drive.files.create({
+        requestBody: fileMetadata,
+        media: media,
+        fields: 'id, name',
       });
 
-      const fileId = driveRes.data.id;
-
-      // Make the file public
-      await drive.permissions.create({
-        fileId,
-        requestBody: {
-          role: 'reader',
-          type: 'anyone',
-        },
+      return res.status(200).json({
+        message: 'Upload berhasil',
+        fileId: response.data.id,
+        fileName: response.data.name,
       });
-
-      const publicUrl = `https://drive.google.com/uc?id=${fileId}`;
-
-      res.status(200).json({ success: true, link: publicUrl });
     } catch (error) {
       console.error('Upload error:', error);
-      res.status(500).json({ error: 'Upload failed' });
+      return res.status(500).json({ message: 'Upload ke Google Drive gagal' });
     }
   });
 }
