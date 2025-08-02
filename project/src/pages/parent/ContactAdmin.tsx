@@ -20,7 +20,7 @@ const ContactAdmin: React.FC = () => {
               <Phone className="text-blue-600 mt-1" />
               <div>
                 <p className="text-lg font-medium text-gray-900">Telepon</p>
-                <p className="text-gray-700">+62 21 1234 5678</p>
+                <p className="text-gray-700">+62 8123 3466 497</p>
               </div>
             </div>
 
@@ -28,7 +28,8 @@ const ContactAdmin: React.FC = () => {
               <Mail className="text-blue-600 mt-1" />
               <div>
                 <p className="text-lg font-medium text-gray-900">Email</p>
-                <p className="text-gray-700">admin@tkceria.com</p>
+                <p className="text-gray-700">rumahcahaya777@gmail.com</p>
+                <p className="text-gray-700">rumahcahaya705@gmail.com</p>
               </div>
             </div>
 
@@ -37,8 +38,8 @@ const ContactAdmin: React.FC = () => {
               <div>
                 <p className="text-lg font-medium text-gray-900">Alamat</p>
                 <p className="text-gray-700 leading-relaxed">
-                  Jl. Pendidikan No. 123<br />
-                  Jakarta Selatan, 12345
+                  Perum. Taman Raden Intan KAV. 705<br />
+                  Malang, Jawa Timur, 65126
                 </p>
               </div>
             </div>
@@ -52,15 +53,11 @@ const ContactAdmin: React.FC = () => {
             <div className="space-y-3 text-sm text-gray-700">
               <div className="flex justify-between">
                 <span>Senin - Jumat</span>
-                <span>08:00 - 16:00</span>
+                <span>07:00 - 16:00</span>
               </div>
               <div className="flex justify-between">
-                <span>Sabtu</span>
-                <span>08:00 - 12:00</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Minggu</span>
-                <span className="text-gray-500 italic">Tutup</span>
+                <span>Sabtu -  Minggu</span>
+                <span>Tutup</span>
               </div>
             </div>
           </div>
