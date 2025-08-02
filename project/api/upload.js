@@ -10,8 +10,15 @@ export const config = {
   },
 };
 
+const serviceAccountBase64 = process.env.GOOGLE_SERVICE_KEY_BASE64;
+if (!serviceAccountBase64) throw new Error('Missing GOOGLE_SERVICE_KEY_BASE64');
+
+const serviceAccountJSON = JSON.parse(
+  Buffer.from(serviceAccountBase64, 'base64').toString('utf-8')
+);
+
 const auth = new google.auth.GoogleAuth({
-  credentials: JSON.parse(process.env.GDRIVE_SERVICE_ACCOUNT_KEY || '{}'),
+  credentials: serviceAccountJSON,
   scopes: ['https://www.googleapis.com/auth/drive.file'],
 });
 
