@@ -27,7 +27,6 @@ interface PaymentHistoryItem {
   amount: number;
   category: string;
   date: Date;
-  status: string;
   notes?: string;
   receiptUrl?: string;
 }
@@ -116,7 +115,6 @@ const PaymentProofModal = ({ isOpen, onClose, loading = false }: PaymentProofMod
         notes: formData.notes || '',
         fileId: uploadData.fileId, // <- hanya fileId
         uploadedAt: new Date(),
-        status: 'waiting',
       });
 
 
@@ -402,7 +400,7 @@ const PaymentProofModal = ({ isOpen, onClose, loading = false }: PaymentProofMod
                   onChange={handleInputChange}
                   rows={3}
                   className="input"
-                  placeholder="Catatan tambahan (opsional)"
+                  placeholder="Keterangan Bukti Transfer"
                 />
               </div>
 
@@ -415,8 +413,7 @@ const PaymentProofModal = ({ isOpen, onClose, loading = false }: PaymentProofMod
                     <ul className="mt-2 text-sm text-blue-800 space-y-1">
                       <li>• Pastikan bukti pembayaran jelas dan dapat dibaca</li>
                       <li>• Sertakan detail transaksi seperti tanggal, jumlah, dan nomor referensi</li>
-                      <li>• Verifikasi akan dilakukan dalam 1-2 hari kerja</li>
-                      <li>• Anda akan mendapat notifikasi setelah verifikasi selesai</li>
+                      <li>• Verifikasi Upload Pembayaran ke Admin / Bendahara</li>
                     </ul>
                   </div>
                 </div>

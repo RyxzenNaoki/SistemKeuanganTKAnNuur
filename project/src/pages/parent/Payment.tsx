@@ -10,7 +10,6 @@ interface PaymentHistoryItem {
   amount: number;
   category: string;
   date: Date;
-  status: string;
   notes?: string;
   receiptUrl?: string;
 }
@@ -26,7 +25,7 @@ const Payment = () => {
     const fetchData = async () => {
       if (!currentUser) return;
       try {
-        const q = query(collection(db, 'incomes'), where('student', '==', currentUser.uid));
+        const q = query(collection(db, 'payment_proofs'), where('student', '==', currentUser.uid));
         const snapshot = await getDocs(q);
         const data = snapshot.docs.map(doc => ({
           id: doc.id,
@@ -67,17 +66,7 @@ const Payment = () => {
                 <h2 className="font-semibold text-lg text-gray-800">{payment.category}</h2>
                 <p className="text-sm text-gray-600">Rp {payment.amount.toLocaleString()}</p>
                 <p className="text-sm text-gray-500">{dayjs(payment.date).format('DD MMM YYYY')}</p>
-                <p className="text-sm text-gray-500">Status: {payment.status}</p>
                 {payment.notes && <p className="text-sm text-gray-400 italic">Catatan: {payment.notes}</p>}
-                <button
-                  className="absolute top-2 right-2 text-primary-600 text-sm hover:underline"
-                  onClick={() => {
-                    setSelectedPayment(payment);
-                    setShowModal(true);
-                  }}
-                >
-                  Upload Bukti
-                </button>
               </div>
             ))
           )}
