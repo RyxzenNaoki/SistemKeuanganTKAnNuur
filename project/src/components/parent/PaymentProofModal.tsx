@@ -3,6 +3,7 @@ import { X, Upload, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import { useToast } from '../../contexts/ToastContext';
 import { addDoc, collection } from 'firebase/firestore';
 import { db } from '../../firebase/config';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface PaymentProofModalProps {
   isOpen: boolean;
@@ -34,7 +35,11 @@ interface PaymentHistoryItem {
 const PaymentProofModal = ({ isOpen, onClose, loading = false }: PaymentProofModalProps) => {
   const { showToast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
-
+  const { currentUser } = useAuth();
+  if (!currentUser) {
+    console.error("User belum login");
+    return;
+  }
 
   const [formData, setFormData] = useState<PaymentProofData>({
     paymentType: 'SPP Bulanan',
@@ -107,6 +112,7 @@ const PaymentProofModal = ({ isOpen, onClose, loading = false }: PaymentProofMod
       console.log('uploadData:', uploadData);
 
       await addDoc(collection(db, 'payment_proofs'), {
+        student: currentUser.uid,
         paymentType: formData.paymentType,
         amount: formData.amount,
         paymentDate: formData.paymentDate,
