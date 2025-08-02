@@ -8,7 +8,7 @@ interface PaymentProofModalProps {
   isOpen: boolean;
   onClose: () => void;
   loading?: boolean;
-  payment? : PaymentHistoryItem;
+  payment?: PaymentHistoryItem;
 }
 
 
@@ -35,8 +35,8 @@ interface PaymentHistoryItem {
 const PaymentProofModal = ({ isOpen, onClose, loading = false }: PaymentProofModalProps) => {
   const { showToast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
-  
+
+
   const [formData, setFormData] = useState<PaymentProofData>({
     paymentType: 'SPP Bulanan',
     amount: 0,
@@ -79,53 +79,54 @@ const PaymentProofModal = ({ isOpen, onClose, loading = false }: PaymentProofMod
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  if (!validateForm()) return;
+    if (!validateForm()) return;
 
-  if (!formData.proofFile) {
-    alert('Mohon upload bukti pembayaran');
-    return;
-  }
-
-  try {
-    const uploadForm = new FormData();
-    uploadForm.append('file', formData.proofFile);
-
-    const uploadRes = await fetch('/api/upload', {
-      method: 'POST',
-      body: uploadForm,
-    });
-
-    if (!uploadRes.ok) {
-      throw new Error('Upload ke Google Drive gagal');
+    if (!formData.proofFile) {
+      alert('Mohon upload bukti pembayaran');
+      return;
     }
 
-    const uploadData = await uploadRes.json();
-    const driveUrl = uploadData.url;
+    try {
+      const uploadForm = new FormData();
+      uploadForm.append('file', formData.proofFile);
 
-    console.log("fileUrl to be saved:", driveUrl);
+      const uploadRes = await fetch('/api/upload', {
+        method: 'POST',
+        body: uploadForm,
+      });
 
-    await addDoc(collection(db, 'payment_proofs'), {
-      paymentType: formData.paymentType,
-      amount: formData.amount,
-      paymentDate: formData.paymentDate,
-      bankAccount: formData.bankAccount,
-      referenceNumber: formData.referenceNumber,
-      notes: formData.notes || '',
-      fileUrl: driveUrl,
-      uploadedAt: new Date(),
-      status: 'waiting',
-    });
-    
-    alert('Bukti pembayaran berhasil diupload!');
-    handleReset();
-    onClose();
-  } catch (err) {
-    console.error(err);
-    alert('Terjadi kesalahan saat mengupload.');
-  }
-};
+      if (!uploadRes.ok) {
+        throw new Error('Upload ke Google Drive gagal');
+      }
+
+      const uploadData = await uploadRes.json();
+      const driveUrl = `https://drive.google.com/file/d/${uploadData.fileId}/view`;
+
+
+      console.log("fileUrl to be saved:", driveUrl);
+
+      await addDoc(collection(db, 'payment_proofs'), {
+        paymentType: formData.paymentType,
+        amount: formData.amount,
+        paymentDate: formData.paymentDate,
+        bankAccount: formData.bankAccount,
+        referenceNumber: formData.referenceNumber,
+        notes: formData.notes || '',
+        fileUrl: driveUrl,
+        uploadedAt: new Date(),
+        status: 'waiting',
+      });
+
+      alert('Bukti pembayaran berhasil diupload!');
+      handleReset();
+      onClose();
+    } catch (err) {
+      console.error(err);
+      alert('Terjadi kesalahan saat mengupload.');
+    }
+  };
 
 
   const handleReset = () => {
@@ -148,10 +149,10 @@ const PaymentProofModal = ({ isOpen, onClose, loading = false }: PaymentProofMod
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: name === 'amount' ? parseFloat(value) || 0 : 
-               name === 'paymentDate' ? new Date(value) : value
+      [name]: name === 'amount' ? parseFloat(value) || 0 :
+        name === 'paymentDate' ? new Date(value) : value
     }));
-    
+
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
@@ -198,7 +199,7 @@ const PaymentProofModal = ({ isOpen, onClose, loading = false }: PaymentProofMod
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
-    
+
     const file = e.dataTransfer.files?.[0];
     if (file) {
       handleFileSelect(file);
@@ -332,12 +333,11 @@ const PaymentProofModal = ({ isOpen, onClose, loading = false }: PaymentProofMod
                   Bukti Pembayaran *
                 </label>
                 <div
-                  className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
-                    dragActive ? 'border-primary-500 bg-primary-50' : 
-                    formData.proofFile ? 'border-success-500 bg-success-50' : 
-                    errors.proofFile ? 'border-error-500 bg-error-50' : 
-                    'border-gray-300 hover:border-gray-400'
-                  }`}
+                  className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${dragActive ? 'border-primary-500 bg-primary-50' :
+                      formData.proofFile ? 'border-success-500 bg-success-50' :
+                        errors.proofFile ? 'border-error-500 bg-error-50' :
+                          'border-gray-300 hover:border-gray-400'
+                    }`}
                   onDragEnter={handleDrag}
                   onDragLeave={handleDrag}
                   onDragOver={handleDrag}
@@ -350,7 +350,7 @@ const PaymentProofModal = ({ isOpen, onClose, loading = false }: PaymentProofMod
                     onChange={handleFileInputChange}
                     className="hidden"
                   />
-                  
+
                   {formData.proofFile ? (
                     <div className="space-y-2">
                       <CheckCircle className="h-12 w-12 text-success-600 mx-auto" />
