@@ -1,69 +1,86 @@
-import multer from 'multer';
+// /pages/api/upload.js
 import { google } from 'googleapis';
-import stream from 'stream';
-
-const storage = multer.memoryStorage();
-const upload = multer({ storage });
+import formidable from 'formidable';
+import fs from 'fs';
 
 export const config = {
   api: {
-    bodyParser: false,
+    bodyParser: false, // Karena kita pakai formidable
   },
 };
 
+// OAuth2 credentials — taruh ini di environment variables Vercel
+const CLIENT_ID = process.env.GDRIVE_CLIENT_ID;
+const CLIENT_SECRET = process.env.GDRIVE_CLIENT_SECRET;
+const REDIRECT_URI = process.env.GDRIVE_REDIRECT_URI;
+const REFRESH_TOKEN = process.env.GDRIVE_REFRESH_TOKEN;
+
+const oauth2Client = new google.auth.OAuth2(
+  CLIENT_ID,
+  CLIENT_SECRET,
+  REDIRECT_URI
+);
+
+oauth2Client.setCredentials({ refresh_token: REFRESH_TOKEN });
+
+const drive = google.drive({ version: 'v3', auth: oauth2Client });
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
-    return res.status(405).send({ message: 'Method Not Allowed' });
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  upload.single('file')(req, res, async function (err) {
+  const form = new formidable.IncomingForm();
+
+  form.parse(req, async (err, fields, files) => {
     if (err) {
-      console.error('Upload Error:', err);
-      return res.status(500).send({ message: 'Upload gagal' });
+      console.error('Form parse error:', err);
+      return res.status(500).json({ error: 'Failed to parse form' });
     }
 
-    const { originalname, buffer, mimetype } = req.file;
+    const file = files.file;
+
+    if (!file || !file.filepath) {
+      return res.status(400).json({ error: 'File not found in request' });
+    }
 
     try {
-      const oauth2Client = new google.auth.OAuth2(
-        process.env.GOOGLE_CLIENT_ID,
-        process.env.GOOGLE_CLIENT_SECRET,
-        process.env.GOOGLE_REDIRECT_URI
-      );
-
-      oauth2Client.setCredentials({
-        refresh_token: process.env.GOOGLE_REFRESH_TOKEN,
-      });
-
-      const drive = google.drive({ version: 'v3', auth: oauth2Client });
-
-      const bufferStream = new stream.PassThrough();
-      bufferStream.end(buffer);
-
       const fileMetadata = {
-        name: originalname,
-        parents: [process.env.GOOGLE_FOLDER_ID], // optional, for specific folder
+        name: file.originalFilename,
       };
 
       const media = {
-        mimeType: mimetype,
-        body: bufferStream,
+        mimeType: file.mimetype,
+        body: fs.createReadStream(file.filepath),
       };
 
-      const response = await drive.files.create({
-        requestBody: fileMetadata,
-        media: media,
-        fields: 'id, name',
+      const uploadedFile = await drive.files.create({
+        resource: fileMetadata,
+        media,
+        fields: 'id',
       });
 
-      return res.status(200).json({
-        message: 'Upload berhasil',
-        fileId: response.data.id,
-        fileName: response.data.name,
+      const fileId = uploadedFile.data.id;
+
+      // Set permission to public
+      await drive.permissions.create({
+        fileId,
+        requestBody: {
+          role: 'reader',
+          type: 'anyone',
+        },
       });
-    } catch (error) {
-      console.error('Upload error:', error);
-      return res.status(500).json({ message: 'Upload ke Google Drive gagal' });
+
+      // Get the public URL
+      const fileInfo = await drive.files.get({
+        fileId,
+        fields: 'webViewLink',
+      });
+
+      return res.status(200).json({ url: fileInfo.data.webViewLink });
+    } catch (err) {
+      console.error('Upload error:', err);
+      return res.status(500).json({ error: 'Upload failed' });
     }
   });
 }
