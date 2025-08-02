@@ -60,9 +60,7 @@ const PaymentProofModal = ({ isOpen, onClose, loading = false }: PaymentProofMod
   ];
 
   const bankAccounts = [
-    'Bank BCA - 1234567890',
-    'Bank Mandiri - 0987654321',
-    'Bank BRI - 1122334455',
+    'BNI - 0795834521 a.n Rita Ayu Bulan Trisna',
   ];
 
   const validateForm = () => {
