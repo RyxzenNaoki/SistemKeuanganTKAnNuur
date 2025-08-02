@@ -114,7 +114,7 @@ const PaymentProofModal = ({ isOpen, onClose, loading = false }: PaymentProofMod
         bankAccount: formData.bankAccount,
         referenceNumber: formData.referenceNumber,
         notes: formData.notes || '',
-        fileUrl: driveUrl,
+        fileId : uploadData.fileId,
         uploadedAt: new Date(),
         status: 'waiting',
       });
