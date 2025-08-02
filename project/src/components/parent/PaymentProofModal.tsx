@@ -27,7 +27,7 @@ interface PaymentProofData {
 interface PaymentHistoryItem {
   id: string;
   amount: number;
-  category: string;
+  paymentType: string;
   date: Date;
   notes?: string;
   receiptUrl?: string;

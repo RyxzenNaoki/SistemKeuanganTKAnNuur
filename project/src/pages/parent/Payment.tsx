@@ -8,7 +8,7 @@ import UploadPaymentModal from '../../components/parent/PaymentProofModal';
 interface PaymentHistoryItem {
   id: string;
   amount: number;
-  category: string;
+  paymentType: string;
   date: Date;
   notes?: string;
   receiptUrl?: string;
@@ -63,7 +63,7 @@ const Payment = () => {
           ) : (
             history.map(payment => (
               <div key={payment.id} className="card p-4 relative">
-                <h2 className="font-semibold text-lg text-gray-800">{payment.category}</h2>
+                <h2 className="font-semibold text-lg text-gray-800">{payment.paymentType}</h2>
                 <p className="text-sm text-gray-600">Rp {payment.amount.toLocaleString()}</p>
                 <p className="text-sm text-gray-500">{dayjs(payment.date).format('DD MMM YYYY')}</p>
                 {payment.notes && <p className="text-sm text-gray-400 italic">Catatan: {payment.notes}</p>}
