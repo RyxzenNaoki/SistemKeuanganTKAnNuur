@@ -79,7 +79,7 @@ const ParentSidebar = ({ isOpen, setIsOpen }: ParentSidebarProps) => {
               className={`sidebar-menu-item ${isActive('/parent/contact') ? 'active' : ''}`}
             >
               <MessageSquare className="h-5 w-5" />
-              <span>Hubungi Admin</span>
+              <span>Kontak Admin</span>
             </Link>
           </nav>
         </div>
