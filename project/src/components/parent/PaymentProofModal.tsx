@@ -104,6 +104,8 @@ const PaymentProofModal = ({ isOpen, onClose, loading = false }: PaymentProofMod
     const uploadData = await uploadRes.json();
     const driveUrl = uploadData.url;
 
+    console.log("fileUrl to be saved:", driveUrl);
+
     await addDoc(collection(db, 'payment_proofs'), {
       paymentType: formData.paymentType,
       amount: formData.amount,
