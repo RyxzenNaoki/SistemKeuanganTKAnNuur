@@ -88,7 +88,7 @@ const Payment = () => {
             <h2 className="text-lg font-semibold mb-2">Informasi Rekening Sekolah</h2>
             <ul className="text-sm text-gray-700 space-y-1">
               <li><strong>Bank:</strong> BNI</li>
-              <li><strong>Atas Nama:</strong> TK An Nuur Rumah Cahaya</li>
+              <li><strong>Atas Nama:</strong> Rita Ayu Bulan Trisna</li>
               <li><strong>No. Rekening:</strong> 0795834521</li>
               <li><strong>Catatan:</strong> Sertakan nama siswa dan jenis pembayaran saat transfer.</li>
             </ul>

@@ -1,6 +1,6 @@
 // upload.js
 import { google } from 'googleapis';
-import formidable from 'formidable';
+import { IncomingForm } from 'formidable';
 import fs from 'fs';
 import path from 'path';
 
@@ -22,7 +22,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const form = new formidable.IncomingForm();
+  const form = new IncomingForm();
 
   form.parse(req, async (err, fields, files) => {
     if (err || !files.file) {
