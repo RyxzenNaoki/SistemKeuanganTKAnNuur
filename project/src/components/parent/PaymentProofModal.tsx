@@ -102,10 +102,12 @@ const PaymentProofModal = ({ isOpen, onClose, loading = false }: PaymentProofMod
       }
 
       const uploadData = await uploadRes.json();
-      const driveUrl = `https://drive.google.com/file/d/${uploadData.fileId}/view`;
 
+      if (!uploadData?.fileId) {
+        throw new Error("Upload berhasil tapi fileId tidak ditemukan.");
+      }
 
-      console.log("fileUrl to be saved:", driveUrl);
+      console.log('uploadData:', uploadData);
 
       await addDoc(collection(db, 'payment_proofs'), {
         paymentType: formData.paymentType,
@@ -114,10 +116,11 @@ const PaymentProofModal = ({ isOpen, onClose, loading = false }: PaymentProofMod
         bankAccount: formData.bankAccount,
         referenceNumber: formData.referenceNumber,
         notes: formData.notes || '',
-        fileId : uploadData.fileId,
+        fileId: uploadData.fileId, // <- hanya fileId
         uploadedAt: new Date(),
         status: 'waiting',
       });
+
 
       alert('Bukti pembayaran berhasil diupload!');
       handleReset();
@@ -334,9 +337,9 @@ const PaymentProofModal = ({ isOpen, onClose, loading = false }: PaymentProofMod
                 </label>
                 <div
                   className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${dragActive ? 'border-primary-500 bg-primary-50' :
-                      formData.proofFile ? 'border-success-500 bg-success-50' :
-                        errors.proofFile ? 'border-error-500 bg-error-50' :
-                          'border-gray-300 hover:border-gray-400'
+                    formData.proofFile ? 'border-success-500 bg-success-50' :
+                      errors.proofFile ? 'border-error-500 bg-error-50' :
+                        'border-gray-300 hover:border-gray-400'
                     }`}
                   onDragEnter={handleDrag}
                   onDragLeave={handleDrag}
