@@ -30,7 +30,7 @@ const Payment = () => {
         const data = snapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data(),
-          date: doc.data().date.toDate(),
+          date: doc.data().paymentDate?.toDate?.() ?? new Date(0),
         })) as PaymentHistoryItem[];
         setHistory(data);
       } catch (err) {
