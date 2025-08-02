@@ -14,6 +14,7 @@ interface PaymentProofModalProps {
 
 
 interface PaymentProofData {
+  student: string;
   paymentType: string;
   amount: number;
   paymentDate: Date;
@@ -42,6 +43,7 @@ const PaymentProofModal = ({ isOpen, onClose, loading = false }: PaymentProofMod
   }
 
   const [formData, setFormData] = useState<PaymentProofData>({
+    student: currentUser.uid,
     paymentType: 'SPP Bulanan',
     amount: 0,
     paymentDate: new Date(),
@@ -136,6 +138,7 @@ const PaymentProofModal = ({ isOpen, onClose, loading = false }: PaymentProofMod
 
   const handleReset = () => {
     setFormData({
+      student: currentUser.uid,
       paymentType: 'SPP Bulanan',
       amount: 0,
       paymentDate: new Date(),
