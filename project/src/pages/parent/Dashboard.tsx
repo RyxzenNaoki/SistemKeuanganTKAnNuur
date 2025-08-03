@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { collection, getDocs, query, where, orderBy, limit } from 'firebase/firestore';
+import { collection, getDocs, query, where, orderBy, limit, doc, getDoc } from 'firebase/firestore';
 import { db } from '../../firebase/config';
-// import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../contexts/AuthContext';
 import {
   Clock,
   CheckCircle,
@@ -28,10 +28,19 @@ interface Notification {
   createdAt: Date;
 }
 
+interface UserData {
+  email: string;
+  role: string;
+  name?: string;
+  studentName?: string;
+  studentClass?: string;
+  createdAt: Date;
+}
+
 const ParentDashboard = () => {
-  // const { currentUser } = useAuth();
-  const [studentName] = useState('Budi Santoso');
-  const [className] = useState('TK B - Mawar');
+  const { currentUser } = useAuth();
+  const [studentName, setStudentName] = useState('');
+  const [className, setClassName] = useState('');
   const [paymentSchedules, setPaymentSchedules] = useState<PaymentSchedule[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [nextPayment, setNextPayment] = useState<PaymentSchedule | null>(null);
@@ -53,10 +62,30 @@ const ParentDashboard = () => {
     return dayjs(dueDate).isBefore(dayjs(today), 'day') ? 'overdue' : 'upcoming';
   };
 
+  // Fetch user data from Firebase
+  const fetchUserData = async () => {
+    if (!currentUser) return;
+    
+    try {
+      const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+      if (userDoc.exists()) {
+        const data = userDoc.data() as UserData;
+        setStudentName(data.studentName || 'Nama Siswa');
+        setClassName(data.studentClass || 'Kelas Belum Diatur');
+      }
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+      setStudentName('Nama Siswa');
+      setClassName('Kelas Belum Diatur');
+    }
+  };
+
   // Fetch payment schedules from Firebase
   const fetchPaymentSchedules = async () => {
+    if (!studentName) return;
+    
     try {
-      // Filter berdasarkan nama siswa (dalam aplikasi real, sebaiknya pakai student ID)
+      // Filter berdasarkan nama siswa
       const q = query(
         collection(db, 'payments'),
         where('studentName', '==', studentName),
@@ -131,7 +160,22 @@ const ParentDashboard = () => {
   // Load data on component mount
   useEffect(() => {
     const loadData = async () => {
+      if (!currentUser) return;
+      
       setLoading(true);
+      
+      // First fetch user data
+      await fetchUserData();
+    };
+
+    loadData();
+  }, [currentUser]);
+
+  // Load payment schedules and notifications when student data is available
+  useEffect(() => {
+    const loadPaymentData = async () => {
+      if (!studentName) return;
+      
       await Promise.all([
         fetchPaymentSchedules(),
         fetchNotifications()
@@ -139,8 +183,8 @@ const ParentDashboard = () => {
       setLoading(false);
     };
 
-    loadData();
-  }, [studentName]); // Re-fetch when student name changes
+    loadPaymentData();
+  }, [studentName]);
 
   if (loading) {
     return (

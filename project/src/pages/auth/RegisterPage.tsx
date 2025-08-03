@@ -15,7 +15,15 @@ const RegisterPage = () => {
     const [password, setPassword] = useState('');
     const [confirm, setConfirm] = useState('');
     const [role, setRole] = useState('parent');
+    const [studentName, setStudentName] = useState('');
+    const [studentClass, setStudentClass] = useState('');
     const [loading, setLoading] = useState(false);
+
+    const classes = [
+        'TK A',
+        'TK B', 
+        'Daycare',
+    ];
 
     const handleRegister = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -27,14 +35,31 @@ const RegisterPage = () => {
             return;
         }
 
+        // Validasi khusus untuk parent
+        if (role === 'parent' && (!studentName.trim() || !studentClass.trim())) {
+            showToast('error', 'Nama anak dan kelas wajib diisi untuk orang tua.');
+            setLoading(false);
+            return;
+        }
+
         try {
             const userCred = await createUserWithEmailAndPassword(auth, email, password);
 
-            await setDoc(doc(db, 'users', userCred.user.uid), {
+            // Data yang akan disimpan ke Firestore
+            const userData: any = {
                 email,
                 role,
+                name: name.trim(),
                 createdAt: serverTimestamp(),
-            });
+            };
+
+            // Tambahkan data student jika role adalah parent
+            if (role === 'parent') {
+                userData.studentName = studentName.trim();
+                userData.studentClass = studentClass;
+            }
+
+            await setDoc(doc(db, 'users', userCred.user.uid), userData);
 
             showToast('success', 'Registrasi berhasil!');
             navigate('/login');
@@ -54,6 +79,8 @@ const RegisterPage = () => {
             } else {
                 showToast('error', 'Terjadi kesalahan saat mendaftar.');
             }
+        } finally {
+            setLoading(false);
         }
     }
 
@@ -64,7 +91,7 @@ const RegisterPage = () => {
             </h2>
 
             <form onSubmit={handleRegister}>
-                 <div className="mb-4">
+                <div className="mb-4">
                     <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
                         Nama Lengkap
                     </label>
@@ -78,6 +105,7 @@ const RegisterPage = () => {
                         placeholder="Masukkan nama lengkap Anda"
                     />
                 </div>
+
                 <div className="mb-4">
                     <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
                         Email
@@ -94,6 +122,60 @@ const RegisterPage = () => {
                 </div>
 
                 <div className="mb-4">
+                    <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-1">
+                        Peran
+                    </label>
+                    <select
+                        id="role"
+                        className="input"
+                        value={role}
+                        onChange={(e) => setRole(e.target.value)}
+                    >
+                        <option value="parent">Orang Tua</option>
+                        <option value="guru">Guru</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>
+
+                {/* Fields khusus untuk Parent */}
+                {role === 'parent' && (
+                    <>
+                        <div className="mb-4">
+                            <label htmlFor="studentName" className="block text-sm font-medium text-gray-700 mb-1">
+                                Nama Anak <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                                id="studentName"
+                                type="text"
+                                required={role === 'parent'}
+                                className="input"
+                                value={studentName}
+                                onChange={(e) => setStudentName(e.target.value)}
+                                placeholder="Masukkan nama lengkap anak"
+                            />
+                        </div>
+
+                        <div className="mb-4">
+                            <label htmlFor="studentClass" className="block text-sm font-medium text-gray-700 mb-1">
+                                Kelas Anak <span className="text-red-500">*</span>
+                            </label>
+                            <select
+                                id="studentClass"
+                                className="input"
+                                value={studentClass}
+                                onChange={(e) => setStudentClass(e.target.value)}
+                                required={role === 'parent'}
+                            >
+                                <option value="">Pilih Kelas</option>
+                                {classes.map(className => (
+                                    <option key={className} value={className}>{className}</option>
+                                ))}
+                            </select>
+                        </div>
+                    </>
+                )}
+
+                <div className="mb-4">
                     <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
                         Password
                     </label>
@@ -108,7 +190,7 @@ const RegisterPage = () => {
                     />
                 </div>
 
-                <div className="mb-4">
+                <div className="mb-6">
                     <label htmlFor="confirm" className="block text-sm font-medium text-gray-700 mb-1">
                         Konfirmasi Password
                     </label>
@@ -121,21 +203,6 @@ const RegisterPage = () => {
                         onChange={(e) => setConfirm(e.target.value)}
                         placeholder="••••••••"
                     />
-                </div>
-
-                <div className="mb-6">
-                    <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-1">
-                        Peran
-                    </label>
-                    <select
-                        id="role"
-                        className="input"
-                        value={role}
-                        onChange={(e) => setRole(e.target.value)}
-                    >
-                        <option value="parent">Orang Tua</option>
-                        <option value="guru">Guru</option>
-                    </select>
                 </div>
 
                 <button
