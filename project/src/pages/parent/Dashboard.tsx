@@ -1,52 +1,41 @@
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { collection, getDocs, query, where, orderBy, limit } from 'firebase/firestore';
+import { db } from '../../firebase/config';
+// import { useAuth } from '../../contexts/AuthContext';
 import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from 'recharts';
-import {
-  CreditCard,
-  Calendar,
-  Upload,
-  MessageSquare,
   Clock,
   CheckCircle,
   AlertTriangle,
 } from 'lucide-react';
+import dayjs from 'dayjs';
 
-// Sample data for demonstration
-const paymentHistoryData = [
-  { month: 'Jan', amount: 500000 },
-  { month: 'Feb', amount: 500000 },
-  { month: 'Mar', amount: 750000 },
-  { month: 'Apr', amount: 500000 },
-  { month: 'Mei', amount: 550000 },
-  { month: 'Jun', amount: 500000 },
-];
+// Interfaces
+interface PaymentSchedule {
+  id: string;
+  type: string;
+  amount: number;
+  dueDate: Date;
+  description: string;
+  status: 'upcoming' | 'overdue' | 'paid';
+  studentName: string;
+  class: string;
+}
+
+interface Notification {
+  id: string;
+  title: string;
+  message: string;
+  createdAt: Date;
+}
 
 const ParentDashboard = () => {
-  const [studentName, setStudentName] = useState('Budi Santoso');
-  const [className, setClassName] = useState('TK B - Mawar');
-  const [nextPayment, setNextPayment] = useState({
-    type: 'SPP Bulanan',
-    amount: 500000,
-    dueDate: '10 Juli 2025',
-    daysLeft: 5,
-  });
-  const [paymentStatus, setPaymentStatus] = useState([
-    { month: 'Januari', status: 'paid' },
-    { month: 'Februari', status: 'paid' },
-    { month: 'Maret', status: 'paid' },
-    { month: 'April', status: 'paid' },
-    { month: 'Mei', status: 'paid' },
-    { month: 'Juni', status: 'paid' },
-    { month: 'Juli', status: 'upcoming' },
-  ]);
+  // const { currentUser } = useAuth();
+  const [studentName] = useState('Budi Santoso');
+  const [className] = useState('TK B - Mawar');
+  const [paymentSchedules, setPaymentSchedules] = useState<PaymentSchedule[]>([]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [nextPayment, setNextPayment] = useState<PaymentSchedule | null>(null);
+  const [loading, setLoading] = useState(true);
 
   // Format currency function
   const formatCurrency = (value: number) => {
@@ -56,6 +45,112 @@ const ParentDashboard = () => {
       minimumFractionDigits: 0,
     }).format(value);
   };
+
+  // Get auto status based on due date
+  const getAutoStatus = (dueDate: Date, currentStatus: string): PaymentSchedule['status'] => {
+    const today = new Date();
+    if (currentStatus === 'paid') return 'paid';
+    return dayjs(dueDate).isBefore(dayjs(today), 'day') ? 'overdue' : 'upcoming';
+  };
+
+  // Fetch payment schedules from Firebase
+  const fetchPaymentSchedules = async () => {
+    try {
+      // Filter berdasarkan nama siswa (dalam aplikasi real, sebaiknya pakai student ID)
+      const q = query(
+        collection(db, 'payments'),
+        where('studentName', '==', studentName),
+        orderBy('dueDate', 'desc')
+      );
+      
+      const snapshot = await getDocs(q);
+      const schedules = snapshot.docs.map(doc => {
+        const data = doc.data();
+        const dueDate = data.dueDate?.toDate?.() || new Date();
+        const status = getAutoStatus(dueDate, data.status);
+        
+        return {
+          id: doc.id,
+          type: data.type,
+          amount: data.amount,
+          dueDate,
+          description: data.description,
+          status,
+          studentName: data.studentName,
+          class: data.class,
+        } as PaymentSchedule;
+      });
+
+      setPaymentSchedules(schedules);
+
+      // Find next upcoming payment
+      const upcoming = schedules.filter(p => p.status === 'upcoming')
+        .sort((a, b) => a.dueDate.getTime() - b.dueDate.getTime())[0];
+      
+      setNextPayment(upcoming || null);
+
+    } catch (error) {
+      console.error('Error fetching payment schedules:', error);
+    }
+  };
+
+  // Fetch notifications from Firebase
+  const fetchNotifications = async () => {
+    try {
+      const q = query(
+        collection(db, 'notifications'),
+        orderBy('createdAt', 'desc'),
+        limit(5) // Ambil 5 notifikasi terbaru
+      );
+      
+      const snapshot = await getDocs(q);
+      const notifs = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          title: data.title,
+          message: data.message,
+          createdAt: data.createdAt?.toDate?.() ?? new Date(),
+        } as Notification;
+      });
+
+      setNotifications(notifs);
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+    }
+  };
+
+  // Calculate days left for next payment
+  const getDaysLeft = (dueDate: Date) => {
+    const today = new Date();
+    const diffTime = dueDate.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
+  };
+
+  // Load data on component mount
+  useEffect(() => {
+    const loadData = async () => {
+      setLoading(true);
+      await Promise.all([
+        fetchPaymentSchedules(),
+        fetchNotifications()
+      ]);
+      setLoading(false);
+    };
+
+    loadData();
+  }, [studentName]); // Re-fetch when student name changes
+
+  if (loading) {
+    return (
+      <div className="page-transition">
+        <div className="flex justify-center items-center h-64">
+          <div className="text-gray-500">Memuat data...</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="page-transition">
@@ -73,62 +168,32 @@ const ParentDashboard = () => {
             <div className="mt-2 badge badge-primary">Siswa Aktif</div>
           </div>
           <div className="mt-4 md:mt-0">
-            <div className="text-sm text-gray-600">Pembayaran Berikutnya:</div>
-            <div className="flex items-center mt-1">
-              <Clock className="h-4 w-4 text-warning-500 mr-1" />
-              <span className="text-sm font-medium text-warning-700">
-                {nextPayment.daysLeft} hari lagi
-              </span>
-            </div>
-            <div className="mt-1 text-lg font-bold text-gray-900">
-              {formatCurrency(nextPayment.amount)}
-            </div>
-            <div className="text-sm text-gray-600">Jatuh tempo: {nextPayment.dueDate}</div>
+            {nextPayment ? (
+              <>
+                <div className="text-sm text-gray-600">Pembayaran Berikutnya:</div>
+                <div className="flex items-center mt-1">
+                  <Clock className="h-4 w-4 text-warning-500 mr-1" />
+                  <span className="text-sm font-medium text-warning-700">
+                    {getDaysLeft(nextPayment.dueDate)} hari lagi
+                  </span>
+                </div>
+                <div className="mt-1 text-lg font-bold text-gray-900">
+                  {formatCurrency(nextPayment.amount)}
+                </div>
+                <div className="text-sm text-gray-600">
+                  Jatuh tempo: {dayjs(nextPayment.dueDate).format('DD MMMM YYYY')}
+                </div>
+                <div className="text-sm text-gray-500">{nextPayment.description}</div>
+              </>
+            ) : (
+              <div className="text-sm text-gray-500">Tidak ada pembayaran yang akan datang</div>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Quick Actions */}
-      <div className="mb-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Aksi Cepat</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Link to="/parent/make-payment" className="flex flex-col items-center justify-center p-4 bg-primary-50 rounded-lg hover:bg-primary-100 transition-colors">
-            <CreditCard className="h-8 w-8 text-primary-600 mb-2" />
-            <span className="text-sm font-medium text-gray-900 text-center">Bayar SPP</span>
-          </Link>
-          <Link to="/parent/history" className="flex flex-col items-center justify-center p-4 bg-primary-50 rounded-lg hover:bg-primary-100 transition-colors">
-            <Calendar className="h-8 w-8 text-primary-600 mb-2" />
-            <span className="text-sm font-medium text-gray-900 text-center">Riwayat Pembayaran</span>
-          </Link>
-          <Link to="/parent/upload" className="flex flex-col items-center justify-center p-4 bg-primary-50 rounded-lg hover:bg-primary-100 transition-colors">
-            <Upload className="h-8 w-8 text-primary-600 mb-2" />
-            <span className="text-sm font-medium text-gray-900 text-center">Upload Bukti</span>
-          </Link>
-          <Link to="/parent/contact" className="flex flex-col items-center justify-center p-4 bg-primary-50 rounded-lg hover:bg-primary-100 transition-colors">
-            <MessageSquare className="h-8 w-8 text-primary-600 mb-2" />
-            <span className="text-sm font-medium text-gray-900 text-center">Hubungi Admin</span>
-          </Link>
-        </div>
-      </div>
-
-      {/* Payment Overview */}
+      {/* Payment Status dan Informasi Pembayaran */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        {/* Payment History Chart */}
-        <div className="card p-4">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Riwayat Pembayaran</h2>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={paymentHistoryData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis />
-                <Tooltip formatter={(value) => formatCurrency(value as number)} />
-                <Bar dataKey="amount" name="Jumlah Bayar" fill="#a855f7" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
         {/* Payment Status */}
         <div className="card p-4">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Status Pembayaran SPP</h2>
@@ -137,70 +202,79 @@ const ParentDashboard = () => {
               <table className="table">
                 <thead>
                   <tr>
-                    <th>Bulan</th>
+                    <th>Jenis</th>
                     <th>Status</th>
-                    <th>Tanggal</th>
+                    <th>Jatuh Tempo</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {paymentStatus.map((payment, index) => (
-                    <tr key={index}>
-                      <td>{payment.month}</td>
-                      <td>
-                        {payment.status === 'paid' ? (
-                          <div className="flex items-center">
-                            <CheckCircle className="h-4 w-4 text-success-500 mr-1" />
-                            <span className="text-success-700">Lunas</span>
-                          </div>
-                        ) : payment.status === 'late' ? (
-                          <div className="flex items-center">
-                            <AlertTriangle className="h-4 w-4 text-error-500 mr-1" />
-                            <span className="text-error-700">Terlambat</span>
-                          </div>
-                        ) : (
-                          <div className="flex items-center">
-                            <Clock className="h-4 w-4 text-warning-500 mr-1" />
-                            <span className="text-warning-700">Akan Datang</span>
-                          </div>
-                        )}
-                      </td>
-                      <td>
-                        {payment.status === 'paid' ? '5 ' + payment.month + ' 2025' : '-'}
+                  {paymentSchedules.length === 0 ? (
+                    <tr>
+                      <td colSpan={3} className="text-center text-gray-500">
+                        Belum ada jadwal pembayaran
                       </td>
                     </tr>
-                  ))}
+                  ) : (
+                    paymentSchedules.map((payment) => (
+                      <tr key={payment.id}>
+                        <td>
+                          <div>
+                            <div className="font-medium text-gray-900">{payment.type}</div>
+                            <div className="text-sm text-gray-500">{payment.description}</div>
+                          </div>
+                        </td>
+                        <td>
+                          {payment.status === 'paid' ? (
+                            <div className="flex items-center">
+                              <CheckCircle className="h-4 w-4 text-success-500 mr-1" />
+                              <span className="text-success-700">Lunas</span>
+                            </div>
+                          ) : payment.status === 'overdue' ? (
+                            <div className="flex items-center">
+                              <AlertTriangle className="h-4 w-4 text-error-500 mr-1" />
+                              <span className="text-error-700">Terlambat</span>
+                            </div>
+                          ) : (
+                            <div className="flex items-center">
+                              <Clock className="h-4 w-4 text-warning-500 mr-1" />
+                              <span className="text-warning-700">Akan Datang</span>
+                            </div>
+                          )}
+                        </td>
+                        <td>
+                          <div>
+                            <div className="font-medium">{formatCurrency(payment.amount)}</div>
+                            <div className="text-sm text-gray-500">
+                              {dayjs(payment.dueDate).format('DD MMM YYYY')}
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Payment Information */}
-      <div className="card p-4 mb-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Informasi Pembayaran</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="border border-gray-200 rounded-lg p-4">
+        {/* Informasi Pembayaran */}
+        <div className="card p-4">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Informasi Pembayaran</h2>
+          <div className="border border-gray-200 rounded-lg p-4 mb-4">
             <h3 className="text-md font-medium text-gray-900 mb-2">Transfer Bank</h3>
             <div className="space-y-2">
               <div>
-                <p className="text-sm text-gray-600">Bank BCA</p>
-                <p className="text-sm font-medium">1234567890 (TK An Nuur Rumah Cahaya)</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Bank Mandiri</p>
-                <p className="text-sm font-medium">0987654321 (TK An Nuur Rumah Cahaya)</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Bank BRI</p>
-                <p className="text-sm font-medium">1122334455 (TK An Nuur Rumah Cahaya)</p>
+                <p className="text-sm text-gray-600">Bank BNI</p>
+                <p className="text-sm font-medium">0795834521 (Rita Ayu Bulan Trisna)</p>
               </div>
             </div>
           </div>
+          
           <div className="border border-gray-200 rounded-lg p-4">
             <h3 className="text-md font-medium text-gray-900 mb-2">Panduan Pembayaran</h3>
             <ol className="list-decimal list-inside text-sm text-gray-600 space-y-1">
-              <li>Transfer ke salah satu rekening di samping</li>
+              <li>Transfer ke rekening di atas</li>
               <li>Simpan bukti pembayaran</li>
               <li>Upload bukti di menu "Upload Bukti"</li>
               <li>Tunggu konfirmasi dari admin</li>
@@ -210,22 +284,25 @@ const ParentDashboard = () => {
         </div>
       </div>
 
-      {/* Announcements */}
+      {/* Pengumuman */}
       <div className="card p-4">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Pengumuman</h2>
         <div className="space-y-4">
-          <div className="border-l-4 border-primary-500 pl-3 py-1">
-            <h3 className="text-sm font-medium text-gray-900">Kegiatan Hari Anak</h3>
-            <p className="text-xs text-gray-600 mt-1">
-              Kegiatan Hari Anak akan dilaksanakan pada tanggal 23 Juli 2025. Biaya kegiatan Rp150.000 dapat dibayarkan mulai 1 Juli.
-            </p>
-          </div>
-          <div className="border-l-4 border-secondary-500 pl-3 py-1">
-            <h3 className="text-sm font-medium text-gray-900">Libur Akhir Semester</h3>
-            <p className="text-xs text-gray-600 mt-1">
-              Libur akhir semester dimulai tanggal 20 Juni hingga 5 Juli 2025. Pembayaran SPP tetap dilakukan selama libur.
-            </p>
-          </div>
+          {notifications.length === 0 ? (
+            <div className="text-center text-gray-500 py-4">
+              Belum ada pengumuman terbaru
+            </div>
+          ) : (
+            notifications.map((notification, index) => (
+              <div key={notification.id} className={`border-l-4 ${index % 2 === 0 ? 'border-primary-500' : 'border-secondary-500'} pl-3 py-1`}>
+                <h3 className="text-sm font-medium text-gray-900">{notification.title}</h3>
+                <p className="text-xs text-gray-600 mt-1">{notification.message}</p>
+                <p className="text-xs text-gray-400 mt-1">
+                  {dayjs(notification.createdAt).format('DD MMM YYYY, HH:mm')}
+                </p>
+              </div>
+            ))
+          )}
         </div>
       </div>
     </div>
