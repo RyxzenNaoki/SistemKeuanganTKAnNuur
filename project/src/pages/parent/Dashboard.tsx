@@ -321,8 +321,8 @@ const ParentDashboard = () => {
               <li>Transfer ke rekening di atas</li>
               <li>Simpan bukti pembayaran</li>
               <li>Upload bukti di menu "Upload Bukti"</li>
-              <li>Tunggu konfirmasi dari admin</li>
-              <li>Kwitansi akan dikirim via email</li>
+              <li>Konfirmasi upload bukti ke admin</li>
+              <li>Kwitansi akan dikirim secara langsung/via email</li>
             </ol>
           </div>
         </div>
