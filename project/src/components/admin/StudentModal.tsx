@@ -99,12 +99,12 @@ const StudentModal = ({ isOpen, onClose, onSave, student, loading = false, avail
     if (!formData.emergencyPhone.trim()) newErrors.emergencyPhone = 'Nomor darurat wajib diisi';
 
     // NIS validation (optional but must be unique if provided)
-    if (formData.nis && formData.nis.trim()) {
-      const nisRegex = /^[0-9]+$/;
-      if (!nisRegex.test(formData.nis.trim())) {
-        newErrors.nis = 'NIS hanya boleh berisi angka';
-      }
-    }
+    // if (formData.nis && formData.nis.trim()) {
+    //   const nisRegex = /^[0-9]+$/;
+    //   if (!nisRegex.test(formData.nis.trim())) {
+    //     newErrors.nis = 'NIS hanya boleh berisi angka';
+    //   }
+    // }
 
     // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
