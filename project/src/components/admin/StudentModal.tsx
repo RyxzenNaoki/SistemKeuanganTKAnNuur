@@ -8,10 +8,12 @@ interface StudentModalProps {
   onSave: (student: Omit<Student, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
   student?: Student | null;
   loading?: boolean;
+  availableClasses: string[];
 }
 
-const StudentModal = ({ isOpen, onClose, onSave, student, loading = false }: StudentModalProps) => {
+const StudentModal = ({ isOpen, onClose, onSave, student, loading = false, availableClasses }: StudentModalProps) => {
   const [formData, setFormData] = useState({
+    nis: '',
     name: '',
     class: '',
     parentName: '',
@@ -31,6 +33,7 @@ const StudentModal = ({ isOpen, onClose, onSave, student, loading = false }: Stu
   useEffect(() => {
     if (student) {
       setFormData({
+        nis: student.nis || '',
         name: student.name,
         class: student.class,
         parentName: student.parentName,
@@ -46,6 +49,7 @@ const StudentModal = ({ isOpen, onClose, onSave, student, loading = false }: Stu
       });
     } else {
       setFormData({
+        nis: '',
         name: '',
         class: '',
         parentName: '',
@@ -75,6 +79,14 @@ const StudentModal = ({ isOpen, onClose, onSave, student, loading = false }: Stu
     if (!formData.emergencyContact.trim()) newErrors.emergencyContact = 'Kontak darurat wajib diisi';
     if (!formData.emergencyPhone.trim()) newErrors.emergencyPhone = 'Nomor darurat wajib diisi';
 
+    // NIS validation (optional but must be unique if provided)
+    if (formData.nis && formData.nis.trim()) {
+      const nisRegex = /^[0-9]+$/;
+      if (!nisRegex.test(formData.nis.trim())) {
+        newErrors.nis = 'NIS hanya boleh berisi angka';
+      }
+    }
+
     // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (formData.parentEmail && !emailRegex.test(formData.parentEmail)) {
@@ -91,7 +103,11 @@ const StudentModal = ({ isOpen, onClose, onSave, student, loading = false }: Stu
     if (!validateForm()) return;
 
     try {
-      await onSave(formData);
+      const submitData = {
+        ...formData,
+        nis: formData.nis.trim() || undefined, // Send undefined if empty
+      };
+      await onSave(submitData);
       onClose();
     } catch (error) {
       console.error('Error saving student:', error);
@@ -108,6 +124,23 @@ const StudentModal = ({ isOpen, onClose, onSave, student, loading = false }: Stu
     // Clear error when user starts typing
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
+    }
+  };
+
+  const generateNIS = () => {
+    const year = new Date().getFullYear().toString().slice(-2);
+    const month = String(new Date().getMonth() + 1).padStart(2, '0');
+    const random = Math.floor(Math.random() * 999).toString().padStart(3, '0');
+    const generatedNIS = `${year}${month}${random}`;
+    
+    setFormData(prev => ({
+      ...prev,
+      nis: generatedNIS
+    }));
+    
+    // Clear NIS error if exists
+    if (errors.nis) {
+      setErrors(prev => ({ ...prev, nis: '' }));
     }
   };
 
@@ -134,6 +167,35 @@ const StudentModal = ({ isOpen, onClose, onSave, student, loading = false }: Stu
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* NIS */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    NIS (Nomor Induk Siswa)
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      name="nis"
+                      value={formData.nis}
+                      onChange={handleInputChange}
+                      className={`input flex-1 ${errors.nis ? 'border-error-500' : ''}`}
+                      placeholder="Masukkan NIS atau generate otomatis"
+                    />
+                    <button
+                      type="button"
+                      onClick={generateNIS}
+                      className="btn btn-secondary px-3 py-2 text-sm whitespace-nowrap"
+                      title="Generate NIS otomatis"
+                    >
+                      Generate
+                    </button>
+                  </div>
+                  {errors.nis && <p className="text-error-600 text-xs mt-1">{errors.nis}</p>}
+                  <p className="text-xs text-gray-500 mt-1">
+                    NIS bersifat opsional. Klik Generate untuk membuat NIS otomatis.
+                  </p>
+                </div>
+
                 {/* Student Name */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -162,11 +224,26 @@ const StudentModal = ({ isOpen, onClose, onSave, student, loading = false }: Stu
                     className={`input ${errors.class ? 'border-error-500' : ''}`}
                   >
                     <option value="">Pilih Kelas</option>
-                    <option value="TK A">TK A</option>
-                    <option value="TK B">TK B</option>
-                    <option value="Daycare">Daycare</option>
+                    {availableClasses.length > 0 ? (
+                      availableClasses.map(className => (
+                        <option key={className} value={className}>
+                          {className}
+                        </option>
+                      ))
+                    ) : (
+                      <>
+                        <option value="TK A">TK A</option>
+                        <option value="TK B">TK B</option>
+                        <option value="Daycare">Daycare</option>
+                      </>
+                    )}
                   </select>
                   {errors.class && <p className="text-error-600 text-xs mt-1">{errors.class}</p>}
+                  {availableClasses.length === 0 && (
+                    <p className="text-xs text-amber-600 mt-1">
+                      Tidak ada kelas tersedia. Silakan tambahkan kelas terlebih dahulu di menu Manajemen Kelas.
+                    </p>
+                  )}
                 </div>
 
                 {/* Birth Date */}

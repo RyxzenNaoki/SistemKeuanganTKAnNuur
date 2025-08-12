@@ -14,10 +14,20 @@ import {
 } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
 
+interface Class {
+  id: string;
+  name: string;
+  teacher: string;
+  studentCount: number;
+  academicYear: string;
+  capacity: number;
+  description?: string;
+}
 
 const StudentManagement = () => {
   const { showToast } = useToast();
   const [students, setStudents] = useState<Student[]>([]);
+  const [classes, setClasses] = useState<Class[]>([]);
   const [filteredStudents, setFilteredStudents] = useState<Student[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
@@ -27,9 +37,9 @@ const StudentManagement = () => {
   const [selectedClass, setSelectedClass] = useState('all');
   const [selectedStatus, setSelectedStatus] = useState('all');
 
-  // Load students on component mount
+  // Load students and classes on component mount
   useEffect(() => {
-    loadStudents();
+    loadData();
   }, []);
 
   // Filter students when search term or filters change
@@ -37,27 +47,80 @@ const StudentManagement = () => {
     filterStudents();
   }, [students, searchTerm, selectedClass, selectedStatus]);
 
-  const loadStudents = async () => {
-  try {
-    setLoading(true);
-    const snapshot = await getDocs(collection(db, 'students'));
-    const data = snapshot.docs.map(docSnap => {
-      const data = docSnap.data();
-      return {
-        id: docSnap.id,
-        ...data,
-        registrationDate: data.registrationDate?.toDate() || new Date(),
-      } as Student;
-    });
-    setStudents(data);
-  } catch (error) {
-    console.error('Error loading students:', error);
-    showToast('error', 'Gagal memuat data siswa');
-  } finally {
-    setLoading(false);
-  }
-};
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      await Promise.all([loadStudents(), loadClasses()]);
+    } catch (error) {
+      console.error('Error loading data:', error);
+      showToast('error', 'Gagal memuat data');
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  const loadStudents = async () => {
+    try {
+      const snapshot = await getDocs(collection(db, 'students'));
+      const data = snapshot.docs.map(docSnap => {
+        const data = docSnap.data();
+        return {
+          id: docSnap.id,
+          ...data,
+          registrationDate: data.registrationDate?.toDate() || new Date(),
+          birthDate: data.birthDate?.toDate() || new Date(),
+        } as Student;
+      });
+      setStudents(data);
+    } catch (error) {
+      console.error('Error loading students:', error);
+      throw error;
+    }
+  };
+
+  const loadClasses = async () => {
+    try {
+      const snapshot = await getDocs(collection(db, 'classes'));
+      const classData = snapshot.docs.map((docSnap) => {
+        const data = docSnap.data();
+        return {
+          id: docSnap.id,
+          ...data,
+        } as Class;
+      });
+      setClasses(classData);
+    } catch (error) {
+      console.error('Error loading classes:', error);
+      throw error;
+    }
+  };
+
+  const updateClassStudentCount = async () => {
+    try {
+      // Count students by class
+      const classCounts: Record<string, number> = {};
+      students.filter(s => s.status === 'active').forEach(student => {
+        classCounts[student.class] = (classCounts[student.class] || 0) + 1;
+      });
+
+      // Update each class with current student count
+      const updatePromises = classes.map(async (classItem) => {
+        const currentCount = classCounts[classItem.name] || 0;
+        if (classItem.studentCount !== currentCount) {
+          await updateDoc(doc(db, 'classes', classItem.id), {
+            studentCount: currentCount
+          });
+        }
+      });
+
+      await Promise.all(updatePromises);
+      
+      // Reload classes to get updated counts
+      await loadClasses();
+    } catch (error) {
+      console.error('Error updating class student counts:', error);
+    }
+  };
 
   const filterStudents = () => {
     let filtered = students;
@@ -67,7 +130,8 @@ const StudentManagement = () => {
       filtered = filtered.filter(student =>
         student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         student.class.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        student.parentName.toLowerCase().includes(searchTerm.toLowerCase())
+        student.parentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (student.nis && student.nis.toLowerCase().includes(searchTerm.toLowerCase()))
       );
     }
 
@@ -95,50 +159,67 @@ const StudentManagement = () => {
   };
 
   const handleSaveStudent = async (studentData: Omit<Student, 'id' | 'createdAt' | 'updatedAt'>) => {
-  try {
-    setModalLoading(true);
+    try {
+      setModalLoading(true);
 
-    const payload = {
-      ...studentData,
-      registrationDate: Timestamp.fromDate(new Date()),
-    };
+      // Check if NIS already exists (only for new students or when NIS is changed)
+      if (studentData.nis) {
+        const existingStudent = students.find(s => 
+          s.nis === studentData.nis && s.id !== selectedStudent?.id
+        );
+        if (existingStudent) {
+          showToast('error', 'NIS sudah digunakan oleh siswa lain');
+          return;
+        }
+      }
 
-    if (selectedStudent?.id) {
-      const ref = doc(db, 'students', selectedStudent.id);
-      await updateDoc(ref, payload);
-      showToast('success', 'Data siswa berhasil diperbarui');
-    } else {
-      await addDoc(collection(db, 'students'), payload);
-      showToast('success', 'Siswa baru berhasil ditambahkan');
+      const payload = {
+        ...studentData,
+        registrationDate: Timestamp.fromDate(studentData.registrationDate),
+        birthDate: Timestamp.fromDate(studentData.birthDate),
+      };
+
+      if (selectedStudent?.id) {
+        const ref = doc(db, 'students', selectedStudent.id);
+        await updateDoc(ref, payload);
+        showToast('success', 'Data siswa berhasil diperbarui');
+      } else {
+        await addDoc(collection(db, 'students'), payload);
+        showToast('success', 'Siswa baru berhasil ditambahkan');
+      }
+
+      await loadStudents();
+      await updateClassStudentCount();
+      setShowModal(false);
+    } catch (error) {
+      console.error('Error saving student:', error);
+      showToast('error', 'Gagal menyimpan data siswa');
+    } finally {
+      setModalLoading(false);
     }
-
-    await loadStudents();
-    setShowModal(false);
-  } catch (error) {
-    console.error('Error saving student:', error);
-    showToast('error', 'Gagal menyimpan data siswa');
-  } finally {
-    setModalLoading(false);
-  }
-};
+  };
 
   const handleDeleteStudent = async (student: Student) => {
-  if (!window.confirm(`Apakah Anda yakin ingin menghapus data ${student.name}?`)) return;
+    if (!window.confirm(`Apakah Anda yakin ingin menghapus data ${student.name}?`)) return;
 
-  try {
-    await deleteDoc(doc(db, 'students', student.id!));
-    showToast('success', 'Data siswa berhasil dihapus');
-    await loadStudents();
-  } catch (error) {
-    console.error('Error deleting student:', error);
-    showToast('error', 'Gagal menghapus data siswa');
-  }
-};
+    try {
+      await deleteDoc(doc(db, 'students', student.id!));
+      showToast('success', 'Data siswa berhasil dihapus');
+      await loadStudents();
+      await updateClassStudentCount();
+    } catch (error) {
+      console.error('Error deleting student:', error);
+      showToast('error', 'Gagal menghapus data siswa');
+    }
+  };
 
+  const getAvailableClasses = () => {
+    return classes.map(cls => cls.name);
+  };
 
   const getUniqueClasses = () => {
-    const classes = [...new Set(students.map(student => student.class))];
-    return classes.sort();
+    const classNames = [...new Set(students.map(student => student.class))];
+    return classNames.sort();
   };
 
   if (loading) {
@@ -224,7 +305,7 @@ const StudentManagement = () => {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
             <input
               type="text"
-              placeholder="Cari siswa..."
+              placeholder="Cari siswa (nama, NIS, kelas, orang tua)..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10 input"
@@ -272,6 +353,7 @@ const StudentManagement = () => {
           <table className="table">
             <thead>
               <tr>
+                <th>NIS</th>
                 <th>Nama Siswa</th>
                 <th>Kelas</th>
                 <th>Nama Orang Tua</th>
@@ -284,6 +366,9 @@ const StudentManagement = () => {
             <tbody>
               {filteredStudents.map((student) => (
                 <tr key={student.id}>
+                  <td className="font-mono text-sm text-gray-600">
+                    {student.nis || '-'}
+                  </td>
                   <td className="font-medium text-gray-900">{student.name}</td>
                   <td>
                     <span className="badge badge-secondary">{student.class}</span>
@@ -346,6 +431,7 @@ const StudentManagement = () => {
         onSave={handleSaveStudent}
         student={selectedStudent}
         loading={modalLoading}
+        availableClasses={getAvailableClasses()}
       />
     </div>
   );
