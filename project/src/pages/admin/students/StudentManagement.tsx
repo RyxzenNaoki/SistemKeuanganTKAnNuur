@@ -36,6 +36,7 @@ const StudentManagement = () => {
   const [modalLoading, setModalLoading] = useState(false);
   const [selectedClass, setSelectedClass] = useState('all');
   const [selectedStatus, setSelectedStatus] = useState('all');
+  const [selectedAcademicYear, setSelectedAcademicYear] = useState('all');
 
   // Load students and classes on component mount
   useEffect(() => {
@@ -45,7 +46,7 @@ const StudentManagement = () => {
   // Filter students when search term or filters change
   useEffect(() => {
     filterStudents();
-  }, [students, searchTerm, selectedClass, selectedStatus]);
+  }, [students, searchTerm, selectedClass, selectedStatus, selectedAcademicYear]);
 
   const loadData = async () => {
     try {
@@ -97,15 +98,17 @@ const StudentManagement = () => {
 
   const updateClassStudentCount = async () => {
     try {
-      // Count students by class
+      // Count students by class and academic year
       const classCounts: Record<string, number> = {};
       students.filter(s => s.status === 'active').forEach(student => {
-        classCounts[student.class] = (classCounts[student.class] || 0) + 1;
+        const key = `${student.class}-${student.academicYear}`;
+        classCounts[key] = (classCounts[key] || 0) + 1;
       });
 
       // Update each class with current student count
       const updatePromises = classes.map(async (classItem) => {
-        const currentCount = classCounts[classItem.name] || 0;
+        const key = `${classItem.name}-${classItem.academicYear}`;
+        const currentCount = classCounts[key] || 0;
         if (classItem.studentCount !== currentCount) {
           await updateDoc(doc(db, 'classes', classItem.id), {
             studentCount: currentCount
@@ -131,7 +134,8 @@ const StudentManagement = () => {
         student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         student.class.toLowerCase().includes(searchTerm.toLowerCase()) ||
         student.parentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (student.nis && student.nis.toLowerCase().includes(searchTerm.toLowerCase()))
+        (student.nis && student.nis.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (student.academicYear && student.academicYear.toLowerCase().includes(searchTerm.toLowerCase()))
       );
     }
 
@@ -143,6 +147,11 @@ const StudentManagement = () => {
     // Filter by status
     if (selectedStatus !== 'all') {
       filtered = filtered.filter(student => student.status === selectedStatus);
+    }
+
+    // Filter by academic year
+    if (selectedAcademicYear !== 'all') {
+      filtered = filtered.filter(student => student.academicYear === selectedAcademicYear);
     }
 
     setFilteredStudents(filtered);
@@ -220,6 +229,11 @@ const StudentManagement = () => {
   const getUniqueClasses = () => {
     const classNames = [...new Set(students.map(student => student.class))];
     return classNames.sort();
+  };
+
+  const getUniqueAcademicYears = () => {
+    const academicYears = [...new Set(students.map(student => student.academicYear).filter(Boolean))];
+    return academicYears.sort().reverse(); // Most recent first
   };
 
   if (loading) {
@@ -305,7 +319,7 @@ const StudentManagement = () => {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
             <input
               type="text"
-              placeholder="Cari siswa (nama, NIS, kelas, orang tua)..."
+              placeholder="Cari siswa (nama, NIS, kelas, orang tua, tahun ajaran)..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10 input"
@@ -322,6 +336,17 @@ const StudentManagement = () => {
               <option value="all">Semua Kelas</option>
               {getUniqueClasses().map(className => (
                 <option key={className} value={className}>{className}</option>
+              ))}
+            </select>
+
+            <select
+              value={selectedAcademicYear}
+              onChange={(e) => setSelectedAcademicYear(e.target.value)}
+              className="input min-w-[150px]"
+            >
+              <option value="all">Semua Tahun Ajaran</option>
+              {getUniqueAcademicYears().map(year => (
+                <option key={year} value={year}>{year}</option>
               ))}
             </select>
 
@@ -356,6 +381,7 @@ const StudentManagement = () => {
                 <th>NIS</th>
                 <th>Nama Siswa</th>
                 <th>Kelas</th>
+                <th>Tahun Ajaran</th>
                 <th>Nama Orang Tua</th>
                 <th>Email Orang Tua</th>
                 <th>Status</th>
@@ -372,6 +398,9 @@ const StudentManagement = () => {
                   <td className="font-medium text-gray-900">{student.name}</td>
                   <td>
                     <span className="badge badge-secondary">{student.class}</span>
+                  </td>
+                  <td>
+                    <span className="badge badge-primary">{student.academicYear || '-'}</span>
                   </td>
                   <td>{student.parentName}</td>
                   <td className="text-sm text-gray-600">{student.parentEmail}</td>
@@ -416,7 +445,7 @@ const StudentManagement = () => {
         {filteredStudents.length === 0 && !loading && (
           <div className="text-center py-12">
             <p className="text-gray-500">
-              {searchTerm || selectedClass !== 'all' || selectedStatus !== 'all'
+              {searchTerm || selectedClass !== 'all' || selectedStatus !== 'all' || selectedAcademicYear !== 'all'
                 ? 'Tidak ada siswa yang sesuai dengan filter'
                 : 'Belum ada data siswa'}
             </p>

@@ -16,6 +16,7 @@ const StudentModal = ({ isOpen, onClose, onSave, student, loading = false, avail
     nis: '',
     name: '',
     class: '',
+    academicYear: '',
     parentName: '',
     parentEmail: '',
     parentPhone: '',
@@ -30,12 +31,24 @@ const StudentModal = ({ isOpen, onClose, onSave, student, loading = false, avail
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  // Generate academic year options
+  const getAcademicYearOptions = () => {
+    const currentYear = new Date().getFullYear();
+    const years = [];
+    for (let i = -2; i <= 2; i++) {
+      const year = currentYear + i;
+      years.push(`${year}/${year + 1}`);
+    }
+    return years;
+  };
+
   useEffect(() => {
     if (student) {
       setFormData({
         nis: student.nis || '',
         name: student.name,
         class: student.class,
+        academicYear: student.academicYear || '',
         parentName: student.parentName,
         parentEmail: student.parentEmail,
         parentPhone: student.parentPhone,
@@ -48,10 +61,15 @@ const StudentModal = ({ isOpen, onClose, onSave, student, loading = false, avail
         medicalNotes: student.medicalNotes || '',
       });
     } else {
+      // Set default academic year to current year
+      const currentYear = new Date().getFullYear();
+      const defaultAcademicYear = `${currentYear}/${currentYear + 1}`;
+      
       setFormData({
         nis: '',
         name: '',
         class: '',
+        academicYear: defaultAcademicYear,
         parentName: '',
         parentEmail: '',
         parentPhone: '',
@@ -72,6 +90,7 @@ const StudentModal = ({ isOpen, onClose, onSave, student, loading = false, avail
 
     if (!formData.name.trim()) newErrors.name = 'Nama siswa wajib diisi';
     if (!formData.class.trim()) newErrors.class = 'Kelas wajib diisi';
+    if (!formData.academicYear.trim()) newErrors.academicYear = 'Tahun ajaran wajib diisi';
     if (!formData.parentName.trim()) newErrors.parentName = 'Nama orang tua wajib diisi';
     if (!formData.parentEmail.trim()) newErrors.parentEmail = 'Email orang tua wajib diisi';
     if (!formData.parentPhone.trim()) newErrors.parentPhone = 'Nomor telepon wajib diisi';
@@ -244,6 +263,27 @@ const StudentModal = ({ isOpen, onClose, onSave, student, loading = false, avail
                       Tidak ada kelas tersedia. Silakan tambahkan kelas terlebih dahulu di menu Manajemen Kelas.
                     </p>
                   )}
+                </div>
+
+                {/* Academic Year */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Tahun Ajaran *
+                  </label>
+                  <select
+                    name="academicYear"
+                    value={formData.academicYear}
+                    onChange={handleInputChange}
+                    className={`input ${errors.academicYear ? 'border-error-500' : ''}`}
+                  >
+                    <option value="">Pilih Tahun Ajaran</option>
+                    {getAcademicYearOptions().map(year => (
+                      <option key={year} value={year}>
+                        {year}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.academicYear && <p className="text-error-600 text-xs mt-1">{errors.academicYear}</p>}
                 </div>
 
                 {/* Birth Date */}
