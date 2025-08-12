@@ -41,7 +41,7 @@ const ClassManagement = () => {
   const [students, setStudents] = useState<Student[]>([]);
 
   useEffect(() => {
-    loadData();
+    loadClasses();
   }, []);
 
   const loadData = async () => {
