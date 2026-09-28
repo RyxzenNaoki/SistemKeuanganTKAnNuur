@@ -133,8 +133,10 @@ const RegisterPage = () => {
                     >
                         <option value="parent">Orang Tua</option>
                         <option value="guru">Guru</option>
-                        <option value="admin">Admin</option>
                     </select>
+                    <p className="mt-1 text-xs text-slate-400">
+                        Akun Admin didaftarkan manual oleh pengelola sistem melalui Firebase.
+                    </p>
                 </div>
 
                 {/* Fields khusus untuk Parent */}

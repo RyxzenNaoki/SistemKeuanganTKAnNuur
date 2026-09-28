@@ -8,49 +8,49 @@
   }
   
   body {
-    @apply bg-gray-50 text-gray-900 font-sans;
+    @apply bg-[#F7F9FC] text-slate-800 font-sans;
   }
   
   h1, h2, h3, h4, h5, h6 {
-    @apply font-semibold text-gray-900;
+    @apply font-semibold text-slate-900;
   }
 }
 
 @layer components {
   .btn {
-    @apply px-4 py-2 rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2;
+    @apply px-4 py-2.5 rounded-xl font-medium text-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2;
   }
   
   .btn-primary {
-    @apply bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-500;
+    @apply bg-primary-500 text-white hover:bg-primary-600 focus:ring-primary-400 shadow-soft;
   }
   
   .btn-secondary {
-    @apply bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 focus:ring-primary-500;
+    @apply bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 focus:ring-primary-400;
   }
   
   .btn-accent {
-    @apply bg-accent-500 text-white hover:bg-accent-600 focus:ring-accent-400;
+    @apply bg-accent-400 text-slate-900 hover:bg-accent-500 focus:ring-accent-300 shadow-soft;
   }
   
   .btn-success {
-    @apply bg-success-600 text-white hover:bg-success-700 focus:ring-success-500;
+    @apply bg-success-500 text-white hover:bg-success-600 focus:ring-success-400 shadow-soft;
   }
   
   .btn-error {
-    @apply bg-error-600 text-white hover:bg-error-700 focus:ring-error-500;
+    @apply bg-error-500 text-white hover:bg-error-600 focus:ring-error-400 shadow-soft;
   }
   
   .input {
-    @apply w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500;
+    @apply w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-300 focus:border-primary-400 transition-colors;
   }
   
   .card {
-    @apply bg-white rounded-lg shadow-md overflow-hidden animate-fade-in;
+    @apply bg-white rounded-2xl shadow-soft border border-slate-100 overflow-hidden animate-fade-in;
   }
   
   .table-container {
-    @apply overflow-x-auto rounded-lg shadow-md;
+    @apply overflow-x-auto rounded-2xl shadow-soft border border-slate-100;
   }
   
   .table {
@@ -58,40 +58,48 @@
   }
   
   .table thead {
-    @apply bg-gray-100;
+    @apply bg-slate-50;
   }
   
   .table th {
-    @apply px-6 py-3 font-medium text-gray-700;
+    @apply px-6 py-3 font-medium text-slate-500 text-xs uppercase tracking-wide;
   }
   
   .table td {
-    @apply px-6 py-4 border-t border-gray-200;
+    @apply px-6 py-4 border-t border-slate-100;
   }
   
   .badge {
-    @apply px-2 py-1 text-xs font-medium rounded-full;
+    @apply px-2.5 py-1 text-xs font-medium rounded-full;
   }
   
   .badge-primary {
-    @apply bg-primary-100 text-primary-800;
+    @apply bg-primary-100 text-primary-700;
+  }
+  
+  .badge-secondary {
+    @apply bg-secondary-100 text-secondary-700;
+  }
+  
+  .badge-accent {
+    @apply bg-accent-100 text-accent-800;
   }
   
   .badge-success {
-    @apply bg-success-100 text-success-800;
+    @apply bg-success-100 text-success-700;
   }
   
   .badge-warning {
-    @apply bg-warning-100 text-warning-800;
+    @apply bg-warning-100 text-warning-700;
   }
   
   .badge-error {
-    @apply bg-error-100 text-error-800;
+    @apply bg-error-100 text-error-700;
   }
 }
 
 .sidebar-menu-item {
-  @apply flex items-center gap-2 px-4 py-3 text-sm font-medium rounded-md transition-all;
+  @apply flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-xl transition-all;
 }
 
 .sidebar-menu-item.active {
@@ -99,7 +107,7 @@
 }
 
 .sidebar-menu-item:not(.active) {
-  @apply text-gray-600 hover:bg-gray-100;
+  @apply text-slate-500 hover:bg-slate-50 hover:text-slate-700;
 }
 
 .page-transition {
@@ -107,5 +115,18 @@
 }
 
 .dropdown-menu {
-  @apply absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 py-1 z-50 animate-slide-down;
+  @apply absolute right-0 mt-2 w-56 rounded-2xl shadow-soft-lg bg-white ring-1 ring-slate-100 py-1.5 z-50 animate-slide-down;
+}
+
+/* Kartu ringkasan dashboard bergaya pastel bergradasi lembut */
+.stat-card-blue {
+  @apply bg-gradient-to-br from-primary-50 to-white border border-primary-100;
+}
+
+.stat-card-pink {
+  @apply bg-gradient-to-br from-secondary-50 to-white border border-secondary-100;
+}
+
+.stat-card-yellow {
+  @apply bg-gradient-to-br from-accent-50 to-white border border-accent-100;
 }

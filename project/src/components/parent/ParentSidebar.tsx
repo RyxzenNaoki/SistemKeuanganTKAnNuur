@@ -6,6 +6,7 @@ import {
   MessageSquare,
   GraduationCap
 } from 'lucide-react';
+import { APP_NAME } from '../../config/branding';
 
 interface ParentSidebarProps {
   isOpen: boolean;
@@ -32,21 +33,24 @@ const ParentSidebar = ({ isOpen, setIsOpen }: ParentSidebarProps) => {
 
       {/* Sidebar */}
       <div 
-        className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform ${
+        className={`fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-slate-100 transform ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         } lg:translate-x-0 transition-transform duration-300 ease-in-out lg:z-30`}
       >
         {/* Sidebar header */}
-        <div className="h-16 flex items-center justify-between px-4 border-b border-gray-200">
-          <div className="flex items-center space-x-2">
-            <div className="bg-primary-600 p-1.5 rounded-md">
+        <div className="h-16 flex items-center justify-between px-4 border-b border-slate-100">
+          <div className="flex items-center space-x-2.5">
+            <div className="bg-gradient-to-br from-primary-400 to-secondary-400 p-1.5 rounded-xl shadow-soft">
               <GraduationCap className="h-6 w-6 text-white" />
             </div>
-            <span className="font-semibold text-lg text-gray-900">TK An Nuur Rumah Cahaya</span>
+            <div className="leading-tight">
+              <p className="font-bold text-base text-slate-900">{APP_NAME}</p>
+              <p className="text-[11px] text-slate-400">TK An Nuur Rumah Cahaya</p>
+            </div>
           </div>
           <button
             onClick={() => setIsOpen(false)}
-            className="lg:hidden text-gray-500 hover:text-gray-700 focus:outline-none"
+            className="lg:hidden text-slate-400 hover:text-slate-600 focus:outline-none"
           >
             <X className="h-5 w-5" />
           </button>

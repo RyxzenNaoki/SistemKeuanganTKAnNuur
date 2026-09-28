@@ -19,7 +19,7 @@ import {
 import { useNavigate, useLocation } from 'react-router-dom';
 import { auth, db } from '../firebase/config';
 
-type UserRole = 'admin' | 'bendahara' | 'parent' | 'guru' | null;
+type UserRole = 'admin' | 'parent' | 'guru' | null;
 
 interface AuthContextType {
   currentUser: User | null;

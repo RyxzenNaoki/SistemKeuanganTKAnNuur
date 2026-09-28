@@ -32,14 +32,14 @@ const ParentHeader = ({ onMenuButtonClick }: ParentHeaderProps) => {
   }, []);
 
   return (
-    <header className="bg-white shadow-sm lg:static">
+    <header className="bg-white border-b border-slate-100 lg:static">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="relative flex justify-between h-16">
           <div className="flex items-center">
             {/* Mobile menu button */}
             <button
               onClick={onMenuButtonClick}
-              className="lg:hidden -ml-0.5 -mt-0.5 h-12 w-12 inline-flex items-center justify-center rounded-md text-gray-500 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500"
+              className="lg:hidden -ml-0.5 -mt-0.5 h-12 w-12 inline-flex items-center justify-center rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-400"
             >
               <span className="sr-only">Open sidebar</span>
               <Menu className="h-6 w-6" aria-hidden="true" />
@@ -47,7 +47,7 @@ const ParentHeader = ({ onMenuButtonClick }: ParentHeaderProps) => {
             
             {/* Page title - desktop only */}
             <div className="hidden lg:flex lg:items-center">
-              <h1 className="text-2xl font-semibold text-gray-900">
+              <h1 className="text-2xl font-semibold text-slate-900">
                 Portal Orang Tua
               </h1>
             </div>
@@ -58,7 +58,7 @@ const ParentHeader = ({ onMenuButtonClick }: ParentHeaderProps) => {
             <div className="relative" ref={notificationsRef}>
               <button
                 onClick={() => setNotificationsOpen(!notificationsOpen)}
-                className="p-1 rounded-full text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+                className="p-2 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-400"
               >
                 <span className="sr-only">View notifications</span>
                 <Bell className="h-6 w-6" />
@@ -99,12 +99,12 @@ const ParentHeader = ({ onMenuButtonClick }: ParentHeaderProps) => {
                 onClick={() => setUserMenuOpen(!userMenuOpen)}
                 className="flex items-center space-x-2 focus:outline-none"
               >
-                <div className="h-8 w-8 rounded-full bg-primary-600 flex items-center justify-center">
+                <div className="h-8 w-8 rounded-full bg-gradient-to-br from-secondary-400 to-accent-400 flex items-center justify-center">
                   <span className="text-sm font-medium text-white">
                     {currentUser?.email?.[0].toUpperCase() || 'P'}
                   </span>
                 </div>
-                <span className="hidden md:block text-sm font-medium text-gray-700">
+                <span className="hidden md:block text-sm font-medium text-slate-600">
                   {currentUser?.email?.split('@')[0] || 'Orang Tua'}
                 </span>
               </button>
@@ -113,7 +113,7 @@ const ParentHeader = ({ onMenuButtonClick }: ParentHeaderProps) => {
                 <div className="dropdown-menu">
                   <Link
                     to="#"
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    className="block px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 rounded-lg mx-1.5"
                   >
                     <div className="flex items-center">
                       <User className="h-4 w-4 mr-2" />
@@ -122,7 +122,7 @@ const ParentHeader = ({ onMenuButtonClick }: ParentHeaderProps) => {
                   </Link>
                   <Link
                     to="#"
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    className="block px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 rounded-lg mx-1.5"
                   >
                     <div className="flex items-center">
                       <Settings className="h-4 w-4 mr-2" />
@@ -131,7 +131,7 @@ const ParentHeader = ({ onMenuButtonClick }: ParentHeaderProps) => {
                   </Link>
                   <button
                     onClick={() => signOut()}
-                    className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    className="block w-full text-left px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 rounded-lg mx-1.5"
                   >
                     <div className="flex items-center">
                       <LogOut className="h-4 w-4 mr-2" />
