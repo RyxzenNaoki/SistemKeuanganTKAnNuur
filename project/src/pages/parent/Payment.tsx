@@ -59,14 +59,14 @@ const Payment = () => {
           {loading ? (
             <p>Memuat data...</p>
           ) : history.length === 0 ? (
-            <p className="text-gray-500">Belum ada riwayat pembayaran</p>
+            <p className="text-slate-500">Belum ada riwayat pembayaran</p>
           ) : (
             history.map(payment => (
               <div key={payment.id} className="card p-4 relative">
-                <h2 className="font-semibold text-lg text-gray-800">{payment.paymentType}</h2>
-                <p className="text-sm text-gray-600">Rp {payment.amount.toLocaleString()}</p>
-                <p className="text-sm text-gray-500">{dayjs(payment.date).format('DD MMM YYYY')}</p>
-                {payment.notes && <p className="text-sm text-gray-400 italic">Catatan: {payment.notes}</p>}
+                <h2 className="font-semibold text-lg text-slate-800">{payment.paymentType}</h2>
+                <p className="text-sm text-slate-600">Rp {payment.amount.toLocaleString()}</p>
+                <p className="text-sm text-slate-500">{dayjs(payment.date).format('DD MMM YYYY')}</p>
+                {payment.notes && <p className="text-sm text-slate-400 italic">Catatan: {payment.notes}</p>}
               </div>
             ))
           )}
@@ -75,7 +75,7 @@ const Payment = () => {
         <div className="space-y-6">
           <div className="card p-4">
             <h2 className="text-lg font-semibold mb-2">Informasi Rekening Sekolah</h2>
-            <ul className="text-sm text-gray-700 space-y-1">
+            <ul className="text-sm text-slate-700 space-y-1">
               <li><strong>Bank:</strong> BNI</li>
               <li><strong>Atas Nama:</strong> Rita Ayu Bulan Trisna</li>
               <li><strong>No. Rekening:</strong> 0795834521</li>
@@ -85,7 +85,7 @@ const Payment = () => {
 
           <div className="card p-4">
             <h2 className="text-lg font-semibold mb-2">Keterangan</h2>
-            <ul className="text-sm text-gray-700 space-y-1">
+            <ul className="text-sm text-slate-700 space-y-1">
               <li>1. Uang sarana prasarana (Gedung) bisa diangsur selama <strong>3 Bulan</strong></li>
               <li>2. SPP bulanan sebesar Rp 250.000 (terdiri dari SPP, makan sehat, tabungan pentas seni)</li>
               <li>3. Hari efektif: <strong>Senin s.d. Jumat</strong></li>

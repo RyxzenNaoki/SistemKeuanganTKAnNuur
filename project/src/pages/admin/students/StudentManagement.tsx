@@ -1,3 +1,4 @@
+import { SCHOOL_NAME } from '../../../config/branding';
 import { useState, useEffect } from 'react';
 import { PlusCircle, Search, Edit2, Trash2, CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import { Student } from '../../../services/studentService';
@@ -241,7 +242,7 @@ const StudentManagement = () => {
       <div className="page-transition">
         <div className="flex items-center justify-center py-12">
           <Loader2 className="h-8 w-8 animate-spin text-primary-600" />
-          <span className="ml-2 text-gray-600">Memuat data siswa...</span>
+          <span className="ml-2 text-slate-600">Memuat data siswa...</span>
         </div>
       </div>
     );
@@ -250,8 +251,8 @@ const StudentManagement = () => {
   return (
     <div className="page-transition">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Data Siswa</h1>
-        <p className="text-gray-600">Kelola data siswa TK An Nuur Rumah Cahaya</p>
+        <h1 className="text-2xl font-bold text-slate-900">Data Siswa</h1>
+        <p className="text-slate-600">Kelola data siswa {SCHOOL_NAME}</p>
       </div>
 
       {/* Summary Cards */}
@@ -259,10 +260,10 @@ const StudentManagement = () => {
         <div className="card p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-500">Total Siswa</p>
-              <p className="text-2xl font-bold text-gray-900">{students.length}</p>
+              <p className="text-sm font-medium text-slate-500">Total Siswa</p>
+              <p className="text-2xl font-bold text-slate-900">{students.length}</p>
             </div>
-            <div className="p-2 bg-primary-100 rounded-lg">
+            <div className="p-2 bg-primary-100 rounded-xl">
               <CheckCircle className="h-6 w-6 text-primary-600" />
             </div>
           </div>
@@ -271,12 +272,12 @@ const StudentManagement = () => {
         <div className="card p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-500">Siswa Aktif</p>
+              <p className="text-sm font-medium text-slate-500">Siswa Aktif</p>
               <p className="text-2xl font-bold text-success-600">
                 {students.filter(s => s.status === 'active').length}
               </p>
             </div>
-            <div className="p-2 bg-success-100 rounded-lg">
+            <div className="p-2 bg-success-100 rounded-xl">
               <CheckCircle className="h-6 w-6 text-success-600" />
             </div>
           </div>
@@ -285,13 +286,13 @@ const StudentManagement = () => {
         <div className="card p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-500">Alumni</p>
-              <p className="text-2xl font-bold text-gray-600">
+              <p className="text-sm font-medium text-slate-500">Alumni</p>
+              <p className="text-2xl font-bold text-slate-600">
                 {students.filter(s => s.status === 'alumni').length}
               </p>
             </div>
-            <div className="p-2 bg-gray-100 rounded-lg">
-              <XCircle className="h-6 w-6 text-gray-600" />
+            <div className="p-2 bg-slate-100 rounded-xl">
+              <XCircle className="h-6 w-6 text-slate-600" />
             </div>
           </div>
         </div>
@@ -299,12 +300,12 @@ const StudentManagement = () => {
         <div className="card p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-500">Total Kelas</p>
+              <p className="text-sm font-medium text-slate-500">Total Kelas</p>
               <p className="text-2xl font-bold text-primary-600">
                 {getUniqueClasses().length}
               </p>
             </div>
-            <div className="p-2 bg-primary-100 rounded-lg">
+            <div className="p-2 bg-primary-100 rounded-xl">
               <CheckCircle className="h-6 w-6 text-primary-600" />
             </div>
           </div>
@@ -316,7 +317,7 @@ const StudentManagement = () => {
         <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
           {/* Search */}
           <div className="relative flex-1 min-w-[200px]">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
             <input
               type="text"
               placeholder="Cari siswa (nama, NIS, kelas, orang tua, tahun ajaran)..."
@@ -392,10 +393,10 @@ const StudentManagement = () => {
             <tbody>
               {filteredStudents.map((student) => (
                 <tr key={student.id}>
-                  <td className="font-mono text-sm text-gray-600">
+                  <td className="font-mono text-sm text-slate-600">
                     {student.nis || '-'}
                   </td>
-                  <td className="font-medium text-gray-900">{student.name}</td>
+                  <td className="font-medium text-slate-900">{student.name}</td>
                   <td>
                     <span className="badge badge-secondary">{student.class}</span>
                   </td>
@@ -403,7 +404,7 @@ const StudentManagement = () => {
                     <span className="badge badge-primary">{student.academicYear || '-'}</span>
                   </td>
                   <td>{student.parentName}</td>
-                  <td className="text-sm text-gray-600">{student.parentEmail}</td>
+                  <td className="text-sm text-slate-600">{student.parentEmail}</td>
                   <td>
                     {student.status === 'active' ? (
                       <span className="badge badge-success flex items-center w-fit">
@@ -422,14 +423,14 @@ const StudentManagement = () => {
                     <div className="flex items-center space-x-2">
                       <button
                         onClick={() => handleEditStudent(student)}
-                        className="p-1 text-gray-500 hover:text-primary-600 transition-colors"
+                        className="p-1 text-slate-500 hover:text-primary-600 transition-colors"
                         title="Edit"
                       >
                         <Edit2 className="h-4 w-4" />
                       </button>
                       <button
                         onClick={() => handleDeleteStudent(student)}
-                        className="p-1 text-gray-500 hover:text-error-600 transition-colors"
+                        className="p-1 text-slate-500 hover:text-error-600 transition-colors"
                         title="Hapus"
                       >
                         <Trash2 className="h-4 w-4" />
@@ -444,7 +445,7 @@ const StudentManagement = () => {
 
         {filteredStudents.length === 0 && !loading && (
           <div className="text-center py-12">
-            <p className="text-gray-500">
+            <p className="text-slate-500">
               {searchTerm || selectedClass !== 'all' || selectedStatus !== 'all' || selectedAcademicYear !== 'all'
                 ? 'Tidak ada siswa yang sesuai dengan filter'
                 : 'Belum ada data siswa'}
@@ -466,4 +467,4 @@ const StudentManagement = () => {
   );
 };
 
-export default StudentManagement;
+export default StudentManagement;

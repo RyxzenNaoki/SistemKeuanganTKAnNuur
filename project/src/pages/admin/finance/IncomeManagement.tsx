@@ -166,24 +166,24 @@ const IncomeManagement = () => {
   return (
     <div className="page-transition">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Manajemen Pemasukan</h1>
-        <p className="text-gray-600">Kelola data pemasukan keuangan sekolah</p>
+        <h1 className="text-2xl font-bold text-slate-900">Manajemen Pemasukan</h1>
+        <p className="text-slate-600">Kelola data pemasukan keuangan sekolah</p>
       </div>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
         <div className="card p-4">
-          <h3 className="text-sm font-medium text-gray-500 mb-2">Total Pemasukan</h3>
-          <p className="text-2xl font-bold text-gray-900">{formatCurrency(totalIncome)}</p>
+          <h3 className="text-sm font-medium text-slate-500 mb-2">Total Pemasukan</h3>
+          <p className="text-2xl font-bold text-slate-900">{formatCurrency(totalIncome)}</p>
           <div className="mt-2 text-sm text-success-600">Periode yang dipilih</div>
         </div>
         <div className="card p-4">
-          <h3 className="text-sm font-medium text-gray-500 mb-2">Terverifikasi</h3>
+          <h3 className="text-sm font-medium text-slate-500 mb-2">Terverifikasi</h3>
           <p className="text-2xl font-bold text-success-600">{verifiedCount}</p>
-          <div className="mt-2 text-sm text-gray-600">dari {filteredIncomes.length} transaksi</div>
+          <div className="mt-2 text-sm text-slate-600">dari {filteredIncomes.length} transaksi</div>
         </div>
         <div className="card p-4">
-          <h3 className="text-sm font-medium text-gray-500 mb-2">Menunggu Verifikasi</h3>
+          <h3 className="text-sm font-medium text-slate-500 mb-2">Menunggu Verifikasi</h3>
           <p className="text-2xl font-bold text-warning-600">{pendingCount}</p>
           <div className="mt-2 text-sm text-warning-600">Perlu ditinjau</div>
         </div>
@@ -194,7 +194,7 @@ const IncomeManagement = () => {
         <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
           {/* Search */}
           <div className="relative flex-1 min-w-[200px]">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
             <input
               type="text"
               placeholder="Cari pemasukan..."
@@ -288,21 +288,21 @@ const IncomeManagement = () => {
                     <div className="flex items-center space-x-2">
                       <button
                         onClick={() => {/* Handle view receipt */ }}
-                        className="p-1 text-gray-500 hover:text-primary-600 transition-colors"
+                        className="p-1 text-slate-500 hover:text-primary-600 transition-colors"
                         title="Lihat Kwitansi"
                       >
                         <FileText className="h-4 w-4" />
                       </button>
                       <button
                         onClick={() => handleEditIncome(income)}
-                        className="p-1 text-gray-500 hover:text-primary-600 transition-colors"
+                        className="p-1 text-slate-500 hover:text-primary-600 transition-colors"
                         title="Edit"
                       >
                         <Edit2 className="h-4 w-4" />
                       </button>
                       <button
                         onClick={() => handleDeleteIncome(income)}
-                        className="p-1 text-gray-500 hover:text-error-600 transition-colors"
+                        className="p-1 text-slate-500 hover:text-error-600 transition-colors"
                         title="Hapus"
                       >
                         <Trash2 className="h-4 w-4" />
@@ -317,7 +317,7 @@ const IncomeManagement = () => {
 
         {filteredIncomes.length === 0 && (
           <div className="text-center py-12">
-            <p className="text-gray-500">Tidak ada data pemasukan yang ditemukan</p>
+            <p className="text-slate-500">Tidak ada data pemasukan yang ditemukan</p>
           </div>
         )}
       </div>
@@ -334,4 +334,4 @@ const IncomeManagement = () => {
   );
 };
 
-export default IncomeManagement;
+export default IncomeManagement;

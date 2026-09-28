@@ -197,8 +197,8 @@ const ClassManagement = () => {
   return (
     <div className="page-transition">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Data Kelas</h1>
-        <p className="text-gray-600">Kelola data kelas TK Ceria</p>
+        <h1 className="text-2xl font-bold text-slate-900">Data Kelas</h1>
+        <p className="text-slate-600">Kelola data kelas TK Ceria</p>
       </div>
 
       {/* Summary Cards */}
@@ -206,10 +206,10 @@ const ClassManagement = () => {
         <div className="card p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-500">Total Kelas</p>
-              <p className="text-2xl font-bold text-gray-900">{classes.length}</p>
+              <p className="text-sm font-medium text-slate-500">Total Kelas</p>
+              <p className="text-2xl font-bold text-slate-900">{classes.length}</p>
             </div>
-            <div className="p-2 bg-primary-100 rounded-lg">
+            <div className="p-2 bg-primary-100 rounded-xl">
               <Users className="h-6 w-6 text-primary-600" />
             </div>
           </div>
@@ -218,12 +218,12 @@ const ClassManagement = () => {
         <div className="card p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-500">Total Siswa Aktif</p>
+              <p className="text-sm font-medium text-slate-500">Total Siswa Aktif</p>
               <p className="text-2xl font-bold text-success-600">
                 {students.filter(s => s.status === 'active').length}
               </p>
             </div>
-            <div className="p-2 bg-success-100 rounded-lg">
+            <div className="p-2 bg-success-100 rounded-xl">
               <Users className="h-6 w-6 text-success-600" />
             </div>
           </div>
@@ -232,12 +232,12 @@ const ClassManagement = () => {
         <div className="card p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-500">Kapasitas Total</p>
+              <p className="text-sm font-medium text-slate-500">Kapasitas Total</p>
               <p className="text-2xl font-bold text-primary-600">
                 {classes.reduce((sum, cls) => sum + cls.capacity, 0)}
               </p>
             </div>
-            <div className="p-2 bg-primary-100 rounded-lg">
+            <div className="p-2 bg-primary-100 rounded-xl">
               <Users className="h-6 w-6 text-primary-600" />
             </div>
           </div>
@@ -246,7 +246,7 @@ const ClassManagement = () => {
         <div className="card p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-500">Tingkat Hunian</p>
+              <p className="text-sm font-medium text-slate-500">Tingkat Hunian</p>
               <p className="text-2xl font-bold text-warning-600">
                 {classes.reduce((sum, cls) => sum + cls.capacity, 0) > 0 
                   ? Math.round((students.filter(s => s.status === 'active').length / 
@@ -254,7 +254,7 @@ const ClassManagement = () => {
                   : 0}%
               </p>
             </div>
-            <div className="p-2 bg-warning-100 rounded-lg">
+            <div className="p-2 bg-warning-100 rounded-xl">
               <Users className="h-6 w-6 text-warning-600" />
             </div>
           </div>
@@ -265,7 +265,7 @@ const ClassManagement = () => {
       <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         {/* Search */}
         <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
           <input
             type="text"
             placeholder="Cari kelas, guru, atau tahun ajaran..."
@@ -295,20 +295,20 @@ const ClassManagement = () => {
             <div key={cls.id} className="card p-6">
               <div className="flex justify-between items-start mb-4">
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900">{cls.name}</h3>
-                  <p className="text-gray-600 text-sm mt-1">{cls.teacher}</p>
+                  <h3 className="text-lg font-semibold text-slate-900">{cls.name}</h3>
+                  <p className="text-slate-600 text-sm mt-1">{cls.teacher}</p>
                 </div>
                 <div className="flex space-x-2">
                   <button
                     onClick={() => handleEditClass(cls)}
-                    className="p-1 text-gray-500 hover:text-primary-600 transition-colors"
+                    className="p-1 text-slate-500 hover:text-primary-600 transition-colors"
                     title="Edit"
                   >
                     <Edit2 className="h-4 w-4" />
                   </button>
                   <button
                     onClick={() => handleDeleteClass(cls)}
-                    className="p-1 text-gray-500 hover:text-error-600 transition-colors"
+                    className="p-1 text-slate-500 hover:text-error-600 transition-colors"
                     title="Hapus"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -317,12 +317,12 @@ const ClassManagement = () => {
               </div>
 
               <div className="space-y-3">
-                <div className="flex items-center text-gray-700">
+                <div className="flex items-center text-slate-700">
                   <Users className="h-5 w-5 mr-2" />
                   <span>{actualStudentCount}/{cls.capacity} Siswa</span>
                 </div>
 
-                <div className="w-full bg-gray-200 rounded-full h-2">
+                <div className="w-full bg-slate-200 rounded-full h-2">
                   <div 
                     className={`h-2 rounded-full transition-all ${
                       occupancyPercentage > 90 ? 'bg-red-500' : 
@@ -334,14 +334,14 @@ const ClassManagement = () => {
                 </div>
 
                 {cls.description && (
-                  <p className="text-sm text-gray-600">{cls.description}</p>
+                  <p className="text-sm text-slate-600">{cls.description}</p>
                 )}
               </div>
 
-              <div className="mt-4 pt-4 border-t border-gray-200">
+              <div className="mt-4 pt-4 border-t border-slate-200">
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Tahun Ajaran</span>
-                  <span className="font-medium text-gray-900">{cls.academicYear}</span>
+                  <span className="text-slate-600">Tahun Ajaran</span>
+                  <span className="font-medium text-slate-900">{cls.academicYear}</span>
                 </div>
                 {occupancyPercentage > 100 && (
                   <div className="mt-2">
@@ -358,9 +358,9 @@ const ClassManagement = () => {
 
       {filteredClasses.length === 0 && (
         <div className="text-center py-12">
-          <Users className="mx-auto h-12 w-12 text-gray-400" />
-          <h3 className="mt-2 text-sm font-medium text-gray-900">Tidak ada data kelas</h3>
-          <p className="mt-1 text-sm text-gray-500">
+          <Users className="mx-auto h-12 w-12 text-slate-400" />
+          <h3 className="mt-2 text-sm font-medium text-slate-900">Tidak ada data kelas</h3>
+          <p className="mt-1 text-sm text-slate-500">
             {searchTerm ? 'Tidak ada kelas yang sesuai dengan pencarian' : 'Belum ada kelas yang ditambahkan'}
           </p>
         </div>
@@ -378,4 +378,4 @@ const ClassManagement = () => {
   );
 };
 
-export default ClassManagement;
+export default ClassManagement;

@@ -6,7 +6,7 @@ import {
   MessageSquare,
   GraduationCap
 } from 'lucide-react';
-import { APP_NAME } from '../../config/branding';
+import { APP_NAME, SCHOOL_NAME } from '../../config/branding';
 
 interface ParentSidebarProps {
   isOpen: boolean;
@@ -26,7 +26,7 @@ const ParentSidebar = ({ isOpen, setIsOpen }: ParentSidebarProps) => {
       {/* Mobile sidebar overlay */}
       {isOpen && (
         <div 
-          className="fixed inset-0 z-40 bg-gray-600 bg-opacity-75 lg:hidden"
+          className="fixed inset-0 z-40 bg-slate-600 bg-opacity-75 lg:hidden"
           onClick={() => setIsOpen(false)}
         />
       )}
@@ -45,7 +45,7 @@ const ParentSidebar = ({ isOpen, setIsOpen }: ParentSidebarProps) => {
             </div>
             <div className="leading-tight">
               <p className="font-bold text-base text-slate-900">{APP_NAME}</p>
-              <p className="text-[11px] text-slate-400">TK An Nuur Rumah Cahaya</p>
+              <p className="text-[11px] text-slate-400">{SCHOOL_NAME}</p>
             </div>
           </div>
           <button
@@ -92,4 +92,4 @@ const ParentSidebar = ({ isOpen, setIsOpen }: ParentSidebarProps) => {
   );
 };
 
-export default ParentSidebar;
+export default ParentSidebar;

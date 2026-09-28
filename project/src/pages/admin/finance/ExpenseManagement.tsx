@@ -152,8 +152,8 @@ const ExpenseManagement = () => {
   return (
     <div className="page-transition">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Manajemen Pengeluaran</h1>
-        <p className="text-gray-600">Kelola dan pantau pengeluaran sekolah</p>
+        <h1 className="text-2xl font-bold text-slate-900">Manajemen Pengeluaran</h1>
+        <p className="text-slate-600">Kelola dan pantau pengeluaran sekolah</p>
       </div>
 
       {/* Summary Cards */}
@@ -166,7 +166,7 @@ const ExpenseManagement = () => {
                 {formatCurrency(totalExpenses)}
               </p>
             </div>
-            <div className="p-2 bg-error-200 rounded-lg">
+            <div className="p-2 bg-error-200 rounded-xl">
               <TrendingDown className="h-6 w-6 text-error-600" />
             </div>
           </div>
@@ -178,42 +178,42 @@ const ExpenseManagement = () => {
 
         <div className="card p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-medium text-gray-900">Status Pengeluaran</h3>
-            <FileText className="h-5 w-5 text-gray-400" />
+            <h3 className="text-sm font-medium text-slate-900">Status Pengeluaran</h3>
+            <FileText className="h-5 w-5 text-slate-400" />
           </div>
           <div className="space-y-2">
             <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Approved</span>
+              <span className="text-sm text-slate-600">Approved</span>
               <span className="text-sm font-medium text-success-600">{approvedCount}</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Pending</span>
+              <span className="text-sm text-slate-600">Pending</span>
               <span className="text-sm font-medium text-warning-600">{pendingCount}</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Total</span>
-              <span className="text-sm font-medium text-gray-900">{expenses.length}</span>
+              <span className="text-sm text-slate-600">Total</span>
+              <span className="text-sm font-medium text-slate-900">{expenses.length}</span>
             </div>
           </div>
         </div>
 
         <div className="card p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-medium text-gray-900">Kategori Teratas</h3>
-            <FileText className="h-5 w-5 text-gray-400" />
+            <h3 className="text-sm font-medium text-slate-900">Kategori Teratas</h3>
+            <FileText className="h-5 w-5 text-slate-400" />
           </div>
           <div className="space-y-2">
             <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Utilitas</span>
-              <span className="text-sm font-medium text-gray-900">35%</span>
+              <span className="text-sm text-slate-600">Utilitas</span>
+              <span className="text-sm font-medium text-slate-900">35%</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Maintenance</span>
-              <span className="text-sm font-medium text-gray-900">30%</span>
+              <span className="text-sm text-slate-600">Maintenance</span>
+              <span className="text-sm font-medium text-slate-900">30%</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">ATK</span>
-              <span className="text-sm font-medium text-gray-900">20%</span>
+              <span className="text-sm text-slate-600">ATK</span>
+              <span className="text-sm font-medium text-slate-900">20%</span>
             </div>
           </div>
         </div>
@@ -224,7 +224,7 @@ const ExpenseManagement = () => {
         <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
           {/* Search */}
           <div className="relative flex-1 min-w-[200px]">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
             <input
               type="text"
               placeholder="Cari pengeluaran..."
@@ -236,7 +236,7 @@ const ExpenseManagement = () => {
 
           {/* Category Filter */}
           <div className="relative min-w-[200px]">
-            <Filter className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <Filter className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
@@ -286,7 +286,7 @@ const ExpenseManagement = () => {
             <tbody>
               {filteredExpenses.map((expense) => (
                 <tr key={expense.id}>
-                  <td className="font-medium text-gray-900">{expense.description}</td>
+                  <td className="font-medium text-slate-900">{expense.description}</td>
                   <td>
                     <span className="badge badge-secondary">{expense.category}</span>
                   </td>
@@ -306,14 +306,14 @@ const ExpenseManagement = () => {
                     <div className="flex items-center space-x-2">
                       <button
                         onClick={() => handleEditExpense(expense)}
-                        className="p-1 text-gray-500 hover:text-primary-600 transition-colors"
+                        className="p-1 text-slate-500 hover:text-primary-600 transition-colors"
                         title="Edit"
                       >
                         <Edit2 className="h-4 w-4" />
                       </button>
                       <button
                         onClick={() => handleDeleteExpense(expense)}
-                        className="p-1 text-gray-500 hover:text-error-600 transition-colors"
+                        className="p-1 text-slate-500 hover:text-error-600 transition-colors"
                         title="Hapus"
                       >
                         <Trash2 className="h-4 w-4" />
@@ -328,9 +328,9 @@ const ExpenseManagement = () => {
 
         {filteredExpenses.length === 0 && (
           <div className="text-center py-12">
-            <TrendingDown className="mx-auto h-12 w-12 text-gray-400" />
-            <h3 className="mt-2 text-sm font-medium text-gray-900">Tidak ada data pengeluaran</h3>
-            <p className="mt-1 text-sm text-gray-500">
+            <TrendingDown className="mx-auto h-12 w-12 text-slate-400" />
+            <h3 className="mt-2 text-sm font-medium text-slate-900">Tidak ada data pengeluaran</h3>
+            <p className="mt-1 text-sm text-slate-500">
               {searchTerm || selectedCategory !== 'all'
                 ? 'Tidak ada pengeluaran yang sesuai dengan filter'
                 : 'Mulai dengan menambahkan pengeluaran baru.'}
@@ -351,4 +351,4 @@ const ExpenseManagement = () => {
   );
 };
 
-export default ExpenseManagement;
+export default ExpenseManagement;

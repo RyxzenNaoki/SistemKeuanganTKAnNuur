@@ -89,8 +89,8 @@ const NotificationManagement = () => {
     <div className="page-transition">
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Manajemen Pemberitahuan</h1>
-          <p className="text-gray-600">Tambah atau tinjau pemberitahuan yang akan tampil di dashboard</p>
+          <h1 className="text-2xl font-bold text-slate-900">Manajemen Pemberitahuan</h1>
+          <p className="text-slate-600">Tambah atau tinjau pemberitahuan yang akan tampil di dashboard</p>
         </div>
         <button
           onClick={() => setShowModal(true)}
@@ -106,7 +106,7 @@ const NotificationManagement = () => {
           <Loader2 className="h-6 w-6 animate-spin text-primary-600" />
         </div>
       ) : notifications.length === 0 ? (
-        <div className="text-center py-10 text-gray-500">Belum ada pemberitahuan</div>
+        <div className="text-center py-10 text-slate-500">Belum ada pemberitahuan</div>
       ) : (
         <div className="grid grid-cols-1 gap-4">
           {notifications.map((notif) => (
@@ -118,9 +118,9 @@ const NotificationManagement = () => {
                 Hapus
               </button>
 
-              <h3 className="text-lg font-semibold text-gray-800">{notif.title}</h3>
-              <p className="text-gray-600 text-sm mb-1">{notif.message}</p>
-              <p className="text-xs text-gray-400">
+              <h3 className="text-lg font-semibold text-slate-800">{notif.title}</h3>
+              <p className="text-slate-600 text-sm mb-1">{notif.message}</p>
+              <p className="text-xs text-slate-400">
                 {notif.createdAt ? dayjs(notif.createdAt).format('DD MMM YYYY, HH:mm') : '-'}
               </p>
             </div>

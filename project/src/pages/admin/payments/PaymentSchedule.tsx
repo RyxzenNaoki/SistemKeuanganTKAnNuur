@@ -175,8 +175,8 @@ const getAutoStatus = (dueDate: Date, currentStatus: string): Payment['status'] 
   return (
     <div className="page-transition">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Jadwal Pembayaran</h1>
-        <p className="text-gray-600">Kelola jadwal dan status pembayaran siswa</p>
+        <h1 className="text-2xl font-bold text-slate-900">Jadwal Pembayaran</h1>
+        <p className="text-slate-600">Kelola jadwal dan status pembayaran siswa</p>
       </div>
 
       {/* Summary Cards */}
@@ -184,10 +184,10 @@ const getAutoStatus = (dueDate: Date, currentStatus: string): Payment['status'] 
         <div className="card p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-500">Total Jadwal</p>
-              <p className="text-2xl font-bold text-gray-900">{payments.length}</p>
+              <p className="text-sm font-medium text-slate-500">Total Jadwal</p>
+              <p className="text-2xl font-bold text-slate-900">{payments.length}</p>
             </div>
-            <div className="p-2 bg-primary-100 rounded-lg">
+            <div className="p-2 bg-primary-100 rounded-xl">
               <Calendar className="h-6 w-6 text-primary-600" />
             </div>
           </div>
@@ -196,10 +196,10 @@ const getAutoStatus = (dueDate: Date, currentStatus: string): Payment['status'] 
         <div className="card p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-500">Akan Datang</p>
+              <p className="text-sm font-medium text-slate-500">Akan Datang</p>
               <p className="text-2xl font-bold text-warning-600">{upcomingCount}</p>
             </div>
-            <div className="p-2 bg-warning-100 rounded-lg">
+            <div className="p-2 bg-warning-100 rounded-xl">
               <Clock className="h-6 w-6 text-warning-600" />
             </div>
           </div>
@@ -208,10 +208,10 @@ const getAutoStatus = (dueDate: Date, currentStatus: string): Payment['status'] 
         <div className="card p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-500">Terlambat</p>
+              <p className="text-sm font-medium text-slate-500">Terlambat</p>
               <p className="text-2xl font-bold text-error-600">{overdueCount}</p>
             </div>
-            <div className="p-2 bg-error-100 rounded-lg">
+            <div className="p-2 bg-error-100 rounded-xl">
               <AlertCircle className="h-6 w-6 text-error-600" />
             </div>
           </div>
@@ -220,10 +220,10 @@ const getAutoStatus = (dueDate: Date, currentStatus: string): Payment['status'] 
         <div className="card p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-500">Lunas</p>
+              <p className="text-sm font-medium text-slate-500">Lunas</p>
               <p className="text-2xl font-bold text-success-600">{paidCount}</p>
             </div>
-            <div className="p-2 bg-success-100 rounded-lg">
+            <div className="p-2 bg-success-100 rounded-xl">
               <CheckCircle className="h-6 w-6 text-success-600" />
             </div>
           </div>
@@ -234,7 +234,7 @@ const getAutoStatus = (dueDate: Date, currentStatus: string): Payment['status'] 
       <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         {/* Search */}
         <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
           <input
             type="text"
             placeholder="Cari jadwal pembayaran..."
@@ -272,14 +272,14 @@ const getAutoStatus = (dueDate: Date, currentStatus: string): Payment['status'] 
             <tbody>
               {filteredPayments.map((payment) => (
                 <tr key={payment.id}>
-                  <td className="font-medium text-gray-900">{payment.studentName}</td>
+                  <td className="font-medium text-slate-900">{payment.studentName}</td>
                   <td>
                     <span className="badge badge-secondary">{payment.class}</span>
                   </td>
                   <td>
                     <div>
-                      <div className="font-medium text-gray-900">{payment.type}</div>
-                      <div className="text-sm text-gray-500">{payment.description}</div>
+                      <div className="font-medium text-slate-900">{payment.type}</div>
+                      <div className="text-sm text-slate-500">{payment.description}</div>
                     </div>
                   </td>
                   <td className="font-medium">{formatCurrency(payment.amount)}</td>
@@ -289,14 +289,14 @@ const getAutoStatus = (dueDate: Date, currentStatus: string): Payment['status'] 
                     <div className="flex items-center space-x-2">
                       <button
                         onClick={() => handleEditPayment(payment)}
-                        className="p-1 text-gray-500 hover:text-primary-600 transition-colors"
+                        className="p-1 text-slate-500 hover:text-primary-600 transition-colors"
                         title="Edit"
                       >
                         <Edit2 className="h-4 w-4" />
                       </button>
                       <button
                         onClick={() => handleDeletePayment(payment)}
-                        className="p-1 text-gray-500 hover:text-error-600 transition-colors"
+                        className="p-1 text-slate-500 hover:text-error-600 transition-colors"
                         title="Hapus"
                       >
                         <Trash2 className="h-4 w-4" />
@@ -311,9 +311,9 @@ const getAutoStatus = (dueDate: Date, currentStatus: string): Payment['status'] 
 
         {filteredPayments.length === 0 && (
           <div className="text-center py-12">
-            <Calendar className="mx-auto h-12 w-12 text-gray-400" />
-            <h3 className="mt-2 text-sm font-medium text-gray-900">Tidak ada jadwal pembayaran</h3>
-            <p className="mt-1 text-sm text-gray-500">
+            <Calendar className="mx-auto h-12 w-12 text-slate-400" />
+            <h3 className="mt-2 text-sm font-medium text-slate-900">Tidak ada jadwal pembayaran</h3>
+            <p className="mt-1 text-sm text-slate-500">
               {searchTerm 
                 ? 'Tidak ada jadwal yang sesuai dengan pencarian'
                 : 'Belum ada jadwal pembayaran yang ditambahkan'}
@@ -334,4 +334,4 @@ const getAutoStatus = (dueDate: Date, currentStatus: string): Payment['status'] 
   );
 };
 
-export default PaymentSchedule;
+export default PaymentSchedule;

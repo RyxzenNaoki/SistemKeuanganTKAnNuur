@@ -1,29 +1,45 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, doc, getDocs, setDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../../firebase/config';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '../../contexts/ToastContext';
-import { Loader2, UserPlus } from 'lucide-react';
+import { linkParentToStudent } from '../../services/studentService';
+import { Loader2, UserPlus, Baby } from 'lucide-react';
+
+// Dipakai kalau daftar kelas dari Data Kelas (admin) belum bisa dimuat
+const DEFAULT_CLASSES = ['TK A', 'TK B', 'Daycare'];
 
 const RegisterPage = () => {
     const navigate = useNavigate();
     const { showToast } = useToast();
 
-    const [name, setName] = useState('');    
+    const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirm, setConfirm] = useState('');
     const [role, setRole] = useState('parent');
     const [studentName, setStudentName] = useState('');
+    const [studentNickname, setStudentNickname] = useState('');
     const [studentClass, setStudentClass] = useState('');
+    const [classes, setClasses] = useState<string[]>(DEFAULT_CLASSES);
     const [loading, setLoading] = useState(false);
 
-    const classes = [
-        'TK A',
-        'TK B', 
-        'Daycare',
-    ];
+    // Ambil daftar kelas dari Data Kelas supaya pilihannya sama dengan yang dikelola admin
+    useEffect(() => {
+        const loadClasses = async () => {
+            try {
+                const snap = await getDocs(collection(db, 'classes'));
+                const names = snap.docs
+                    .map(d => String(d.data().name || '').trim())
+                    .filter(Boolean);
+                if (names.length > 0) setClasses(Array.from(new Set(names)).sort());
+            } catch {
+                // belum login -> aturan Firestore bisa menolak; pakai daftar bawaan
+            }
+        };
+        loadClasses();
+    }, []);
 
     const handleRegister = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -35,9 +51,8 @@ const RegisterPage = () => {
             return;
         }
 
-        // Validasi khusus untuk parent
-        if (role === 'parent' && (!studentName.trim() || !studentClass.trim())) {
-            showToast('error', 'Nama anak dan kelas wajib diisi untuk orang tua.');
+        if (role === 'parent' && (!studentName.trim() || !studentNickname.trim() || !studentClass.trim())) {
+            showToast('error', 'Nama lengkap, nama panggilan, dan kelas anak wajib diisi.');
             setLoading(false);
             return;
         }
@@ -45,21 +60,37 @@ const RegisterPage = () => {
         try {
             const userCred = await createUserWithEmailAndPassword(auth, email, password);
 
-            // Data yang akan disimpan ke Firestore
-            const userData: any = {
+            const userData: Record<string, unknown> = {
                 email,
                 role,
                 name: name.trim(),
                 createdAt: serverTimestamp(),
             };
 
-            // Tambahkan data student jika role adalah parent
             if (role === 'parent') {
                 userData.studentName = studentName.trim();
+                userData.studentNickname = studentNickname.trim();
                 userData.studentClass = studentClass;
             }
 
             await setDoc(doc(db, 'users', userCred.user.uid), userData);
+
+            // Tautkan akun ortu ke data siswa (dipakai Admin & Guru)
+            if (role === 'parent') {
+                try {
+                    const { studentId } = await linkParentToStudent({
+                        uid: userCred.user.uid,
+                        email,
+                        parentName: name.trim(),
+                        studentName: studentName.trim(),
+                        studentNickname: studentNickname.trim(),
+                        studentClass,
+                    });
+                    await setDoc(doc(db, 'users', userCred.user.uid), { studentId }, { merge: true });
+                } catch (linkError) {
+                    console.warn('Gagal menautkan siswa, admin dapat menautkan manual:', linkError);
+                }
+            }
 
             showToast('success', 'Registrasi berhasil!');
             navigate('/login');
@@ -82,49 +113,18 @@ const RegisterPage = () => {
         } finally {
             setLoading(false);
         }
-    }
+    };
+
+    const label = 'block text-sm font-medium text-slate-600 mb-1';
 
     return (
         <div>
-            <h2 className="text-2xl font-bold text-center text-gray-900 mb-6">
-                Daftar Akun
-            </h2>
+            <h2 className="text-2xl font-bold text-center text-slate-900 mb-1">Daftar Akun</h2>
+            <p className="text-center text-sm text-slate-400 mb-6">Buat akun untuk mengakses SINAU</p>
 
             <form onSubmit={handleRegister}>
                 <div className="mb-4">
-                    <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-                        Nama Lengkap
-                    </label>
-                    <input
-                        id="name"
-                        type="text"
-                        required
-                        className="input"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        placeholder="Masukkan nama lengkap Anda"
-                    />
-                </div>
-
-                <div className="mb-4">
-                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                        Email
-                    </label>
-                    <input
-                        id="email"
-                        type="email"
-                        required
-                        className="input"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        placeholder="nama@email.com"
-                    />
-                </div>
-
-                <div className="mb-4">
-                    <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-1">
-                        Peran
-                    </label>
+                    <label htmlFor="role" className={label}>Daftar sebagai</label>
                     <select
                         id="role"
                         className="input"
@@ -139,34 +139,82 @@ const RegisterPage = () => {
                     </p>
                 </div>
 
-                {/* Fields khusus untuk Parent */}
+                <div className="mb-4">
+                    <label htmlFor="name" className={label}>
+                        {role === 'parent' ? 'Nama Lengkap Orang Tua' : 'Nama Lengkap Guru'}
+                    </label>
+                    <input
+                        id="name"
+                        type="text"
+                        required
+                        className="input"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        placeholder="Masukkan nama lengkap Anda"
+                    />
+                </div>
+
+                <div className="mb-4">
+                    <label htmlFor="email" className={label}>Email</label>
+                    <input
+                        id="email"
+                        type="email"
+                        required
+                        className="input"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="nama@email.com"
+                    />
+                </div>
+
+                {/* Data anak — hanya untuk Orang Tua */}
                 {role === 'parent' && (
-                    <>
-                        <div className="mb-4">
-                            <label htmlFor="studentName" className="block text-sm font-medium text-gray-700 mb-1">
-                                Nama Anak <span className="text-red-500">*</span>
+                    <div className="mb-4 rounded-2xl border border-secondary-100 bg-secondary-50/60 p-4 space-y-4">
+                        <div className="flex items-center gap-2 text-sm font-semibold text-secondary-700">
+                            <Baby className="h-4 w-4" />
+                            Data Anak
+                        </div>
+
+                        <div>
+                            <label htmlFor="studentName" className={label}>
+                                Nama Lengkap Anak <span className="text-error-500">*</span>
                             </label>
                             <input
                                 id="studentName"
                                 type="text"
-                                required={role === 'parent'}
-                                className="input"
+                                required
+                                className="input bg-white"
                                 value={studentName}
                                 onChange={(e) => setStudentName(e.target.value)}
-                                placeholder="Masukkan nama lengkap anak"
+                                placeholder="Sesuai akta kelahiran"
                             />
                         </div>
 
-                        <div className="mb-4">
-                            <label htmlFor="studentClass" className="block text-sm font-medium text-gray-700 mb-1">
-                                Kelas Anak <span className="text-red-500">*</span>
+                        <div>
+                            <label htmlFor="studentNickname" className={label}>
+                                Nama Panggilan Anak <span className="text-error-500">*</span>
+                            </label>
+                            <input
+                                id="studentNickname"
+                                type="text"
+                                required
+                                className="input bg-white"
+                                value={studentNickname}
+                                onChange={(e) => setStudentNickname(e.target.value)}
+                                placeholder="Nama yang dipanggil sehari-hari"
+                            />
+                        </div>
+
+                        <div>
+                            <label htmlFor="studentClass" className={label}>
+                                Kelas <span className="text-error-500">*</span>
                             </label>
                             <select
                                 id="studentClass"
-                                className="input"
+                                className="input bg-white"
                                 value={studentClass}
                                 onChange={(e) => setStudentClass(e.target.value)}
-                                required={role === 'parent'}
+                                required
                             >
                                 <option value="">Pilih Kelas</option>
                                 {classes.map(className => (
@@ -174,13 +222,15 @@ const RegisterPage = () => {
                                 ))}
                             </select>
                         </div>
-                    </>
+                        <p className="text-xs text-slate-500">
+                            Data ini otomatis terhubung ke Data Siswa, sehingga nama anak Anda akan
+                            dikenali oleh admin dan guru.
+                        </p>
+                    </div>
                 )}
 
                 <div className="mb-4">
-                    <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-                        Password
-                    </label>
+                    <label htmlFor="password" className={label}>Password</label>
                     <input
                         id="password"
                         type="password"
@@ -193,9 +243,7 @@ const RegisterPage = () => {
                 </div>
 
                 <div className="mb-6">
-                    <label htmlFor="confirm" className="block text-sm font-medium text-gray-700 mb-1">
-                        Konfirmasi Password
-                    </label>
+                    <label htmlFor="confirm" className={label}>Konfirmasi Password</label>
                     <input
                         id="confirm"
                         type="password"
@@ -224,9 +272,9 @@ const RegisterPage = () => {
             </form>
 
             <div className="mt-6 text-center">
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-slate-500">
                     Sudah punya akun?{' '}
-                    <a href="/login" className="text-primary-600 hover:text-primary-500">
+                    <a href="/login" className="font-medium text-primary-600 hover:text-primary-700">
                         Masuk di sini
                     </a>
                 </p>

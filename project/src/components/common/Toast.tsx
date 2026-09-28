@@ -19,20 +19,20 @@ const Toast = ({ type, message, onClose }: ToastProps) => {
       case 'info':
         return 'bg-primary-50 text-primary-800 border-primary-500';
       default:
-        return 'bg-gray-50 text-gray-800 border-gray-500';
+        return 'bg-slate-50 text-slate-800 border-slate-500';
     }
   };
 
   return (
     <div
-      className={`rounded-lg border-l-4 p-4 shadow-md animate-slide-up ${getToastStyles()}`}
+      className={`rounded-xl border-l-4 p-4 shadow-soft animate-slide-up ${getToastStyles()}`}
       role="alert"
     >
       <div className="flex items-center justify-between">
         <p className="font-medium">{message}</p>
         <button
           onClick={onClose}
-          className="ml-4 text-gray-500 hover:text-gray-700 focus:outline-none"
+          className="ml-4 text-slate-500 hover:text-slate-700 focus:outline-none"
           aria-label="Close"
         >
           <X className="h-4 w-4" />
@@ -42,4 +42,4 @@ const Toast = ({ type, message, onClose }: ToastProps) => {
   );
 };
 
-export default Toast;
+export default Toast;

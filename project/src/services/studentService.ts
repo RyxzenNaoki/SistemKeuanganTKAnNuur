@@ -1,9 +1,26 @@
+import {
+  collection,
+  query,
+  where,
+  getDocs,
+  addDoc,
+  updateDoc,
+  doc,
+  serverTimestamp,
+  Timestamp,
+} from 'firebase/firestore';
+import { db } from '../firebase/config';
+
 export interface Student {
   id?: string;
   nis?: string; // Nomor Induk Siswa (optional)
-  name: string;
+  name: string; // Nama lengkap siswa
+  nickname?: string; // Nama panggilan siswa
   class: string;
   academicYear: string; // Added academic year field
+  parentUid?: string; // UID akun orang tua (users/{uid}) yang tertaut ke siswa ini
+  source?: 'admin' | 'parent-registration'; // Asal data siswa
+  verified?: boolean; // false = diisi ortu saat daftar, belum dicek admin
   parentName: string;
   parentEmail: string;
   parentPhone: string;
@@ -148,4 +165,123 @@ export const getStudentSummary = (students: Student[]): StudentSummary => {
   });
 
   return summary;
+};
+
+// ---------------------------------------------------------------------------
+// Integrasi siswa <-> akun orang tua
+// Dipakai bersama oleh Admin, Guru, dan Orang Tua.
+// ---------------------------------------------------------------------------
+
+const toDate = (value: unknown): Date => {
+  if (value instanceof Timestamp) return value.toDate();
+  if (value instanceof Date) return value;
+  return new Date();
+};
+
+export const mapStudentDoc = (id: string, data: Record<string, any>): Student => ({
+  id,
+  nis: data.nis,
+  name: data.name ?? '',
+  nickname: data.nickname ?? '',
+  class: data.class ?? '',
+  academicYear: data.academicYear ?? '',
+  parentName: data.parentName ?? '',
+  parentEmail: data.parentEmail ?? '',
+  parentPhone: data.parentPhone ?? '',
+  parentUid: data.parentUid,
+  source: data.source,
+  verified: data.verified,
+  status: data.status ?? 'active',
+  registrationDate: toDate(data.registrationDate),
+  birthDate: toDate(data.birthDate),
+  address: data.address ?? '',
+  emergencyContact: data.emergencyContact ?? '',
+  emergencyPhone: data.emergencyPhone ?? '',
+  medicalNotes: data.medicalNotes,
+});
+
+// Nama yang ditampilkan di UI: panggilan kalau ada, kalau tidak nama lengkap
+export const getDisplayName = (student: Pick<Student, 'name' | 'nickname'>): string =>
+  student.nickname?.trim() || student.name;
+
+export interface FetchStudentsOptions {
+  className?: string;
+  onlyActive?: boolean;
+}
+
+// Semua siswa (untuk Admin & Guru: absensi, asesmen, dropdown, dll)
+export const fetchStudents = async (options: FetchStudentsOptions = {}): Promise<Student[]> => {
+  const snap = await getDocs(collection(db, 'students'));
+  let list = snap.docs.map(d => mapStudentDoc(d.id, d.data()));
+  if (options.onlyActive) list = list.filter(s => s.status === 'active');
+  if (options.className) list = list.filter(s => s.class === options.className);
+  return list.sort((a, b) => a.name.localeCompare(b.name, 'id'));
+};
+
+// Siswa milik satu akun orang tua (ditemukan lewat UID, lalu fallback email)
+export const fetchStudentsByParent = async (uid: string, email?: string | null): Promise<Student[]> => {
+  const byUid = await getDocs(query(collection(db, 'students'), where('parentUid', '==', uid)));
+  if (!byUid.empty) return byUid.docs.map(d => mapStudentDoc(d.id, d.data()));
+
+  if (email) {
+    const byEmail = await getDocs(query(collection(db, 'students'), where('parentEmail', '==', email)));
+    if (!byEmail.empty) return byEmail.docs.map(d => mapStudentDoc(d.id, d.data()));
+  }
+  return [];
+};
+
+export interface LinkParentInput {
+  uid: string;
+  email: string;
+  parentName: string;
+  studentName: string;
+  studentNickname: string;
+  studentClass: string;
+}
+
+// Dipanggil saat orang tua mendaftar.
+// 1) Kalau admin sudah menginput siswa (email ortu / nama anak cocok) -> tautkan.
+// 2) Kalau belum ada -> buat data siswa baru berstatus "belum diverifikasi" supaya
+//    langsung muncul di Data Siswa (Admin) dan daftar murid (Guru).
+export const linkParentToStudent = async (input: LinkParentInput): Promise<{ studentId: string; created: boolean }> => {
+  const { uid, email, parentName, studentName, studentNickname, studentClass } = input;
+
+  let match = await getDocs(query(collection(db, 'students'), where('parentEmail', '==', email)));
+  if (match.empty) {
+    match = await getDocs(query(collection(db, 'students'), where('name', '==', studentName)));
+    // jangan rebut siswa yang sudah tertaut ke akun ortu lain
+    match = { ...match, docs: match.docs.filter(d => !d.data().parentUid) } as typeof match;
+  }
+
+  if (match.docs.length > 0) {
+    const existing = match.docs[0];
+    await updateDoc(doc(db, 'students', existing.id), {
+      parentUid: uid,
+      ...(existing.data().nickname ? {} : { nickname: studentNickname }),
+      updatedAt: serverTimestamp(),
+    });
+    return { studentId: existing.id, created: false };
+  }
+
+  const created = await addDoc(collection(db, 'students'), {
+    name: studentName,
+    nickname: studentNickname,
+    class: studentClass,
+    academicYear: getCurrentAcademicYear(),
+    parentName,
+    parentEmail: email,
+    parentPhone: '',
+    parentUid: uid,
+    status: 'active',
+    source: 'parent-registration',
+    verified: false,
+    registrationDate: serverTimestamp(),
+    birthDate: serverTimestamp(),
+    address: '',
+    emergencyContact: '',
+    emergencyPhone: '',
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  });
+  return { studentId: created.id, created: true };
 };

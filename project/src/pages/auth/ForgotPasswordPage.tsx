@@ -29,19 +29,19 @@ const ForgotPasswordPage = () => {
 
   return (
     <div>
-      <h2 className="text-2xl font-bold text-center text-gray-900 mb-4">
+      <h2 className="text-2xl font-bold text-center text-slate-900 mb-4">
         Reset Password
       </h2>
       
       {!emailSent ? (
         <>
-          <p className="text-center text-gray-600 mb-6">
+          <p className="text-center text-slate-600 mb-6">
             Masukkan alamat email Anda untuk menerima link reset password.
           </p>
 
           <form onSubmit={handleSubmit}>
             <div className="mb-6">
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-1">
                 Email
               </label>
               <input
@@ -78,11 +78,11 @@ const ForgotPasswordPage = () => {
           <div className="rounded-full bg-success-100 p-3 inline-flex items-center justify-center mb-4">
             <Send className="h-6 w-6 text-success-600" />
           </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">Email Terkirim</h3>
-          <p className="text-gray-600 mb-4">
+          <h3 className="text-lg font-medium text-slate-900 mb-2">Email Terkirim</h3>
+          <p className="text-slate-600 mb-4">
             Kami telah mengirimkan email reset password ke {email}. Silakan periksa inbox Anda dan ikuti petunjuk untuk reset password.
           </p>
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-slate-500">
             Tidak menerima email? Periksa folder spam atau junk Anda.
           </p>
         </div>
@@ -101,4 +101,4 @@ const ForgotPasswordPage = () => {
   );
 };
 
-export default ForgotPasswordPage;
+export default ForgotPasswordPage;

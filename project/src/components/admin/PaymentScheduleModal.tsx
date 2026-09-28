@@ -120,17 +120,17 @@ const PaymentScheduleModal = ({ isOpen, onClose, onSave, scheduleData, loading =
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onClick={onClose} />
+        <div className="fixed inset-0 bg-slate-500 bg-opacity-75 transition-opacity" onClick={onClose} />
 
-        <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+        <div className="inline-block align-bottom bg-white rounded-xl text-left overflow-hidden shadow-soft-lg transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
           <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-medium text-gray-900">
+              <h3 className="text-lg font-medium text-slate-900">
                 {scheduleData ? 'Edit Jadwal Pembayaran' : 'Tambah Jadwal Pembayaran'}
               </h3>
               <button
                 onClick={onClose}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
+                className="text-slate-400 hover:text-slate-600 transition-colors"
               >
                 <X className="h-6 w-6" />
               </button>
@@ -140,7 +140,7 @@ const PaymentScheduleModal = ({ isOpen, onClose, onSave, scheduleData, loading =
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Student Name */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
                     Nama Siswa *
                   </label>
                   <input
@@ -156,7 +156,7 @@ const PaymentScheduleModal = ({ isOpen, onClose, onSave, scheduleData, loading =
 
                 {/* Class */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
                     Kelas *
                   </label>
                   <select
@@ -175,7 +175,7 @@ const PaymentScheduleModal = ({ isOpen, onClose, onSave, scheduleData, loading =
 
                 {/* Payment Type */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
                     Jenis Pembayaran *
                   </label>
                   <select
@@ -193,7 +193,7 @@ const PaymentScheduleModal = ({ isOpen, onClose, onSave, scheduleData, loading =
 
                 {/* Amount */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
                     Jumlah (Rp) *
                   </label>
                   <input
@@ -211,7 +211,7 @@ const PaymentScheduleModal = ({ isOpen, onClose, onSave, scheduleData, loading =
 
                 {/* Due Date */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
                     Jatuh Tempo *
                   </label>
                   <input
@@ -225,7 +225,7 @@ const PaymentScheduleModal = ({ isOpen, onClose, onSave, scheduleData, loading =
 
                 {/* Status */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
                     Status
                   </label>
                   <select
@@ -243,7 +243,7 @@ const PaymentScheduleModal = ({ isOpen, onClose, onSave, scheduleData, loading =
 
               {/* Description */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-slate-700 mb-1">
                   Deskripsi *
                 </label>
                 <textarea
@@ -288,4 +288,4 @@ const PaymentScheduleModal = ({ isOpen, onClose, onSave, scheduleData, loading =
   );
 };
 
-export default PaymentScheduleModal;
+export default PaymentScheduleModal;

@@ -60,7 +60,7 @@ const loadUsers = async () => {
       case 'parent':
         return 'bg-primary-100 text-primary-800';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-slate-100 text-slate-800';
     }
   };
 
@@ -130,8 +130,8 @@ const loadUsers = async () => {
   return (
     <div className="page-transition">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Manajemen Pengguna</h1>
-        <p className="text-gray-600">Kelola akun pengguna dan hak akses sistem</p>
+        <h1 className="text-2xl font-bold text-slate-900">Manajemen Pengguna</h1>
+        <p className="text-slate-600">Kelola akun pengguna dan hak akses sistem</p>
       </div>
 
       {/* Summary Cards */}
@@ -139,10 +139,10 @@ const loadUsers = async () => {
         <div className="card p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-500">Total Pengguna</p>
-              <p className="text-2xl font-bold text-gray-900">{users.length}</p>
+              <p className="text-sm font-medium text-slate-500">Total Pengguna</p>
+              <p className="text-2xl font-bold text-slate-900">{users.length}</p>
             </div>
-            <div className="p-2 bg-primary-100 rounded-lg">
+            <div className="p-2 bg-primary-100 rounded-xl">
               <User className="h-6 w-6 text-primary-600" />
             </div>
           </div>
@@ -151,12 +151,12 @@ const loadUsers = async () => {
         <div className="card p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-500">Admin</p>
+              <p className="text-sm font-medium text-slate-500">Admin</p>
               <p className="text-2xl font-bold text-error-600">
                 {users.filter(u => u.role === 'admin').length}
               </p>
             </div>
-            <div className="p-2 bg-error-100 rounded-lg">
+            <div className="p-2 bg-error-100 rounded-xl">
               <Shield className="h-6 w-6 text-error-600" />
             </div>
           </div>
@@ -167,12 +167,12 @@ const loadUsers = async () => {
         <div className="card p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-500">Orang Tua</p>
+              <p className="text-sm font-medium text-slate-500">Orang Tua</p>
               <p className="text-2xl font-bold text-primary-600">
                 {users.filter(u => u.role === 'parent').length}
               </p>
             </div>
-            <div className="p-2 bg-primary-100 rounded-lg">
+            <div className="p-2 bg-primary-100 rounded-xl">
               <User className="h-6 w-6 text-primary-600" />
             </div>
           </div>
@@ -189,7 +189,7 @@ const loadUsers = async () => {
             onChange={(e) => setSearchTerm(e.target.value)}
             className="input pl-10"
           />
-          <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+          <Search className="absolute left-3 top-2.5 h-5 w-5 text-slate-400" />
         </div>
         <button
           onClick={handleAddUser}
@@ -221,7 +221,7 @@ const loadUsers = async () => {
                         <User className="h-5 w-5 text-primary-600" />
                       </div>
                       <div className="ml-4">
-                        <div className="font-medium text-gray-900">{user.name}</div>
+                        <div className="font-medium text-slate-900">{user.name}</div>
                       </div>
                     </div>
                   </td>
@@ -240,14 +240,14 @@ const loadUsers = async () => {
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => handleEditUser(user)}
-                        className="p-1 text-gray-400 hover:text-primary-600"
+                        className="p-1 text-slate-400 hover:text-primary-600"
                         title="Edit pengguna"
                       >
                         <Edit className="h-5 w-5" />
                       </button>
                       <button
                         onClick={() => handleDeleteUser(user.id)}
-                        className="p-1 text-gray-400 hover:text-error-600"
+                        className="p-1 text-slate-400 hover:text-error-600"
                         title="Hapus pengguna"
                       >
                         <Trash2 className="h-5 w-5" />
@@ -262,9 +262,9 @@ const loadUsers = async () => {
 
         {filteredUsers.length === 0 && (
           <div className="text-center py-12">
-            <User className="mx-auto h-12 w-12 text-gray-400" />
-            <h3 className="mt-2 text-sm font-medium text-gray-900">Tidak ada pengguna</h3>
-            <p className="mt-1 text-sm text-gray-500">
+            <User className="mx-auto h-12 w-12 text-slate-400" />
+            <h3 className="mt-2 text-sm font-medium text-slate-900">Tidak ada pengguna</h3>
+            <p className="mt-1 text-sm text-slate-500">
               {searchTerm ? 'Tidak ada pengguna yang sesuai dengan pencarian' : 'Belum ada pengguna yang ditambahkan'}
             </p>
           </div>
@@ -283,4 +283,4 @@ const loadUsers = async () => {
   );
 };
 
-export default UserManagement;
+export default UserManagement;

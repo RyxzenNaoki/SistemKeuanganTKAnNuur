@@ -15,6 +15,7 @@ const StudentModal = ({ isOpen, onClose, onSave, student, loading = false, avail
   const [formData, setFormData] = useState({
     nis: '',
     name: '',
+    nickname: '',
     class: '',
     academicYear: '',
     parentName: '',
@@ -47,6 +48,7 @@ const StudentModal = ({ isOpen, onClose, onSave, student, loading = false, avail
       setFormData({
         nis: student.nis || '',
         name: student.name,
+        nickname: student.nickname || '',
         class: student.class,
         academicYear: student.academicYear || '',
         parentName: student.parentName,
@@ -68,6 +70,7 @@ const StudentModal = ({ isOpen, onClose, onSave, student, loading = false, avail
       setFormData({
         nis: '',
         name: '',
+        nickname: '',
         class: '',
         academicYear: defaultAcademicYear,
         parentName: '',
@@ -168,17 +171,17 @@ const StudentModal = ({ isOpen, onClose, onSave, student, loading = false, avail
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onClick={onClose} />
+        <div className="fixed inset-0 bg-slate-500 bg-opacity-75 transition-opacity" onClick={onClose} />
 
-        <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
+        <div className="inline-block align-bottom bg-white rounded-xl text-left overflow-hidden shadow-soft-lg transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
           <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-medium text-gray-900">
+              <h3 className="text-lg font-medium text-slate-900">
                 {student ? 'Edit Siswa' : 'Tambah Siswa Baru'}
               </h3>
               <button
                 onClick={onClose}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
+                className="text-slate-400 hover:text-slate-600 transition-colors"
               >
                 <X className="h-6 w-6" />
               </button>
@@ -188,7 +191,7 @@ const StudentModal = ({ isOpen, onClose, onSave, student, loading = false, avail
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* NIS */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
                     NIS (Nomor Induk Siswa)
                   </label>
                   <div className="flex gap-2">
@@ -210,14 +213,14 @@ const StudentModal = ({ isOpen, onClose, onSave, student, loading = false, avail
                     </button>
                   </div>
                   {errors.nis && <p className="text-error-600 text-xs mt-1">{errors.nis}</p>}
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs text-slate-500 mt-1">
                     NIS bersifat opsional. Klik Generate untuk membuat NIS otomatis.
                   </p>
                 </div>
 
                 {/* Student Name */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
                     Nama Siswa *
                   </label>
                   <input
@@ -231,9 +234,23 @@ const StudentModal = ({ isOpen, onClose, onSave, student, loading = false, avail
                   {errors.name && <p className="text-error-600 text-xs mt-1">{errors.name}</p>}
                 </div>
 
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                    Nama Panggilan
+                  </label>
+                  <input
+                    type="text"
+                    name="nickname"
+                    value={formData.nickname}
+                    onChange={handleInputChange}
+                    className="input"
+                    placeholder="Nama panggilan sehari-hari"
+                  />
+                </div>
+
                 {/* Class */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
                     Kelas *
                   </label>
                   <select
@@ -267,7 +284,7 @@ const StudentModal = ({ isOpen, onClose, onSave, student, loading = false, avail
 
                 {/* Academic Year */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
                     Tahun Ajaran *
                   </label>
                   <select
@@ -288,7 +305,7 @@ const StudentModal = ({ isOpen, onClose, onSave, student, loading = false, avail
 
                 {/* Birth Date */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
                     Tanggal Lahir *
                   </label>
                   <input
@@ -302,7 +319,7 @@ const StudentModal = ({ isOpen, onClose, onSave, student, loading = false, avail
 
                 {/* Registration Date */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
                     Tanggal Daftar *
                   </label>
                   <input
@@ -316,7 +333,7 @@ const StudentModal = ({ isOpen, onClose, onSave, student, loading = false, avail
 
                 {/* Parent Name */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
                     Nama Orang Tua *
                   </label>
                   <input
@@ -332,7 +349,7 @@ const StudentModal = ({ isOpen, onClose, onSave, student, loading = false, avail
 
                 {/* Parent Email */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
                     Email Orang Tua *
                   </label>
                   <input
@@ -348,7 +365,7 @@ const StudentModal = ({ isOpen, onClose, onSave, student, loading = false, avail
 
                 {/* Parent Phone */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
                     Telepon Orang Tua *
                   </label>
                   <input
@@ -364,7 +381,7 @@ const StudentModal = ({ isOpen, onClose, onSave, student, loading = false, avail
 
                 {/* Status */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
                     Status
                   </label>
                   <select
@@ -381,7 +398,7 @@ const StudentModal = ({ isOpen, onClose, onSave, student, loading = false, avail
 
               {/* Address */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-slate-700 mb-1">
                   Alamat *
                 </label>
                 <textarea
@@ -398,7 +415,7 @@ const StudentModal = ({ isOpen, onClose, onSave, student, loading = false, avail
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Emergency Contact */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
                     Kontak Darurat *
                   </label>
                   <input
@@ -414,7 +431,7 @@ const StudentModal = ({ isOpen, onClose, onSave, student, loading = false, avail
 
                 {/* Emergency Phone */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
                     Telepon Darurat *
                   </label>
                   <input
@@ -431,7 +448,7 @@ const StudentModal = ({ isOpen, onClose, onSave, student, loading = false, avail
 
               {/* Medical Notes */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-slate-700 mb-1">
                   Catatan Medis
                 </label>
                 <textarea
@@ -475,4 +492,4 @@ const StudentModal = ({ isOpen, onClose, onSave, student, loading = false, avail
   );
 };
 
-export default StudentModal;
+export default StudentModal;

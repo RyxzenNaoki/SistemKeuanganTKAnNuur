@@ -179,7 +179,7 @@ const FinancialReports = () => {
   return (
     <div className="page-transition">
       <div className="flex items-center justify-between mb-4">
-        <h1 className="text-xl font-semibold text-gray-800">Laporan Keuangan</h1>
+        <h1 className="text-xl font-semibold text-slate-800">Laporan Keuangan</h1>
         <div className="flex gap-2">
           <select
             value={selectedPeriod}

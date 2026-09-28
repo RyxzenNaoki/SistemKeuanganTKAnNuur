@@ -6,7 +6,9 @@ import {
   Clock,
   CheckCircle,
   AlertTriangle,
+  Megaphone,
 } from 'lucide-react';
+import { useParentStudents } from '../../hooks/useStudents';
 import dayjs from 'dayjs';
 
 // Interfaces
@@ -33,13 +35,16 @@ interface UserData {
   role: string;
   name?: string;
   studentName?: string;
+  studentNickname?: string;
   studentClass?: string;
   createdAt: Date;
 }
 
 const ParentDashboard = () => {
   const { currentUser } = useAuth();
+  const { student: linkedStudent } = useParentStudents();
   const [studentName, setStudentName] = useState('');
+  const [studentNickname, setStudentNickname] = useState('');
   const [className, setClassName] = useState('');
   const [paymentSchedules, setPaymentSchedules] = useState<PaymentSchedule[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -71,6 +76,7 @@ const ParentDashboard = () => {
       if (userDoc.exists()) {
         const data = userDoc.data() as UserData;
         setStudentName(data.studentName || 'Nama Siswa');
+        setStudentNickname(data.studentNickname || '');
         setClassName(data.studentClass || 'Kelas Belum Diatur');
       }
     } catch (error) {
@@ -157,6 +163,14 @@ const ParentDashboard = () => {
     return diffDays;
   };
 
+  // Data siswa yang tertaut (Data Siswa) menjadi sumber utama, akun ortu jadi cadangan
+  useEffect(() => {
+    if (!linkedStudent) return;
+    setStudentName(linkedStudent.name);
+    setStudentNickname(linkedStudent.nickname || '');
+    setClassName(linkedStudent.class || 'Kelas Belum Diatur');
+  }, [linkedStudent]);
+
   // Load data on component mount
   useEffect(() => {
     const loadData = async () => {
@@ -190,7 +204,7 @@ const ParentDashboard = () => {
     return (
       <div className="page-transition">
         <div className="flex justify-center items-center h-64">
-          <div className="text-gray-500">Memuat data...</div>
+          <div className="text-slate-500">Memuat data...</div>
         </div>
       </div>
     );
@@ -199,40 +213,79 @@ const ParentDashboard = () => {
   return (
     <div className="page-transition">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Selamat Datang, Orang Tua!</h1>
-        <p className="text-gray-600">Berikut ringkasan pembayaran dan informasi untuk {studentName}</p>
+        <h1 className="text-2xl font-bold text-slate-900">Selamat Datang, Orang Tua!</h1>
+        <p className="text-slate-600">Berikut ringkasan pembayaran dan informasi untuk {studentNickname || studentName}</p>
       </div>
 
       {/* Student Information */}
-      <div className="card p-6 mb-6 bg-gradient-to-r from-primary-100 to-purple-50">
+      <div className="card p-6 mb-6 bg-gradient-to-r from-primary-100 via-white to-secondary-100 border-primary-100">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between">
           <div>
-            <h2 className="text-xl font-bold text-gray-900">{studentName}</h2>
-            <p className="text-gray-600">{className}</p>
+            <h2 className="text-xl font-bold text-slate-900">{studentName}</h2>
+            {studentNickname && (
+              <p className="text-sm text-slate-500">Panggilan: {studentNickname}</p>
+            )}
+            <p className="text-slate-600">{className}</p>
             <div className="mt-2 badge badge-primary">Siswa Aktif</div>
           </div>
           <div className="mt-4 md:mt-0">
             {nextPayment ? (
               <>
-                <div className="text-sm text-gray-600">Pembayaran Berikutnya:</div>
+                <div className="text-sm text-slate-600">Pembayaran Berikutnya:</div>
                 <div className="flex items-center mt-1">
                   <Clock className="h-4 w-4 text-warning-500 mr-1" />
                   <span className="text-sm font-medium text-warning-700">
                     {getDaysLeft(nextPayment.dueDate)} hari lagi
                   </span>
                 </div>
-                <div className="mt-1 text-lg font-bold text-gray-900">
+                <div className="mt-1 text-lg font-bold text-slate-900">
                   {formatCurrency(nextPayment.amount)}
                 </div>
-                <div className="text-sm text-gray-600">
+                <div className="text-sm text-slate-600">
                   Jatuh tempo: {dayjs(nextPayment.dueDate).format('DD MMMM YYYY')}
                 </div>
-                <div className="text-sm text-gray-500">{nextPayment.description}</div>
+                <div className="text-sm text-slate-500">{nextPayment.description}</div>
               </>
             ) : (
-              <div className="text-sm text-gray-500">Tidak ada pembayaran yang akan datang</div>
+              <div className="text-sm text-slate-500">Tidak ada pembayaran yang akan datang</div>
             )}
           </div>
+        </div>
+      </div>
+
+      {/* Pengumuman — diletakkan di atas supaya langsung terlihat */}
+      <div className="mb-6 rounded-2xl border border-accent-200 bg-gradient-to-r from-accent-100 via-accent-50 to-secondary-50 p-5 shadow-soft">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent-300 text-accent-900">
+            <Megaphone className="h-5 w-5" />
+          </div>
+          <div>
+            <h2 className="text-lg font-bold text-slate-900">Pengumuman</h2>
+            <p className="text-xs text-slate-500">Informasi terbaru dari sekolah</p>
+          </div>
+        </div>
+        <div className="space-y-3">
+          {notifications.length === 0 ? (
+            <div className="rounded-xl bg-white/70 py-4 text-center text-sm text-slate-500">
+              Belum ada pengumuman terbaru
+            </div>
+          ) : (
+            notifications.map((notification, index) => (
+              <div
+                key={notification.id}
+                className={`rounded-xl bg-white p-3.5 border-l-4 shadow-soft ${index === 0 ? 'border-secondary-400' : 'border-accent-400'}`}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <h3 className="text-sm font-semibold text-slate-900">{notification.title}</h3>
+                  {index === 0 && <span className="badge badge-secondary shrink-0">Terbaru</span>}
+                </div>
+                <p className="text-sm text-slate-600 mt-1">{notification.message}</p>
+                <p className="text-xs text-slate-400 mt-1.5">
+                  {dayjs(notification.createdAt).format('DD MMM YYYY, HH:mm')}
+                </p>
+              </div>
+            ))
+          )}
         </div>
       </div>
 
@@ -240,7 +293,7 @@ const ParentDashboard = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         {/* Payment Status */}
         <div className="card p-4">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Status Pembayaran SPP</h2>
+          <h2 className="text-lg font-semibold text-slate-900 mb-4">Status Pembayaran SPP</h2>
           <div className="overflow-hidden">
             <div className="table-container">
               <table className="table">
@@ -254,7 +307,7 @@ const ParentDashboard = () => {
                 <tbody>
                   {paymentSchedules.length === 0 ? (
                     <tr>
-                      <td colSpan={3} className="text-center text-gray-500">
+                      <td colSpan={3} className="text-center text-slate-500">
                         Belum ada jadwal pembayaran
                       </td>
                     </tr>
@@ -263,8 +316,8 @@ const ParentDashboard = () => {
                       <tr key={payment.id}>
                         <td>
                           <div>
-                            <div className="font-medium text-gray-900">{payment.type}</div>
-                            <div className="text-sm text-gray-500">{payment.description}</div>
+                            <div className="font-medium text-slate-900">{payment.type}</div>
+                            <div className="text-sm text-slate-500">{payment.description}</div>
                           </div>
                         </td>
                         <td>
@@ -288,7 +341,7 @@ const ParentDashboard = () => {
                         <td>
                           <div>
                             <div className="font-medium">{formatCurrency(payment.amount)}</div>
-                            <div className="text-sm text-gray-500">
+                            <div className="text-sm text-slate-500">
                               {dayjs(payment.dueDate).format('DD MMM YYYY')}
                             </div>
                           </div>
@@ -304,20 +357,20 @@ const ParentDashboard = () => {
 
         {/* Informasi Pembayaran */}
         <div className="card p-4">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Informasi Pembayaran</h2>
-          <div className="border border-gray-200 rounded-lg p-4 mb-4">
-            <h3 className="text-md font-medium text-gray-900 mb-2">Transfer Bank</h3>
+          <h2 className="text-lg font-semibold text-slate-900 mb-4">Informasi Pembayaran</h2>
+          <div className="border border-slate-200 rounded-xl p-4 mb-4">
+            <h3 className="text-md font-medium text-slate-900 mb-2">Transfer Bank</h3>
             <div className="space-y-2">
               <div>
-                <p className="text-sm text-gray-600">Bank BNI</p>
+                <p className="text-sm text-slate-600">Bank BNI</p>
                 <p className="text-sm font-medium">0795834521 (Rita Ayu Bulan Trisna)</p>
               </div>
             </div>
           </div>
           
-          <div className="border border-gray-200 rounded-lg p-4">
-            <h3 className="text-md font-medium text-gray-900 mb-2">Panduan Pembayaran</h3>
-            <ol className="list-decimal list-inside text-sm text-gray-600 space-y-1">
+          <div className="border border-slate-200 rounded-xl p-4">
+            <h3 className="text-md font-medium text-slate-900 mb-2">Panduan Pembayaran</h3>
+            <ol className="list-decimal list-inside text-sm text-slate-600 space-y-1">
               <li>Transfer ke rekening di atas</li>
               <li>Simpan bukti pembayaran</li>
               <li>Upload bukti di menu "Upload Bukti"</li>
@@ -327,30 +380,8 @@ const ParentDashboard = () => {
           </div>
         </div>
       </div>
-
-      {/* Pengumuman */}
-      <div className="card p-4">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Pengumuman</h2>
-        <div className="space-y-4">
-          {notifications.length === 0 ? (
-            <div className="text-center text-gray-500 py-4">
-              Belum ada pengumuman terbaru
-            </div>
-          ) : (
-            notifications.map((notification, index) => (
-              <div key={notification.id} className={`border-l-4 ${index % 2 === 0 ? 'border-primary-500' : 'border-secondary-500'} pl-3 py-1`}>
-                <h3 className="text-sm font-medium text-gray-900">{notification.title}</h3>
-                <p className="text-xs text-gray-600 mt-1">{notification.message}</p>
-                <p className="text-xs text-gray-400 mt-1">
-                  {dayjs(notification.createdAt).format('DD MMM YYYY, HH:mm')}
-                </p>
-              </div>
-            ))
-          )}
-        </div>
-      </div>
     </div>
   );
 };
 
-export default ParentDashboard;
+export default ParentDashboard;

@@ -41,11 +41,11 @@ const NotificationModal = ({ isOpen, onClose, onAdded }: NotificationFormProps) 
 
   return (
     <div className="modal-overlay fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="modal bg-white p-6 rounded shadow-md w-full max-w-md">
+      <div className="modal bg-white p-6 rounded shadow-soft w-full max-w-md">
         <h2 className="text-lg font-semibold mb-4">Tambah Pemberitahuan</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700">Judul</label>
+            <label className="block text-sm font-medium text-slate-700">Judul</label>
             <input
               type="text"
               value={title}
@@ -55,7 +55,7 @@ const NotificationModal = ({ isOpen, onClose, onAdded }: NotificationFormProps) 
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Pesan</label>
+            <label className="block text-sm font-medium text-slate-700">Pesan</label>
             <textarea
               value={message}
               onChange={(e) => setMessage(e.target.value)}

@@ -227,17 +227,17 @@ const PaymentProofModal = ({ isOpen, onClose, loading = false }: PaymentProofMod
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onClick={onClose} />
+        <div className="fixed inset-0 bg-slate-500 bg-opacity-75 transition-opacity" onClick={onClose} />
 
-        <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
+        <div className="inline-block align-bottom bg-white rounded-xl text-left overflow-hidden shadow-soft-lg transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
           <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-medium text-gray-900">
+              <h3 className="text-lg font-medium text-slate-900">
                 Upload Bukti Pembayaran
               </h3>
               <button
                 onClick={onClose}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
+                className="text-slate-400 hover:text-slate-600 transition-colors"
               >
                 <X className="h-6 w-6" />
               </button>
@@ -248,7 +248,7 @@ const PaymentProofModal = ({ isOpen, onClose, loading = false }: PaymentProofMod
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Payment Type */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
                     Jenis Pembayaran *
                   </label>
                   <select
@@ -266,7 +266,7 @@ const PaymentProofModal = ({ isOpen, onClose, loading = false }: PaymentProofMod
 
                 {/* Amount */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
                     Jumlah Pembayaran *
                   </label>
                   <input
@@ -281,13 +281,13 @@ const PaymentProofModal = ({ isOpen, onClose, loading = false }: PaymentProofMod
                   />
                   {errors.amount && <p className="text-error-600 text-xs mt-1">{errors.amount}</p>}
                   {formData.amount > 0 && (
-                    <p className="text-xs text-gray-500 mt-1">{formatCurrency(formData.amount)}</p>
+                    <p className="text-xs text-slate-500 mt-1">{formatCurrency(formData.amount)}</p>
                   )}
                 </div>
 
                 {/* Payment Date */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
                     Tanggal Pembayaran *
                   </label>
                   <input
@@ -301,7 +301,7 @@ const PaymentProofModal = ({ isOpen, onClose, loading = false }: PaymentProofMod
 
                 {/* Bank Account */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
                     Rekening Tujuan *
                   </label>
                   <select
@@ -321,7 +321,7 @@ const PaymentProofModal = ({ isOpen, onClose, loading = false }: PaymentProofMod
 
               {/* Reference Number */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-slate-700 mb-1">
                   Nomor Referensi/Transaksi *
                 </label>
                 <input
@@ -337,14 +337,14 @@ const PaymentProofModal = ({ isOpen, onClose, loading = false }: PaymentProofMod
 
               {/* File Upload */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-slate-700 mb-2">
                   Bukti Pembayaran *
                 </label>
                 <div
-                  className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${dragActive ? 'border-primary-500 bg-primary-50' :
+                  className={`border-2 border-dashed rounded-xl p-6 text-center transition-colors ${dragActive ? 'border-primary-500 bg-primary-50' :
                     formData.proofFile ? 'border-success-500 bg-success-50' :
                       errors.proofFile ? 'border-error-500 bg-error-50' :
-                        'border-gray-300 hover:border-gray-400'
+                        'border-slate-300 hover:border-slate-400'
                     }`}
                   onDragEnter={handleDrag}
                   onDragLeave={handleDrag}
@@ -378,7 +378,7 @@ const PaymentProofModal = ({ isOpen, onClose, loading = false }: PaymentProofMod
                     </div>
                   ) : (
                     <div className="space-y-2">
-                      <Upload className="h-12 w-12 text-gray-400 mx-auto" />
+                      <Upload className="h-12 w-12 text-slate-400 mx-auto" />
                       <div>
                         <button
                           type="button"
@@ -387,9 +387,9 @@ const PaymentProofModal = ({ isOpen, onClose, loading = false }: PaymentProofMod
                         >
                           Klik untuk upload
                         </button>
-                        <span className="text-gray-500"> atau drag & drop</span>
+                        <span className="text-slate-500"> atau drag & drop</span>
                       </div>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-slate-500">
                         PNG, JPG, PDF maksimal 10MB
                       </p>
                     </div>
@@ -400,7 +400,7 @@ const PaymentProofModal = ({ isOpen, onClose, loading = false }: PaymentProofMod
 
               {/* Notes */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-slate-700 mb-1">
                   Catatan Tambahan
                 </label>
                 <textarea
@@ -414,12 +414,12 @@ const PaymentProofModal = ({ isOpen, onClose, loading = false }: PaymentProofMod
               </div>
 
               {/* Important Notes */}
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="bg-primary-50 border border-primary-200 rounded-xl p-4">
                 <div className="flex items-start space-x-3">
-                  <AlertCircle className="h-5 w-5 text-blue-600 mt-0.5" />
+                  <AlertCircle className="h-5 w-5 text-primary-600 mt-0.5" />
                   <div>
-                    <h4 className="text-sm font-medium text-blue-900">Catatan Penting</h4>
-                    <ul className="mt-2 text-sm text-blue-800 space-y-1">
+                    <h4 className="text-sm font-medium text-primary-900">Catatan Penting</h4>
+                    <ul className="mt-2 text-sm text-primary-800 space-y-1">
                       <li>• Pastikan bukti pembayaran jelas dan dapat dibaca</li>
                       <li>• Sertakan detail transaksi seperti tanggal, jumlah, dan nomor referensi</li>
                       <li>• Verifikasi Upload Pembayaran ke Admin / Bendahara</li>
@@ -462,4 +462,4 @@ const PaymentProofModal = ({ isOpen, onClose, loading = false }: PaymentProofMod
   );
 };
 
-export default PaymentProofModal;
+export default PaymentProofModal;
