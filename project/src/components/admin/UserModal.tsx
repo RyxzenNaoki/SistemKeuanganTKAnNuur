@@ -1,3 +1,4 @@
+import { UserRole } from '../../config/roles';
 import { useState, useEffect } from 'react';
 import { X, Save, Loader2 } from 'lucide-react';
 
@@ -5,7 +6,7 @@ interface User {
     id?: string;
     name: string;
     email: string;
-    role: 'admin' | 'parent';
+    role: UserRole;
     password?: string;
     createdAt?: Date;
     updatedAt?: Date;
@@ -23,7 +24,7 @@ const UserModal = ({ isOpen, onClose, onSave, userData, loading = false }: UserM
     const [formData, setFormData] = useState({
         name: '',
         email: '',
-        role: 'parent' as 'admin'| 'parent',
+        role: 'parent' as UserRole,
         password: '',
         confirmPassword: '',
     });
@@ -134,6 +135,7 @@ const UserModal = ({ isOpen, onClose, onSave, userData, loading = false }: UserM
     const getRoleLabel = (role: string) => {
         const roles = {
             admin: 'Administrator',
+            guru: 'Guru',
             parent: 'Orang Tua',
         };
         return roles[role as keyof typeof roles] || role;
@@ -206,6 +208,7 @@ const UserModal = ({ isOpen, onClose, onSave, userData, loading = false }: UserM
                                         className="input"
                                     >
                                         <option value="parent">Orang Tua</option>
+                                        <option value="guru">Guru</option>
                                         <option value="admin">Administrator</option>
                                     </select>
                                 </div>
@@ -257,6 +260,7 @@ const UserModal = ({ isOpen, onClose, onSave, userData, loading = false }: UserM
                                 </h5>
                                 <p className="text-xs text-slate-600">
                                     {formData.role === 'admin' && 'Akses penuh ke semua fitur sistem'}
+                                    {formData.role === 'guru' && 'Akses ke portal guru: absensi, asesmen, data siswa, dan dokumen pembelajaran'}
                                     {formData.role === 'parent' && 'Akses ke portal orang tua dan pembayaran'}
                                 </p>
                             </div>

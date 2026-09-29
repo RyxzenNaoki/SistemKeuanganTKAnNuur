@@ -13,9 +13,9 @@ import {
   Bar,
 } from 'recharts';
 import { Link } from 'react-router-dom';
-import { Loader2, Wallet, TrendingUp, TrendingDown, Users, Bell } from 'lucide-react';
+import { Loader2, Wallet, TrendingUp, TrendingDown, Users, Bell, UserCheck } from 'lucide-react';
 import dayjs from 'dayjs';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import { useToast } from '../../contexts/ToastContext';
 import { APP_DESCRIPTION } from '../../config/branding';
@@ -82,6 +82,7 @@ const AdminDashboard = () => {
   const [monthlyIncome, setMonthlyIncome] = useState(0);
   const [monthlyExpense, setMonthlyExpense] = useState(0);
   const [activeStudents, setActiveStudents] = useState(0);
+  const [pendingAccounts, setPendingAccounts] = useState(0);
 
   const [monthlyFinanceData, setMonthlyFinanceData] = useState<ChartData[]>([]);
   const [incomeSourceData, setIncomeSourceData] = useState<PieData[]>([]);
@@ -90,12 +91,14 @@ const AdminDashboard = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [incomeSnap, expenseSnap, studentSnap, notifSnap] = await Promise.all([
+        const [incomeSnap, expenseSnap, studentSnap, notifSnap, pendingSnap] = await Promise.all([
           getDocs(collection(db, 'incomes')),
           getDocs(collection(db, 'expenses')),
           getDocs(collection(db, 'students')),
           getDocs(collection(db, 'notifications')),
+          getDocs(query(collection(db, 'users'), where('status', '==', 'pending'))),
         ]);
+        setPendingAccounts(pendingSnap.size);
 
         const incomes = incomeSnap.docs.map(d => d.data() as Income);
         const expenses = expenseSnap.docs.map(d => d.data() as Expense);
@@ -195,6 +198,24 @@ const AdminDashboard = () => {
         <h1 className="text-2xl font-bold">Beranda</h1>
         <p className="text-sm text-slate-500">{APP_DESCRIPTION}</p>
       </div>
+
+      {pendingAccounts > 0 && (
+        <Link
+          to="/admin/users"
+          className="mb-6 flex items-center gap-3 rounded-2xl border border-accent-200 bg-accent-50 p-4 shadow-soft hover:bg-accent-100 transition-colors"
+        >
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent-200 text-accent-800">
+            <UserCheck className="h-5 w-5" />
+          </div>
+          <div className="flex-1">
+            <p className="text-sm font-semibold text-slate-900">
+              {pendingAccounts} akun menunggu persetujuan
+            </p>
+            <p className="text-xs text-slate-500">Buka Data Pengguna untuk menyetujui atau menolak.</p>
+          </div>
+          <span className="text-sm font-medium text-accent-800">Tinjau</span>
+        </Link>
+      )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4 mb-6">
         {stats.map(({ label, value, icon: Icon, card, chip }) => (

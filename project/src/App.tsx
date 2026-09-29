@@ -2,10 +2,13 @@ import { useEffect, lazy, Suspense } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
 import LoadingScreen from './components/common/LoadingScreen';
+import ProtectedRoute from './components/common/ProtectedRoute';
+import { ROLE_HOME } from './config/roles';
 
 // Layouts
 const AdminLayout = lazy(() => import('./layouts/AdminLayout'));
 const ParentLayout = lazy(() => import('./layouts/ParentLayout'));
+const GuruLayout = lazy(() => import('./layouts/GuruLayout'));
 const AuthLayout = lazy(() => import('./layouts/AuthLayout'));
 
 // Auth Pages
@@ -29,6 +32,13 @@ const NotificationManagement = lazy(() => import('./pages/admin/notifications/No
 const ParentDashboard = lazy(() => import('./pages/parent/Dashboard'));
 const Payment = lazy(() => import('./pages/parent/Payment'));
 const ContactAdmin = lazy(() => import('./pages/parent/ContactAdmin'));
+
+// Guru Pages
+const GuruDashboard = lazy(() => import('./pages/guru/Dashboard'));
+const GuruAttendance = lazy(() => import('./pages/guru/Attendance'));
+const GuruAssessment = lazy(() => import('./pages/guru/Assessment'));
+const GuruStudents = lazy(() => import('./pages/guru/Students'));
+const GuruTeachingDocs = lazy(() => import('./pages/guru/TeachingDocs'));
 
 function App() {
   const { currentUser, userRole, loading } = useAuth();
@@ -57,11 +67,9 @@ function App() {
         <Route
           path="/admin/*"
           element={
-            currentUser && (userRole === 'admin' || userRole === 'bendahara') ? (
+            <ProtectedRoute allow={['admin']}>
               <AdminLayout />
-            ) : (
-              <Navigate to="/login\" replace />
-            )
+            </ProtectedRoute>
           }
         >
           <Route index element={<AdminDashboard />} />
@@ -79,11 +87,9 @@ function App() {
         <Route
           path="/parent/*"
           element={
-            currentUser && userRole === 'parent' ? (
+            <ProtectedRoute allow={['parent']}>
               <ParentLayout />
-            ) : (
-              <Navigate to="/login\" replace />
-            )
+            </ProtectedRoute>
           }
         >
           <Route index element={<ParentDashboard />} />
@@ -91,25 +97,37 @@ function App() {
           <Route path="contact" element={<ContactAdmin />} />
         </Route>
 
+        {/* Guru Routes */}
+        <Route
+          path="/guru/*"
+          element={
+            <ProtectedRoute allow={['guru']}>
+              <GuruLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<GuruDashboard />} />
+          <Route path="attendance" element={<GuruAttendance />} />
+          <Route path="assessment" element={<GuruAssessment />} />
+          <Route path="students" element={<GuruStudents />} />
+          <Route path="teaching-docs" element={<GuruTeachingDocs />} />
+        </Route>
+
         {/* Default redirects */}
         <Route
           path="/"
           element={
-            currentUser ? (
-              userRole === 'parent' ? (
-                <Navigate to="/parent\" replace />
-              ) : (
-                <Navigate to="/admin" replace />
-              )
+            currentUser && userRole ? (
+              <Navigate to={ROLE_HOME[userRole]} replace />
             ) : (
               <Navigate to="/login" replace />
             )
           }
         />
-        <Route path="*" element={<Navigate to="/\" replace />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Suspense>
   );
 }
 
-export default App;
+export default App;

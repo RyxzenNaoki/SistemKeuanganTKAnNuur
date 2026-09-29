@@ -18,13 +18,14 @@ import {
 } from 'firebase/firestore';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { auth, db } from '../firebase/config';
-
-type UserRole = 'admin' | 'parent' | 'guru' | null;
+import { ROLE_HOME, UserRole, AccountStatus, isUserRole, toAccountStatus } from '../config/roles';
 
 interface AuthContextType {
   currentUser: User | null;
-  userRole: UserRole;
+  userRole: UserRole | null;
+  userStatus: AccountStatus;
   loading: boolean;
+  refreshProfile: () => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
@@ -46,7 +47,8 @@ interface AuthProviderProps {
 
 export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [userRole, setUserRole] = useState<UserRole>(null);
+  const [userRole, setUserRole] = useState<UserRole | null>(null);
+  const [userStatus, setUserStatus] = useState<AccountStatus>('active');
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
@@ -59,14 +61,15 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         try {
           const userDoc = await getDoc(doc(db, 'users', user.uid));
           if (userDoc.exists()) {
-            const role = userDoc.data().role as UserRole;
+            const rawRole = userDoc.data().role;
+            // Role di luar admin/guru/parent (mis. data lama "bendahara") dianggap tidak valid
+            const role: UserRole | null = isUserRole(rawRole) ? rawRole : null;
             setUserRole(role);
+            setUserStatus(toAccountStatus(userDoc.data().status));
 
-            // 🔁 Auto-redirect based on role
-            if (role === 'admin' && !location.pathname.startsWith('/admin')) {
-              navigate('/admin/dashboard');
-            } else if (role === 'parent' && !location.pathname.startsWith('/parent')) {
-              navigate('/parent/dashboard');
+            // 🔁 Auto-redirect ke halaman sesuai role
+            if (role && !location.pathname.startsWith(ROLE_HOME[role])) {
+              navigate(ROLE_HOME[role]);
             }
           } else {
             console.warn('User document not found');
@@ -91,9 +94,22 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     // 🔁 jangan redirect di sini — tunggu dari useEffect
   };
 
+  // Muat ulang role & status (dipakai layar "menunggu persetujuan")
+  const refreshProfile = async () => {
+    const user = auth.currentUser;
+    if (!user) return;
+    const snap = await getDoc(doc(db, 'users', user.uid));
+    if (snap.exists()) {
+      const data = snap.data();
+      setUserRole(isUserRole(data.role) ? data.role : null);
+      setUserStatus(toAccountStatus(data.status));
+    }
+  };
+
   const signOut = async () => {
     await firebaseSignOut(auth);
     setUserRole(null);
+    setUserStatus('active');
     navigate('/login');
   };
 
@@ -104,7 +120,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const value: AuthContextType = {
     currentUser,
     userRole,
+    userStatus,
     loading,
+    refreshProfile,
     signIn,
     signOut,
     resetPassword,

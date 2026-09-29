@@ -127,6 +127,7 @@ const StudentModal = ({ isOpen, onClose, onSave, student, loading = false, avail
     try {
       const submitData = {
         ...formData,
+        parentEmail: formData.parentEmail.trim().toLowerCase(),
         nis: formData.nis.trim() || undefined, // Send undefined if empty
       };
       await onSave(submitData);

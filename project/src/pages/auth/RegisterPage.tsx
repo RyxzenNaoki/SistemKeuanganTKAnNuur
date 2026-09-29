@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { useToast } from '../../contexts/ToastContext';
 import { linkParentToStudent } from '../../services/studentService';
 import { Loader2, UserPlus, Baby } from 'lucide-react';
+import { ROLE_LABEL, SELF_REGISTER_ROLES, UserRole, initialStatusFor } from '../../config/roles';
 
 // Dipakai kalau daftar kelas dari Data Kelas (admin) belum bisa dimuat
 const DEFAULT_CLASSES = ['TK A', 'TK B', 'Daycare'];
@@ -58,11 +59,15 @@ const RegisterPage = () => {
         }
 
         try {
-            const userCred = await createUserWithEmailAndPassword(auth, email, password);
+            // Email selalu huruf kecil supaya cocok dengan Data Siswa & aturan keamanan Firestore
+            const cleanEmail = email.trim().toLowerCase();
+            const userCred = await createUserWithEmailAndPassword(auth, cleanEmail, password);
 
             const userData: Record<string, unknown> = {
-                email,
+                email: cleanEmail,
                 role,
+                // Guru harus disetujui admin dulu; orang tua langsung aktif
+                status: initialStatusFor(role as UserRole),
                 name: name.trim(),
                 createdAt: serverTimestamp(),
             };
@@ -80,7 +85,7 @@ const RegisterPage = () => {
                 try {
                     const { studentId } = await linkParentToStudent({
                         uid: userCred.user.uid,
-                        email,
+                        email: cleanEmail,
                         parentName: name.trim(),
                         studentName: studentName.trim(),
                         studentNickname: studentNickname.trim(),
@@ -92,7 +97,12 @@ const RegisterPage = () => {
                 }
             }
 
-            showToast('success', 'Registrasi berhasil!');
+            showToast(
+                'success',
+                role === 'guru'
+                    ? 'Registrasi berhasil! Akun guru aktif setelah disetujui admin.'
+                    : 'Registrasi berhasil!'
+            );
             navigate('/login');
         } catch (error: unknown) {
             if (error instanceof Error && 'code' in error) {
@@ -131,12 +141,18 @@ const RegisterPage = () => {
                         value={role}
                         onChange={(e) => setRole(e.target.value)}
                     >
-                        <option value="parent">Orang Tua</option>
-                        <option value="guru">Guru</option>
+                        {SELF_REGISTER_ROLES.map(r => (
+                            <option key={r} value={r}>{ROLE_LABEL[r]}</option>
+                        ))}
                     </select>
                     <p className="mt-1 text-xs text-slate-400">
                         Akun Admin didaftarkan manual oleh pengelola sistem melalui Firebase.
                     </p>
+                    {role === 'guru' && (
+                        <p className="mt-2 rounded-xl bg-accent-50 border border-accent-100 px-3 py-2 text-xs text-accent-800">
+                            Akun guru perlu disetujui admin sebelum bisa digunakan.
+                        </p>
+                    )}
                 </div>
 
                 <div className="mb-4">

@@ -1,3 +1,4 @@
+import { UserRole, AccountStatus, ROLE_LABEL, STATUS_LABEL, toAccountStatus } from '../../../config/roles';
 import {
   collection,
   getDocs,
@@ -9,7 +10,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
 import { useState, useEffect} from 'react';
-import { User, UserPlus, Edit, Trash2, Search, Shield } from 'lucide-react';
+import { User, UserPlus, Edit, Trash2, Search, Shield, Check, X, Clock } from 'lucide-react';
 import { useToast } from '../../../contexts/ToastContext';
 import UserModal from '../../../components/admin/UserModal';
 
@@ -17,7 +18,8 @@ interface UserData {
   id: string;
   name: string;
   email: string;
-  role: 'admin' | 'parent';
+  role: UserRole;
+  status: AccountStatus;
 }
 
 const UserManagement = () => {
@@ -44,6 +46,7 @@ const loadUsers = async () => {
         name: data.name,
         email: data.email,
         role: data.role,
+        status: toAccountStatus(data.status),
       } as UserData;
     });
     setUsers(fetchedUsers);
@@ -57,6 +60,8 @@ const loadUsers = async () => {
     switch (role) {
       case 'admin':
         return 'bg-error-100 text-error-800';
+      case 'guru':
+        return 'bg-accent-100 text-accent-800';
       case 'parent':
         return 'bg-primary-100 text-primary-800';
       default:
@@ -74,9 +79,13 @@ const loadUsers = async () => {
     setShowModal(true);
   };
 
-  const handleSaveUser = async (userData: Omit<UserData, 'id' | 'lastLogin'>) => {
+  const handleSaveUser = async (rawData: Omit<UserData, 'id' | 'status'> & { password?: string }) => {
   try {
     setModalLoading(true);
+
+    // Password tidak boleh disimpan di Firestore (akun login dikelola Firebase Authentication)
+    const { password: _password, ...userData } = rawData;
+    void _password;
 
     if (selectedUser?.id) {
       await updateDoc(doc(db, 'users', selectedUser.id), {
@@ -86,6 +95,7 @@ const loadUsers = async () => {
     } else {
       await addDoc(collection(db, 'users'), {
         ...userData,
+        status: 'active',
         createdAt: Timestamp.now(),
       });
       showToast('success', 'Pengguna baru berhasil ditambahkan');
@@ -119,12 +129,40 @@ const loadUsers = async () => {
 };
 
 
-  const filteredUsers = users.filter(
-  (user) =>
-    (user.name?.toLowerCase() ?? '').includes(searchTerm.toLowerCase()) ||
-    (user.email?.toLowerCase() ?? '').includes(searchTerm.toLowerCase()) ||
-    (user.role?.toLowerCase() ?? '').includes(searchTerm.toLowerCase())
-);
+  const handleSetStatus = async (user: UserData, status: AccountStatus) => {
+    if (
+      status === 'rejected' &&
+      !window.confirm(`Tolak pendaftaran ${user.name}? Akun ini tidak akan bisa mengakses SINAU.`)
+    ) {
+      return;
+    }
+    try {
+      await updateDoc(doc(db, 'users', user.id), { status });
+      showToast('success', status === 'active' ? `${user.name} disetujui` : `${user.name} ditolak`);
+      await loadUsers();
+    } catch (error) {
+      console.error('Error updating status:', error);
+      showToast('error', 'Gagal memperbarui status pengguna');
+    }
+  };
+
+  const getStatusBadge = (status: AccountStatus) => {
+    if (status === 'pending') return 'badge badge-accent';
+    if (status === 'rejected') return 'badge badge-error';
+    return 'badge badge-success';
+  };
+
+  const pendingCount = users.filter(u => u.status === 'pending').length;
+
+  // Yang menunggu persetujuan ditampilkan paling atas
+  const filteredUsers = users
+    .filter(
+      (user) =>
+        (user.name?.toLowerCase() ?? '').includes(searchTerm.toLowerCase()) ||
+        (user.email?.toLowerCase() ?? '').includes(searchTerm.toLowerCase()) ||
+        (user.role?.toLowerCase() ?? '').includes(searchTerm.toLowerCase())
+    )
+    .sort((a, b) => Number(b.status === 'pending') - Number(a.status === 'pending'));
 
 
   return (
@@ -135,7 +173,7 @@ const loadUsers = async () => {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
         <div className="card p-4">
           <div className="flex items-center justify-between">
             <div>
@@ -163,6 +201,32 @@ const loadUsers = async () => {
         </div>
 
       
+
+        <div className={`card p-4 ${pendingCount > 0 ? 'ring-2 ring-accent-300' : ''}`}>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-slate-500">Menunggu Persetujuan</p>
+              <p className="text-2xl font-bold text-accent-600">{pendingCount}</p>
+            </div>
+            <div className="p-2 bg-accent-100 rounded-xl">
+              <Clock className="h-6 w-6 text-accent-600" />
+            </div>
+          </div>
+        </div>
+
+        <div className="card p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-slate-500">Guru</p>
+              <p className="text-2xl font-bold text-accent-600">
+                {users.filter(u => u.role === 'guru').length}
+              </p>
+            </div>
+            <div className="p-2 bg-accent-100 rounded-xl">
+              <User className="h-6 w-6 text-accent-600" />
+            </div>
+          </div>
+        </div>
 
         <div className="card p-4">
           <div className="flex items-center justify-between">
@@ -209,6 +273,7 @@ const loadUsers = async () => {
                 <th>Pengguna</th>
                 <th>Email</th>
                 <th>Peran</th>
+                <th>Status</th>
                 <th>Aksi</th>
               </tr>
             </thead>
@@ -233,11 +298,32 @@ const loadUsers = async () => {
                       )}`}
                     >
                       <Shield className="h-3 w-3 mr-1" />
-                      {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+                      {ROLE_LABEL[user.role] ?? user.role}
                     </span>
                   </td>
                   <td className="whitespace-nowrap">
+                    <span className={getStatusBadge(user.status)}>{STATUS_LABEL[user.status]}</span>
+                  </td>
+                  <td className="whitespace-nowrap">
                     <div className="flex items-center gap-2">
+                      {user.status !== 'active' && (
+                        <button
+                          onClick={() => handleSetStatus(user, 'active')}
+                          className="inline-flex items-center gap-1 rounded-lg bg-success-100 px-2.5 py-1 text-xs font-medium text-success-700 hover:bg-success-200"
+                          title="Setujui akun"
+                        >
+                          <Check className="h-4 w-4" /> Setujui
+                        </button>
+                      )}
+                      {user.status === 'pending' && (
+                        <button
+                          onClick={() => handleSetStatus(user, 'rejected')}
+                          className="inline-flex items-center gap-1 rounded-lg bg-error-100 px-2.5 py-1 text-xs font-medium text-error-700 hover:bg-error-200"
+                          title="Tolak akun"
+                        >
+                          <X className="h-4 w-4" /> Tolak
+                        </button>
+                      )}
                       <button
                         onClick={() => handleEditUser(user)}
                         className="p-1 text-slate-400 hover:text-primary-600"

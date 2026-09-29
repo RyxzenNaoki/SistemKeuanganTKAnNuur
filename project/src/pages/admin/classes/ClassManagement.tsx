@@ -198,7 +198,7 @@ const ClassManagement = () => {
     <div className="page-transition">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-slate-900">Data Kelas</h1>
-        <p className="text-slate-600">Kelola data kelas TK Ceria</p>
+        <p className="text-slate-600">Kelola data kelas TK An Nuur Rumah Cahaya</p>
       </div>
 
       {/* Summary Cards */}
@@ -378,4 +378,4 @@ const ClassManagement = () => {
   );
 };
 
-export default ClassManagement;
+export default ClassManagement;

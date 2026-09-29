@@ -240,18 +240,15 @@ export interface LinkParentInput {
 }
 
 // Dipanggil saat orang tua mendaftar.
-// 1) Kalau admin sudah menginput siswa (email ortu / nama anak cocok) -> tautkan.
+// 1) Kalau admin sudah menginput siswa dengan email ortu yang sama -> tautkan.
 // 2) Kalau belum ada -> buat data siswa baru berstatus "belum diverifikasi" supaya
 //    langsung muncul di Data Siswa (Admin) dan daftar murid (Guru).
 export const linkParentToStudent = async (input: LinkParentInput): Promise<{ studentId: string; created: boolean }> => {
   const { uid, email, parentName, studentName, studentNickname, studentClass } = input;
 
-  let match = await getDocs(query(collection(db, 'students'), where('parentEmail', '==', email)));
-  if (match.empty) {
-    match = await getDocs(query(collection(db, 'students'), where('name', '==', studentName)));
-    // jangan rebut siswa yang sudah tertaut ke akun ortu lain
-    match = { ...match, docs: match.docs.filter(d => !d.data().parentUid) } as typeof match;
-  }
+  // Pencocokan hanya lewat email ortu (yang diinput admin di Data Siswa).
+  // Pencarian berdasarkan nama tidak dipakai: ortu tidak boleh membaca seluruh data siswa.
+  const match = await getDocs(query(collection(db, 'students'), where('parentEmail', '==', email)));
 
   if (match.docs.length > 0) {
     const existing = match.docs[0];
