@@ -282,3 +282,8 @@ export const linkParentToStudent = async (input: LinkParentInput): Promise<{ stu
   });
   return { studentId: created.id, created: true };
 };
+
+// Semester berjalan berdasarkan bulan sekarang: Juli-Des = Ganjil, Jan-Jun = Genap
+export type Semester = 'Ganjil' | 'Genap';
+
+export const getCurrentSemester = (): Semester => (new Date().getMonth() >= 6 ? 'Ganjil' : 'Genap');

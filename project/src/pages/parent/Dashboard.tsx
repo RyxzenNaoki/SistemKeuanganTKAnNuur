@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { collection, getDocs, query, where, orderBy, limit, doc, getDoc } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, limit, doc, getDoc } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import { useAuth } from '../../contexts/AuthContext';
 import {
@@ -9,6 +9,7 @@ import {
   Megaphone,
 } from 'lucide-react';
 import { useParentStudents } from '../../hooks/useStudents';
+import { fetchPaymentsByParent, Payment as PaymentRecord } from '../../services/paymentService';
 import dayjs from 'dayjs';
 
 // Interfaces
@@ -60,13 +61,6 @@ const ParentDashboard = () => {
     }).format(value);
   };
 
-  // Get auto status based on due date
-  const getAutoStatus = (dueDate: Date, currentStatus: string): PaymentSchedule['status'] => {
-    const today = new Date();
-    if (currentStatus === 'paid') return 'paid';
-    return dayjs(dueDate).isBefore(dayjs(today), 'day') ? 'overdue' : 'upcoming';
-  };
-
   // Fetch user data from Firebase
   const fetchUserData = async () => {
     if (!currentUser) return;
@@ -86,44 +80,31 @@ const ParentDashboard = () => {
     }
   };
 
-  // Fetch payment schedules from Firebase
+  // Ambil tagihan lewat parentUid (bukan cocokkan teks nama) supaya jadwal
+  // yang di-assign admin di Data Siswa otomatis muncul di sini (poin 6c)
   const fetchPaymentSchedules = async () => {
-    if (!studentName) return;
-    
+    if (!currentUser) return;
+
     try {
-      // Filter berdasarkan nama siswa
-      const q = query(
-        collection(db, 'payments'),
-        where('studentName', '==', studentName),
-        orderBy('dueDate', 'desc')
-      );
-      
-      const snapshot = await getDocs(q);
-      const schedules = snapshot.docs.map(doc => {
-        const data = doc.data();
-        const dueDate = data.dueDate?.toDate?.() || new Date();
-        const status = getAutoStatus(dueDate, data.status);
-        
-        return {
-          id: doc.id,
-          type: data.type,
-          amount: data.amount,
-          dueDate,
-          description: data.description,
-          status,
-          studentName: data.studentName,
-          class: data.class,
-        } as PaymentSchedule;
-      });
+      const records: PaymentRecord[] = await fetchPaymentsByParent(currentUser.uid);
+      const schedules: PaymentSchedule[] = records.map(r => ({
+        id: r.id,
+        type: r.type,
+        amount: r.amount,
+        dueDate: r.dueDate,
+        description: r.description,
+        status: r.status,
+        studentName: r.studentName,
+        class: r.class,
+      }));
 
       setPaymentSchedules(schedules);
 
-      // Find next upcoming payment
-      const upcoming = schedules.filter(p => p.status === 'upcoming')
+      const upcoming = schedules
+        .filter(p => p.status === 'upcoming')
         .sort((a, b) => a.dueDate.getTime() - b.dueDate.getTime())[0];
-      
-      setNextPayment(upcoming || null);
 
+      setNextPayment(upcoming || null);
     } catch (error) {
       console.error('Error fetching payment schedules:', error);
     }
