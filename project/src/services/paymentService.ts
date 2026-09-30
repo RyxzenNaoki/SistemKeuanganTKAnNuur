@@ -80,11 +80,17 @@ export const fetchAllPayments = async (): Promise<Payment[]> => {
 };
 
 // Tagihan milik satu akun orang tua (Ortu -> Beranda & Riwayat Pembayaran)
+// Catatan: sengaja TIDAK pakai orderBy di query Firestore di sini. Query yang
+// menggabungkan where() + orderBy() pada field berbeda butuh composite index
+// yang harus dibuat manual di Firebase Console; kalau belum ada, query gagal
+// diam-diam (di-catch, cuma masuk console.error) sehingga data terlihat
+// "tidak muncul" padahal sebenarnya query-nya error. Supaya tidak bergantung
+// pada index tambahan, data diambil polos lalu diurutkan di kode.
 export const fetchPaymentsByParent = async (parentUid: string): Promise<Payment[]> => {
-  const snap = await getDocs(
-    query(collection(db, 'payments'), where('parentUid', '==', parentUid), orderBy('dueDate', 'desc'))
-  );
-  return snap.docs.map(d => mapPaymentDoc(d.id, d.data()));
+  const snap = await getDocs(query(collection(db, 'payments'), where('parentUid', '==', parentUid)));
+  return snap.docs
+    .map(d => mapPaymentDoc(d.id, d.data()))
+    .sort((a, b) => b.dueDate.getTime() - a.dueDate.getTime());
 };
 
 export interface AssignPaymentInput {

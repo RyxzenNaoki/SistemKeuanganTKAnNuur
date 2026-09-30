@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { X, Save, Loader2 } from 'lucide-react';
+import { CLASS_OPTIONS } from '../../config/classes';
 
 interface Class {
   id?: string;
@@ -120,15 +121,21 @@ const ClassModal = ({ isOpen, onClose, onSave, classData, loading = false }: Cla
                 <label className="block text-sm font-medium text-slate-700 mb-1">
                   Nama Kelas *
                 </label>
-                <input
-                  type="text"
+                <select
                   name="name"
                   value={formData.name}
                   onChange={handleInputChange}
                   className={`input ${errors.name ? 'border-error-500' : ''}`}
-                  placeholder="Contoh: TK A - Melati"
-                />
+                >
+                  <option value="">Pilih Kelas</option>
+                  {CLASS_OPTIONS.map(option => (
+                    <option key={option} value={option}>{option}</option>
+                  ))}
+                </select>
                 {errors.name && <p className="text-error-600 text-xs mt-1">{errors.name}</p>}
+                <p className="mt-1 text-xs text-slate-400">
+                  Daftar kelas ini tetap (tidak bisa diketik manual) supaya jumlah siswa di Data Siswa selalu tercatat benar.
+                </p>
               </div>
 
               {/* Teacher */}

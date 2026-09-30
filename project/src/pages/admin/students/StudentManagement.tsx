@@ -223,10 +223,6 @@ const StudentManagement = () => {
     }
   };
 
-  const getAvailableClasses = () => {
-    return classes.map(cls => cls.name);
-  };
-
   const getUniqueClasses = () => {
     const classNames = [...new Set(students.map(student => student.class))];
     return classNames.sort();
@@ -461,7 +457,6 @@ const StudentManagement = () => {
         onSave={handleSaveStudent}
         student={selectedStudent}
         loading={modalLoading}
-        availableClasses={getAvailableClasses()}
       />
     </div>
   );

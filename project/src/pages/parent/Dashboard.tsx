@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { collection, getDocs, query, orderBy, limit, doc, getDoc } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import { useAuth } from '../../contexts/AuthContext';
+import { useToast } from '../../contexts/ToastContext';
 import {
   Clock,
   CheckCircle,
@@ -43,6 +44,7 @@ interface UserData {
 
 const ParentDashboard = () => {
   const { currentUser } = useAuth();
+  const { showToast } = useToast();
   const { student: linkedStudent } = useParentStudents();
   const [studentName, setStudentName] = useState('');
   const [studentNickname, setStudentNickname] = useState('');
@@ -107,6 +109,7 @@ const ParentDashboard = () => {
       setNextPayment(upcoming || null);
     } catch (error) {
       console.error('Error fetching payment schedules:', error);
+      showToast('error', 'Gagal memuat status pembayaran. Coba refresh halaman ini.');
     }
   };
 

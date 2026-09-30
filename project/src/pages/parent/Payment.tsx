@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import dayjs from 'dayjs';
 import { CheckCircle, Clock, AlertCircle, Upload } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useToast } from '../../contexts/ToastContext';
 import UploadPaymentModal from '../../components/parent/PaymentProofModal';
 import {
   fetchPaymentsByParent,
@@ -27,6 +28,7 @@ const PROOF_STATUS_BADGE: Record<PaymentProof['status'], JSX.Element> = {
 
 const Payment = () => {
   const { currentUser } = useAuth();
+  const { showToast } = useToast();
   const [payments, setPayments] = useState<PaymentRecord[]>([]);
   const [proofs, setProofs] = useState<PaymentProof[]>([]);
   const [loading, setLoading] = useState(true);
@@ -43,6 +45,7 @@ const Payment = () => {
       setProofs(proofList);
     } catch (err) {
       console.error('Error fetching payment data:', err);
+      showToast('error', 'Gagal memuat data pembayaran. Coba refresh halaman ini.');
     } finally {
       setLoading(false);
     }

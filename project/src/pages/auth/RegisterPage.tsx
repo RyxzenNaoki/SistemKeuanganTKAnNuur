@@ -1,15 +1,13 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { collection, doc, getDocs, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../../firebase/config';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '../../contexts/ToastContext';
 import { linkParentToStudent } from '../../services/studentService';
 import { Loader2, UserPlus, Baby } from 'lucide-react';
 import { ROLE_LABEL, SELF_REGISTER_ROLES, UserRole, initialStatusFor } from '../../config/roles';
-
-// Dipakai kalau daftar kelas dari Data Kelas (admin) belum bisa dimuat
-const DEFAULT_CLASSES = ['TK A', 'TK B', 'Daycare'];
+import { CLASS_OPTIONS } from '../../config/classes';
 
 const RegisterPage = () => {
     const navigate = useNavigate();
@@ -23,24 +21,7 @@ const RegisterPage = () => {
     const [studentName, setStudentName] = useState('');
     const [studentNickname, setStudentNickname] = useState('');
     const [studentClass, setStudentClass] = useState('');
-    const [classes, setClasses] = useState<string[]>(DEFAULT_CLASSES);
     const [loading, setLoading] = useState(false);
-
-    // Ambil daftar kelas dari Data Kelas supaya pilihannya sama dengan yang dikelola admin
-    useEffect(() => {
-        const loadClasses = async () => {
-            try {
-                const snap = await getDocs(collection(db, 'classes'));
-                const names = snap.docs
-                    .map(d => String(d.data().name || '').trim())
-                    .filter(Boolean);
-                if (names.length > 0) setClasses(Array.from(new Set(names)).sort());
-            } catch {
-                // belum login -> aturan Firestore bisa menolak; pakai daftar bawaan
-            }
-        };
-        loadClasses();
-    }, []);
 
     const handleRegister = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -233,7 +214,7 @@ const RegisterPage = () => {
                                 required
                             >
                                 <option value="">Pilih Kelas</option>
-                                {classes.map(className => (
+                                {CLASS_OPTIONS.map(className => (
                                     <option key={className} value={className}>{className}</option>
                                 ))}
                             </select>

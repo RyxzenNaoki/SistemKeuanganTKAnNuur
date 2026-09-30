@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { X, Save, Loader2 } from 'lucide-react';
 import { Student } from '../../services/studentService';
+import { CLASS_OPTIONS } from '../../config/classes';
 
 interface StudentModalProps {
   isOpen: boolean;
@@ -8,10 +9,9 @@ interface StudentModalProps {
   onSave: (student: Omit<Student, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
   student?: Student | null;
   loading?: boolean;
-  availableClasses: string[];
 }
 
-const StudentModal = ({ isOpen, onClose, onSave, student, loading = false, availableClasses }: StudentModalProps) => {
+const StudentModal = ({ isOpen, onClose, onSave, student, loading = false }: StudentModalProps) => {
   const [formData, setFormData] = useState({
     nis: '',
     name: '',
@@ -261,26 +261,13 @@ const StudentModal = ({ isOpen, onClose, onSave, student, loading = false, avail
                     className={`input ${errors.class ? 'border-error-500' : ''}`}
                   >
                     <option value="">Pilih Kelas</option>
-                    {availableClasses.length > 0 ? (
-                      availableClasses.map(className => (
-                        <option key={className} value={className}>
-                          {className}
-                        </option>
-                      ))
-                    ) : (
-                      <>
-                        <option value="TK A">TK A</option>
-                        <option value="TK B">TK B</option>
-                        <option value="Daycare">Daycare</option>
-                      </>
-                    )}
+                    {CLASS_OPTIONS.map(className => (
+                      <option key={className} value={className}>
+                        {className}
+                      </option>
+                    ))}
                   </select>
                   {errors.class && <p className="text-error-600 text-xs mt-1">{errors.class}</p>}
-                  {availableClasses.length === 0 && (
-                    <p className="text-xs text-amber-600 mt-1">
-                      Tidak ada kelas tersedia. Silakan tambahkan kelas terlebih dahulu di menu Manajemen Kelas.
-                    </p>
-                  )}
                 </div>
 
                 {/* Academic Year */}

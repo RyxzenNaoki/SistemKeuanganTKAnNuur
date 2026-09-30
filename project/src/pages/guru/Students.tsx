@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Loader2, Search } from 'lucide-react';
 import { useStudents } from '../../hooks/useStudents';
 import { getCurrentAcademicYear, getDisplayName } from '../../services/studentService';
+import { CLASS_OPTIONS } from '../../config/classes';
 
 const GuruStudents = () => {
   const { students, loading, error } = useStudents({ onlyActive: true });
@@ -9,10 +10,6 @@ const GuruStudents = () => {
   const [className, setClassName] = useState('all');
   const [year, setYear] = useState(getCurrentAcademicYear());
 
-  const classOptions = useMemo(
-    () => Array.from(new Set(students.map(s => s.class).filter(Boolean))).sort(),
-    [students]
-  );
   const yearOptions = useMemo(
     () => Array.from(new Set([getCurrentAcademicYear(), ...students.map(s => s.academicYear).filter(Boolean)])).sort().reverse(),
     [students]
@@ -53,7 +50,7 @@ const GuruStudents = () => {
         </div>
         <select className="input md:w-44" value={className} onChange={e => setClassName(e.target.value)}>
           <option value="all">Semua Kelas</option>
-          {classOptions.map(c => <option key={c} value={c}>{c}</option>)}
+          {CLASS_OPTIONS.map(c => <option key={c} value={c}>{c}</option>)}
         </select>
         <select className="input md:w-44" value={year} onChange={e => setYear(e.target.value)}>
           <option value="all">Semua Tahun Ajaran</option>

@@ -2,7 +2,6 @@ import {
   collection,
   query,
   where,
-  orderBy,
   getDocs,
   addDoc,
   updateDoc,
@@ -101,6 +100,8 @@ export const createAssessment = async (input: CreateAssessmentInput): Promise<vo
 
 // Semua entri asesmen satu murid (Guru: Rekap Asesmen per murid; Ortu: Rapor Digital)
 // Menggabungkan input dari semua guru karena difilter dari studentId, bukan per guru.
+// Diurutkan di kode (bukan orderBy di query) supaya tidak butuh composite
+// index — lihat catatan di fetchPaymentsByParent.
 export const fetchAssessmentsByStudent = async (
   studentId: string,
   category?: AssessmentCategory
@@ -108,16 +109,18 @@ export const fetchAssessmentsByStudent = async (
   const constraints = category
     ? [where('studentId', '==', studentId), where('category', '==', category)]
     : [where('studentId', '==', studentId)];
-  const snap = await getDocs(query(collection(db, 'assessments'), ...constraints, orderBy('createdAt', 'desc')));
-  return snap.docs.map(d => mapAssessmentDoc(d.id, d.data()));
+  const snap = await getDocs(query(collection(db, 'assessments'), ...constraints));
+  return snap.docs
+    .map(d => mapAssessmentDoc(d.id, d.data()))
+    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 };
 
 // Semua entri asesmen anak milik satu akun ortu (Rapor Digital -> Beranda ortu)
 export const fetchAssessmentsByParent = async (parentUid: string): Promise<AssessmentEntry[]> => {
-  const snap = await getDocs(
-    query(collection(db, 'assessments'), where('parentUid', '==', parentUid), orderBy('createdAt', 'desc'))
-  );
-  return snap.docs.map(d => mapAssessmentDoc(d.id, d.data()));
+  const snap = await getDocs(query(collection(db, 'assessments'), where('parentUid', '==', parentUid)));
+  return snap.docs
+    .map(d => mapAssessmentDoc(d.id, d.data()))
+    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 };
 
 // Ortu memberi feedback pada satu Catatan Guru
