@@ -7,12 +7,19 @@ import 'dayjs/locale/id';
 import { db } from '../../firebase/config';
 import { useAuth } from '../../contexts/AuthContext';
 import { useStudents } from '../../hooks/useStudents';
-import { getCurrentAcademicYear } from '../../services/studentService';
+import { getCurrentAcademicYear, getCurrentSemester } from '../../services/studentService';
+import { CLASS_OPTIONS } from '../../config/classes';
+import { fetchAttendanceSession, calculateAttendancePercentage } from '../../services/attendanceService';
+import { fetchThemes, Theme } from '../../services/curriculumService';
 
 const GuruDashboard = () => {
   const { currentUser } = useAuth();
   const [name, setName] = useState('');
   const { students, loading } = useStudents({ onlyActive: true });
+
+  const [attendancePct, setAttendancePct] = useState<number | null>(null);
+  const [attendanceFilled, setAttendanceFilled] = useState(0);
+  const [latestTheme, setLatestTheme] = useState<Theme | null>(null);
 
   useEffect(() => {
     const loadName = async () => {
@@ -35,11 +42,37 @@ const GuruDashboard = () => {
     return acc;
   }, {});
 
-  const upcoming = [
-    { title: 'Absensi Anak', desc: 'Persentase kehadiran per anak', icon: ClipboardCheck, tone: 'stat-card-blue', chip: 'bg-primary-100 text-primary-600' },
-    { title: 'Jadwal Pembelajaran', desc: 'Hari/tanggal dan jadwal kegiatan', icon: CalendarDays, tone: 'stat-card-pink', chip: 'bg-secondary-100 text-secondary-600' },
-    { title: 'Tema & Sub Tema', desc: 'Tema minggu ini dan sub tema hari ini (sesuai prosem)', icon: BookOpenText, tone: 'stat-card-yellow', chip: 'bg-accent-100 text-accent-700' },
-  ];
+  // Persentase hadir hari ini, digabung dari absensi semua kelas yang sudah diisi
+  useEffect(() => {
+    const loadAttendance = async () => {
+      try {
+        const sessions = await Promise.all(CLASS_OPTIONS.map(c => fetchAttendanceSession(c, new Date())));
+        const filled = sessions.filter(Boolean);
+        setAttendanceFilled(filled.length);
+
+        let hadir = 0;
+        let total = 0;
+        filled.forEach(session => {
+          Object.keys(session!.records).forEach(studentId => {
+            const { hadir: h, total: t } = calculateAttendancePercentage(studentId, [session!]);
+            hadir += h;
+            total += t;
+          });
+        });
+        setAttendancePct(total === 0 ? null : Math.round((hadir / total) * 100));
+      } catch (err) {
+        console.error('Gagal memuat ringkasan absensi:', err);
+      }
+    };
+    loadAttendance();
+  }, []);
+
+  // Tema yang paling baru dibuat untuk semester berjalan
+  useEffect(() => {
+    fetchThemes(getCurrentAcademicYear(), getCurrentSemester())
+      .then(list => setLatestTheme(list[list.length - 1] ?? null))
+      .catch(console.error);
+  }, []);
 
   return (
     <div className="page-transition">
@@ -71,16 +104,47 @@ const GuruDashboard = () => {
         </div>
 
         <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {upcoming.map(({ title, desc, icon: Icon, tone, chip }) => (
-            <div key={title} className={`rounded-2xl p-4 shadow-soft ${tone}`}>
-              <div className={`inline-flex h-9 w-9 items-center justify-center rounded-xl ${chip}`}>
-                <Icon className="h-5 w-5" />
-              </div>
-              <p className="mt-3 text-sm font-semibold text-slate-800">{title}</p>
-              <p className="mt-1 text-xs text-slate-500">{desc}</p>
-              <span className="mt-3 inline-block badge bg-white text-slate-500">Segera hadir</span>
+          {/* Absensi Anak — sekarang data asli dari Rekap Absensi hari ini */}
+          <Link to="/guru/attendance" className="rounded-2xl p-4 shadow-soft stat-card-blue hover:shadow-soft-lg transition-shadow">
+            <div className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-primary-100 text-primary-600">
+              <ClipboardCheck className="h-5 w-5" />
             </div>
-          ))}
+            <p className="mt-3 text-sm font-semibold text-slate-800">Absensi Hari Ini</p>
+            {attendancePct === null ? (
+              <p className="mt-1 text-xs text-slate-500">Belum ada kelas yang mengisi absensi hari ini</p>
+            ) : (
+              <>
+                <p className="text-2xl font-bold text-primary-700">{attendancePct}%</p>
+                <p className="text-xs text-slate-500">hadir · {attendanceFilled} dari {CLASS_OPTIONS.length} kelas terisi</p>
+              </>
+            )}
+          </Link>
+
+          {/* Jadwal Pembelajaran — belum ada modul jadwal, tetap kerangka */}
+          <div className="rounded-2xl p-4 shadow-soft stat-card-pink">
+            <div className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-secondary-100 text-secondary-600">
+              <CalendarDays className="h-5 w-5" />
+            </div>
+            <p className="mt-3 text-sm font-semibold text-slate-800">Jadwal Pembelajaran</p>
+            <p className="mt-1 text-xs text-slate-500">Hari/tanggal dan jadwal kegiatan</p>
+            <span className="mt-3 inline-block badge bg-white text-slate-500">Segera hadir</span>
+          </div>
+
+          {/* Tema — menampilkan tema terbaru yang diinput lewat Rekap Asesmen */}
+          <Link to="/guru/assessment" className="rounded-2xl p-4 shadow-soft stat-card-yellow hover:shadow-soft-lg transition-shadow">
+            <div className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-accent-100 text-accent-700">
+              <BookOpenText className="h-5 w-5" />
+            </div>
+            <p className="mt-3 text-sm font-semibold text-slate-800">Tema Berjalan</p>
+            {latestTheme ? (
+              <p className="mt-1 text-sm font-medium text-accent-800">{latestTheme.name}</p>
+            ) : (
+              <>
+                <p className="mt-1 text-xs text-slate-500">Belum ada tema diinput semester ini</p>
+                <span className="mt-3 inline-block badge bg-white text-slate-500">Segera hadir</span>
+              </>
+            )}
+          </Link>
         </div>
       </div>
     </div>

@@ -3,6 +3,7 @@ import {
   query,
   where,
   getDocs,
+  getDoc,
   doc,
   setDoc,
   Timestamp,
@@ -54,11 +55,9 @@ export const fetchAttendanceSession = async (
   className: string,
   date: Date
 ): Promise<AttendanceSession | null> => {
-  const snap = await getDocs(
-    query(collection(db, 'attendance'), where('__name__', '==', sessionId(className, date)))
-  );
-  if (snap.empty) return null;
-  return mapSessionDoc(snap.docs[0].id, snap.docs[0].data());
+  const snap = await getDoc(doc(db, 'attendance', sessionId(className, date)));
+  if (!snap.exists()) return null;
+  return mapSessionDoc(snap.id, snap.data());
 };
 
 // Simpan/perbarui absensi satu kelas satu hari sekaligus (satu kali tulis untuk semua murid)
