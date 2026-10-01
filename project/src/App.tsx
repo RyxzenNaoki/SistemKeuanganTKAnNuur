@@ -32,6 +32,7 @@ const NotificationManagement = lazy(() => import('./pages/admin/notifications/No
 const ParentDashboard = lazy(() => import('./pages/parent/Dashboard'));
 const Payment = lazy(() => import('./pages/parent/Payment'));
 const ContactAdmin = lazy(() => import('./pages/parent/ContactAdmin'));
+const DigitalReport = lazy(() => import('./pages/parent/DigitalReport'));
 
 // Guru Pages
 const GuruDashboard = lazy(() => import('./pages/guru/Dashboard'));
@@ -94,6 +95,8 @@ function App() {
         >
           <Route index element={<ParentDashboard />} />
           <Route path="payment" element={<Payment/>} />
+          <Route path="report" element={<DigitalReport />} />
+          <Route path="report/:tab" element={<DigitalReport />} />
           <Route path="contact" element={<ContactAdmin />} />
         </Route>
 

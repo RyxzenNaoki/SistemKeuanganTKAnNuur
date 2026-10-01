@@ -56,10 +56,22 @@ export default async function handler(req, res) {
         fields: 'id, name',
       });
 
+      const fileId = response.data.id;
+
+      // Supaya file bisa ditampilkan (foto asesmen, PDF rapor, bukti pembayaran)
+      // tanpa perlu login Google, file diberi izin "siapa saja yang punya link
+      // boleh melihat". Tanpa ini, link ke file akan selalu gagal dibuka.
+      await drive.permissions.create({
+        fileId,
+        requestBody: { role: 'reader', type: 'anyone' },
+      });
+
       return res.status(200).json({
         message: 'Upload berhasil',
-        fileId: response.data.id,
+        fileId,
         fileName: response.data.name,
+        viewUrl: `https://drive.google.com/file/d/${fileId}/preview`,
+        downloadUrl: `https://drive.google.com/uc?export=download&id=${fileId}`,
       });
     } catch (error) {
       console.error('Upload error:', error);

@@ -45,7 +45,7 @@ export interface AssessmentEntry {
   semester: Semester;
   academicYear: string;
   note: string;
-  photoUrl?: string;
+  photoFileId?: string;
   teacherUid: string;
   teacherName: string;
   parentFeedback?: ParentFeedback; // hanya relevan untuk kategori "catatan"
@@ -63,7 +63,7 @@ const mapAssessmentDoc = (id: string, data: Record<string, any>): AssessmentEntr
   semester: data.semester,
   academicYear: data.academicYear ?? '',
   note: data.note ?? '',
-  photoUrl: data.photoUrl,
+  photoFileId: data.photoFileId,
   teacherUid: data.teacherUid ?? '',
   teacherName: data.teacherName ?? '',
   parentFeedback: data.parentFeedback
@@ -85,7 +85,7 @@ export interface CreateAssessmentInput {
   semester: Semester;
   academicYear: string;
   note: string;
-  photoUrl?: string;
+  photoFileId?: string;
   teacherUid: string;
   teacherName: string;
 }

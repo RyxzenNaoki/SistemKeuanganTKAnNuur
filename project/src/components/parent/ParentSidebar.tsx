@@ -1,10 +1,16 @@
+import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { 
-  X, 
-  Home,  
-  Upload, 
+import {
+  X,
+  Home,
+  Upload,
   MessageSquare,
-  GraduationCap
+  GraduationCap,
+  ChevronDown,
+  Image as ImageIcon,
+  Sparkles,
+  NotebookPen,
+  FileText,
 } from 'lucide-react';
 import { APP_NAME, SCHOOL_NAME } from '../../config/branding';
 
@@ -13,13 +19,20 @@ interface ParentSidebarProps {
   setIsOpen: (isOpen: boolean) => void;
 }
 
+const REPORT_TABS = [
+  { key: 'karya', label: 'Foto Hasil Karya', icon: Sparkles },
+  { key: 'kegiatan', label: 'Foto Kegiatan', icon: ImageIcon },
+  { key: 'catatan', label: 'Catatan Guru', icon: NotebookPen },
+  { key: 'pdf', label: 'File PDF Rapor', icon: FileText },
+];
+
 const ParentSidebar = ({ isOpen, setIsOpen }: ParentSidebarProps) => {
   const location = useLocation();
   const currentPath = location.pathname;
+  const isOnReportPage = currentPath.startsWith('/parent/report');
+  const [reportMenuOpen, setReportMenuOpen] = useState(isOnReportPage);
 
-  const isActive = (path: string) => {
-    return currentPath === path || currentPath.startsWith(`${path}/`);
-  };
+  const isActive = (path: string) => currentPath === path || currentPath.startsWith(`${path}/`);
 
   return (
     <>
@@ -62,7 +75,7 @@ const ParentSidebar = ({ isOpen, setIsOpen }: ParentSidebarProps) => {
             {/* Dashboard */}
             <Link
               to="/parent"
-              className={`sidebar-menu-item ${isActive('/parent') && !isActive('/parent/history') && !isActive('/parent/make-payment') && !isActive('/parent/upload') && !isActive('/parent/contact') ? 'active' : ''}`}
+              className={`sidebar-menu-item ${currentPath === '/parent' ? 'active' : ''}`}
             >
               <Home className="h-5 w-5" />
               <span>Beranda</span>
@@ -76,6 +89,37 @@ const ParentSidebar = ({ isOpen, setIsOpen }: ParentSidebarProps) => {
               <Upload className="h-5 w-5" />
               <span>Upload Bukti Pembayaran</span>
             </Link>
+
+            {/* Rapor Digital — dropdown 4 kategori */}
+            <div>
+              <button
+                onClick={() => setReportMenuOpen(o => !o)}
+                className={`sidebar-menu-item w-full justify-between ${isOnReportPage ? 'active' : ''}`}
+              >
+                <span className="flex items-center gap-3">
+                  <Sparkles className="h-5 w-5" />
+                  <span>Rapor Digital</span>
+                </span>
+                <ChevronDown className={`h-4 w-4 transition-transform ${reportMenuOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {reportMenuOpen && (
+                <div className="mt-1 ml-4 pl-3 border-l border-slate-100 space-y-0.5">
+                  {REPORT_TABS.map(tab => (
+                    <Link
+                      key={tab.key}
+                      to={`/parent/report/${tab.key}`}
+                      className={`sidebar-menu-item text-[13px] py-2 ${
+                        currentPath === `/parent/report/${tab.key}` ? 'active' : ''
+                      }`}
+                    >
+                      <tab.icon className="h-4 w-4" />
+                      <span>{tab.label}</span>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
 
             {/* Contact Admin */}
             <Link
@@ -92,4 +136,4 @@ const ParentSidebar = ({ isOpen, setIsOpen }: ParentSidebarProps) => {
   );
 };
 
-export default ParentSidebar;
+export default ParentSidebar;
