@@ -11,6 +11,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { Semester } from './studentService';
+import { stripUndefined } from '../utils/firestore';
 
 // ---------------------------------------------------------------------------
 // Tema pembelajaran (koleksi "themes")
@@ -57,11 +58,11 @@ export const fetchThemes = async (academicYear?: string, semester?: Semester): P
 };
 
 export const createTheme = async (input: ThemeInput): Promise<void> => {
-  await addDoc(collection(db, 'themes'), { ...input, createdAt: Timestamp.now() });
+  await addDoc(collection(db, 'themes'), { ...stripUndefined(input), createdAt: Timestamp.now() });
 };
 
 export const updateTheme = async (id: string, input: Partial<ThemeInput>): Promise<void> => {
-  await updateDoc(doc(db, 'themes', id), input);
+  await updateDoc(doc(db, 'themes', id), stripUndefined(input));
 };
 
 export const deleteTheme = async (id: string): Promise<void> => {

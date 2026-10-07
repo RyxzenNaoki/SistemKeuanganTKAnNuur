@@ -10,6 +10,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { Semester } from './studentService';
+import { stripUndefined } from '../utils/firestore';
 
 // ---------------------------------------------------------------------------
 // Asesmen (koleksi "assessments")
@@ -90,10 +91,13 @@ export interface CreateAssessmentInput {
   teacherName: string;
 }
 
-// Guru menambah satu entri asesmen untuk satu murid
+// Guru menambah satu entri asesmen untuk satu murid.
+// stripUndefined() membuang field opsional yang tidak diisi (mis. "theme"
+// untuk kategori selain Hasil Karya, atau "photoFileId" tanpa foto) — kalau
+// tidak, Firestore menolak seluruh penulisan karena ada field bernilai undefined.
 export const createAssessment = async (input: CreateAssessmentInput): Promise<void> => {
   await addDoc(collection(db, 'assessments'), {
-    ...input,
+    ...stripUndefined(input),
     createdAt: Timestamp.now(),
   });
 };

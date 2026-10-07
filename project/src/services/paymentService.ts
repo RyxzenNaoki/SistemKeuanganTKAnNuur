@@ -11,6 +11,7 @@ import {
   Timestamp,
 } from 'firebase/firestore';
 import { db } from '../firebase/config';
+import { stripUndefined } from '../utils/firestore';
 
 // ---------------------------------------------------------------------------
 // Jadwal / tagihan pembayaran (koleksi "payments")
@@ -107,7 +108,7 @@ export interface AssignPaymentInput {
 // Admin meng-assign tagihan ke satu siswa -> otomatis muncul di akun ortu terkait
 export const assignPayment = async (input: AssignPaymentInput): Promise<void> => {
   await addDoc(collection(db, 'payments'), {
-    ...input,
+    ...stripUndefined(input),
     status: 'upcoming' as PaymentStatus,
     dueDate: Timestamp.fromDate(input.dueDate),
     createdAt: Timestamp.now(),
@@ -118,7 +119,7 @@ export const assignPayment = async (input: AssignPaymentInput): Promise<void> =>
 export const updatePayment = async (id: string, input: Partial<AssignPaymentInput> & { status?: PaymentStatus }): Promise<void> => {
   const { dueDate, ...rest } = input;
   await updateDoc(doc(db, 'payments', id), {
-    ...rest,
+    ...stripUndefined(rest),
     ...(dueDate ? { dueDate: Timestamp.fromDate(dueDate) } : {}),
     ...(input.status === 'paid' ? { paidAt: Timestamp.now() } : {}),
     updatedAt: Timestamp.now(),
