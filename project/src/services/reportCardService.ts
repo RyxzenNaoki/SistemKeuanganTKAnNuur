@@ -46,10 +46,22 @@ const mapReportCardDoc = (id: string, data: Record<string, any>): ReportCard => 
   uploadedAt: data.uploadedAt?.toDate?.() ?? new Date(),
 });
 
-// Semua rapor satu murid (Ortu -> Rapor Digital); diurutkan di kode
-// (bukan orderBy di query) supaya tidak butuh composite index Firestore.
+// Semua rapor satu murid (dipakai Guru/Admin — rules mengizinkan mereka
+// membaca apa pun terlepas dari bentuk query). JANGAN dipakai dari sisi
+// Ortu: rules "reportCards" mensyaratkan field parentUid pada query itu
+// sendiri untuk ortu, kalau tidak Firestore menolak seluruh query (bukan
+// cuma menyaring dokumennya) — pakai fetchReportCardsByParent di sisi ortu.
 export const fetchReportCardsByStudent = async (studentId: string): Promise<ReportCard[]> => {
   const snap = await getDocs(query(collection(db, 'reportCards'), where('studentId', '==', studentId)));
+  return snap.docs
+    .map(d => mapReportCardDoc(d.id, d.data()))
+    .sort((a, b) => b.academicYear.localeCompare(a.academicYear) || b.semester.localeCompare(a.semester));
+};
+
+// Semua rapor anak milik satu akun ortu (Ortu -> Rapor Digital). Query-nya
+// difilter lewat parentUid supaya persis cocok dengan syarat rules.
+export const fetchReportCardsByParent = async (parentUid: string): Promise<ReportCard[]> => {
+  const snap = await getDocs(query(collection(db, 'reportCards'), where('parentUid', '==', parentUid)));
   return snap.docs
     .map(d => mapReportCardDoc(d.id, d.data()))
     .sort((a, b) => b.academicYear.localeCompare(a.academicYear) || b.semester.localeCompare(a.semester));

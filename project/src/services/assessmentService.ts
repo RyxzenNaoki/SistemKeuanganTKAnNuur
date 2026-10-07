@@ -30,9 +30,15 @@ export const ASSESSMENT_CATEGORY_LABEL: Record<AssessmentCategory, string> = {
   catatan: 'Catatan Guru',
 };
 
+export interface TeacherReply {
+  message: string;
+  createdAt: Date;
+}
+
 export interface ParentFeedback {
   message: string;
   createdAt: Date;
+  teacherReply?: TeacherReply; // balasan guru atas feedback ortu
 }
 
 export interface AssessmentEntry {
@@ -71,6 +77,12 @@ const mapAssessmentDoc = (id: string, data: Record<string, any>): AssessmentEntr
     ? {
         message: data.parentFeedback.message,
         createdAt: data.parentFeedback.createdAt?.toDate?.() ?? new Date(),
+        teacherReply: data.parentFeedback.teacherReply
+          ? {
+              message: data.parentFeedback.teacherReply.message,
+              createdAt: data.parentFeedback.teacherReply.createdAt?.toDate?.() ?? new Date(),
+            }
+          : undefined,
       }
     : undefined,
   createdAt: data.createdAt?.toDate?.() ?? new Date(),
@@ -104,6 +116,10 @@ export const createAssessment = async (input: CreateAssessmentInput): Promise<vo
 
 // Semua entri asesmen satu murid (Guru: Rekap Asesmen per murid; Ortu: Rapor Digital)
 // Menggabungkan input dari semua guru karena difilter dari studentId, bukan per guru.
+// Dipakai Guru/Admin (Rekap Asesmen). JANGAN dipakai dari sisi Ortu: rules
+// "assessments" mensyaratkan field parentUid ada di query itu sendiri untuk
+// ortu, kalau tidak Firestore menolak seluruh query — pakai
+// fetchAssessmentsByParent di sisi ortu (lihat DigitalReport.tsx).
 // Diurutkan di kode (bukan orderBy di query) supaya tidak butuh composite
 // index — lihat catatan di fetchPaymentsByParent.
 export const fetchAssessmentsByStudent = async (
@@ -131,5 +147,13 @@ export const fetchAssessmentsByParent = async (parentUid: string): Promise<Asses
 export const addParentFeedback = async (assessmentId: string, message: string): Promise<void> => {
   await updateDoc(doc(db, 'assessments', assessmentId), {
     parentFeedback: { message, createdAt: Timestamp.now() },
+  });
+};
+
+// Guru membalas feedback ortu pada satu Catatan Guru (pakai dot-path supaya
+// hanya field teacherReply yang ditimpa, bukan mengganti seluruh parentFeedback)
+export const addTeacherReply = async (assessmentId: string, message: string): Promise<void> => {
+  await updateDoc(doc(db, 'assessments', assessmentId), {
+    'parentFeedback.teacherReply': { message, createdAt: Timestamp.now() },
   });
 };

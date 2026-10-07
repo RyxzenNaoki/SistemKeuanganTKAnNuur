@@ -12,13 +12,14 @@ import {
 } from 'lucide-react';
 import dayjs from 'dayjs';
 import { useParentStudents } from '../../hooks/useStudents';
+import { useToast } from '../../contexts/ToastContext';
 import {
-  fetchAssessmentsByStudent,
+  fetchAssessmentsByParent,
   addParentFeedback,
   AssessmentEntry,
   AssessmentCategory,
 } from '../../services/assessmentService';
-import { fetchReportCardsByStudent, ReportCard } from '../../services/reportCardService';
+import { fetchReportCardsByParent, ReportCard } from '../../services/reportCardService';
 import { getDriveImageUrl, getDrivePreviewUrl, getDriveDownloadUrl } from '../../utils/drive';
 
 type TabKey = 'karya' | 'kegiatan' | 'catatan' | 'pdf';
@@ -32,13 +33,14 @@ const TABS: { key: TabKey; label: string; icon: typeof ImageIcon; desc: string }
 
 const DigitalReport = () => {
   const { student, loading: studentLoading } = useParentStudents();
+  const { showToast } = useToast();
   const params = useParams<{ tab?: string }>();
   const activeTab: TabKey = (['karya', 'kegiatan', 'catatan', 'pdf'] as TabKey[]).includes(params.tab as TabKey)
     ? (params.tab as TabKey)
     : 'karya';
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [entries, setEntries] = useState<AssessmentEntry[]>([]);
+  const [allEntries, setAllEntries] = useState<AssessmentEntry[]>([]);
   const [reportCards, setReportCards] = useState<ReportCard[]>([]);
   const [loading, setLoading] = useState(true);
   const [feedbackDraft, setFeedbackDraft] = useState<Record<string, string>>({});
@@ -46,28 +48,42 @@ const DigitalReport = () => {
 
   const activeTabInfo = TABS.find(t => t.key === activeTab)!;
 
+  // Diambil SEKALI lewat parentUid (bukan per tab lewat studentId), karena
+  // rules "assessments" & "reportCards" mensyaratkan query ortu difilter
+  // lewat parentUid — query yang bentuknya tidak cocok dengan rules akan
+  // ditolak Firestore untuk SELURUH query, bukan cuma menyaring dokumennya.
+  // Kategori per tab cukup difilter di sisi klien dari data yang sama.
   useEffect(() => {
     const load = async () => {
-      if (!student) return;
+      if (!student?.parentUid) {
+        setLoading(false);
+        return;
+      }
       setLoading(true);
       try {
-        if (activeTab === 'pdf') {
-          setReportCards(await fetchReportCardsByStudent(student.id ?? ''));
-        } else {
-          const category = activeTab as AssessmentCategory;
-          const items = await fetchAssessmentsByStudent(student.id ?? '', category);
-          setEntries(items);
-        }
+        const [entries, cards] = await Promise.all([
+          fetchAssessmentsByParent(student.parentUid),
+          fetchReportCardsByParent(student.parentUid),
+        ]);
+        setAllEntries(entries);
+        setReportCards(cards);
       } catch (err) {
         console.error('Gagal memuat Rapor Digital:', err);
+        showToast('error', 'Gagal memuat data Rapor Digital. Coba refresh halaman ini.');
       } finally {
         setLoading(false);
       }
     };
     load();
-  }, [student, activeTab]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [student?.parentUid]);
 
-  // Kelompokkan Foto Progress Hasil Karya per tema, lalu per semester
+  const entries = useMemo(
+    () => allEntries.filter(e => e.category === (activeTab as AssessmentCategory)),
+    [allEntries, activeTab]
+  );
+
+  // Kelompokkan Foto Progress Hasil Karya per tema
   const groupedByTheme = useMemo(() => {
     if (activeTab !== 'karya') return [];
     const groups = new Map<string, AssessmentEntry[]>();
@@ -84,12 +100,13 @@ const DigitalReport = () => {
     setSendingFeedback(assessmentId);
     try {
       await addParentFeedback(assessmentId, message);
-      setEntries(prev =>
+      setAllEntries(prev =>
         prev.map(e => (e.id === assessmentId ? { ...e, parentFeedback: { message, createdAt: new Date() } } : e))
       );
       setFeedbackDraft(prev => ({ ...prev, [assessmentId]: '' }));
     } catch (err) {
       console.error('Gagal mengirim feedback:', err);
+      showToast('error', 'Gagal mengirim feedback. Coba lagi.');
     } finally {
       setSendingFeedback(null);
     }
@@ -109,6 +126,15 @@ const DigitalReport = () => {
       <div className="card p-8 text-center">
         <p className="text-slate-600">Akun Anda belum tertaut ke data siswa.</p>
         <p className="text-sm text-slate-400 mt-1">Hubungi admin sekolah untuk menautkan akun Anda ke data anak.</p>
+      </div>
+    );
+  }
+
+  if (!student.parentUid) {
+    return (
+      <div className="card p-8 text-center">
+        <p className="text-slate-600">Akun Anda belum sepenuhnya tertaut ke data siswa {student.name}.</p>
+        <p className="text-sm text-slate-400 mt-1">Hubungi admin sekolah untuk menautkan ulang akun Anda.</p>
       </div>
     );
   }
@@ -202,9 +228,21 @@ const DigitalReport = () => {
                 <p className="text-sm text-slate-700 whitespace-pre-line">{entry.note}</p>
 
                 {entry.parentFeedback ? (
-                  <div className="mt-3 rounded-xl bg-secondary-50 border border-secondary-100 p-3">
-                    <p className="text-xs font-medium text-secondary-700 mb-1">Feedback Anda</p>
-                    <p className="text-sm text-slate-700">{entry.parentFeedback.message}</p>
+                  <div className="mt-3 space-y-2">
+                    <div className="rounded-xl bg-secondary-50 border border-secondary-100 p-3">
+                      <p className="text-xs font-medium text-secondary-700 mb-1">Feedback Anda</p>
+                      <p className="text-sm text-slate-700">{entry.parentFeedback.message}</p>
+                    </div>
+                    {entry.parentFeedback.teacherReply ? (
+                      <div className="rounded-xl bg-primary-50 border border-primary-100 p-3">
+                        <p className="text-xs font-medium text-primary-700 mb-1">
+                          Balasan {entry.teacherName || 'Guru'}
+                        </p>
+                        <p className="text-sm text-slate-700">{entry.parentFeedback.teacherReply.message}</p>
+                      </div>
+                    ) : (
+                      <p className="text-xs text-slate-400 italic">Menunggu balasan guru...</p>
+                    )}
                   </div>
                 ) : (
                   <div className="mt-3 flex gap-2">

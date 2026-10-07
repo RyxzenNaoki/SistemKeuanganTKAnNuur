@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import dayjs from 'dayjs';
 import { doc, getDoc } from 'firebase/firestore';
-import { Loader2, Upload, Image as ImageIcon, Send, Plus, FileText, Trash2, Download } from 'lucide-react';
+import { Loader2, Upload, Image as ImageIcon, Send, Plus, FileText, Trash2, Download, Reply } from 'lucide-react';
 import { db } from '../../firebase/config';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -14,6 +14,7 @@ import {
   AssessmentEntry,
   createAssessment,
   fetchAssessmentsByStudent,
+  addTeacherReply,
 } from '../../services/assessmentService';
 import { getDriveImageUrl, getDriveDownloadUrl } from '../../utils/drive';
 import {
@@ -51,6 +52,8 @@ const GuruAssessment = () => {
 
   const [history, setHistory] = useState<AssessmentEntry[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
+  const [replyDraft, setReplyDraft] = useState<Record<string, string>>({});
+  const [sendingReply, setSendingReply] = useState<string | null>(null);
 
   // Khusus tab "File PDF Rapor"
   const [reportSemester, setReportSemester] = useState<Semester>(getCurrentSemester());
@@ -173,6 +176,28 @@ const GuruAssessment = () => {
     } catch (err) {
       console.error(err);
       showToast('error', 'Gagal menghapus rapor');
+    }
+  };
+
+  const handleSendReply = async (assessmentId: string) => {
+    const message = replyDraft[assessmentId]?.trim();
+    if (!message) return;
+    setSendingReply(assessmentId);
+    try {
+      await addTeacherReply(assessmentId, message);
+      setHistory(prev =>
+        prev.map(e =>
+          e.id === assessmentId && e.parentFeedback
+            ? { ...e, parentFeedback: { ...e.parentFeedback, teacherReply: { message, createdAt: new Date() } } }
+            : e
+        )
+      );
+      setReplyDraft(prev => ({ ...prev, [assessmentId]: '' }));
+    } catch (err) {
+      console.error('Gagal mengirim balasan:', err);
+      showToast('error', 'Gagal mengirim balasan');
+    } finally {
+      setSendingReply(null);
     }
   };
 
@@ -438,9 +463,39 @@ const GuruAssessment = () => {
                         {entry.teacherName} · {dayjs(entry.createdAt).format('DD MMM YYYY, HH:mm')}
                       </p>
                       {entry.parentFeedback && (
-                        <p className="mt-1 text-xs italic text-secondary-600">
-                          Feedback ortu: {entry.parentFeedback.message}
-                        </p>
+                        <div className="mt-2 space-y-2">
+                          <div className="rounded-lg bg-secondary-50 border border-secondary-100 px-2.5 py-2">
+                            <p className="text-[11px] font-medium text-secondary-700">Feedback Orang Tua</p>
+                            <p className="text-xs text-slate-700 mt-0.5">{entry.parentFeedback.message}</p>
+                          </div>
+
+                          {entry.parentFeedback.teacherReply ? (
+                            <div className="rounded-lg bg-primary-50 border border-primary-100 px-2.5 py-2">
+                              <p className="text-[11px] font-medium text-primary-700">Balasan Anda</p>
+                              <p className="text-xs text-slate-700 mt-0.5">{entry.parentFeedback.teacherReply.message}</p>
+                            </div>
+                          ) : (
+                            <div className="flex gap-2">
+                              <input
+                                className="input text-sm py-1.5"
+                                placeholder="Balas feedback orang tua..."
+                                value={replyDraft[entry.id] ?? ''}
+                                onChange={e => setReplyDraft(prev => ({ ...prev, [entry.id]: e.target.value }))}
+                              />
+                              <button
+                                onClick={() => handleSendReply(entry.id)}
+                                disabled={sendingReply === entry.id || !replyDraft[entry.id]?.trim()}
+                                className="btn btn-primary px-2.5"
+                              >
+                                {sendingReply === entry.id ? (
+                                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                ) : (
+                                  <Reply className="h-3.5 w-3.5" />
+                                )}
+                              </button>
+                            </div>
+                          )}
+                        </div>
                       )}
                     </div>
                   </div>
