@@ -5,6 +5,7 @@ import {
   Users, 
   School, 
   UserCog, 
+  BookOpenText,
   Calendar, 
   TrendingUp, 
   TrendingDown, 
@@ -102,6 +103,14 @@ const AdminSidebar = ({ isOpen, setIsOpen }: AdminSidebarProps) => {
             >
               <UserCog className="h-5 w-5" />
               <span>Data Pengguna</span>
+            </Link>
+
+            <Link
+              to="/admin/themes"
+              className={`sidebar-menu-item ${isActive('/admin/themes') ? 'active' : ''}`}
+            >
+              <BookOpenText className="h-5 w-5" />
+              <span>Tema Pembelajaran</span>
             </Link>
 
             {/* Financial Management */}

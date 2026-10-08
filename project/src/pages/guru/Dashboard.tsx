@@ -10,7 +10,7 @@ import { useStudents } from '../../hooks/useStudents';
 import { getCurrentAcademicYear, getCurrentSemester } from '../../services/studentService';
 import { CLASS_OPTIONS } from '../../config/classes';
 import { fetchAttendanceSession, calculateAttendancePercentage } from '../../services/attendanceService';
-import { fetchThemes, Theme } from '../../services/curriculumService';
+import { fetchThemes, findCurrentWeekTheme, getSemesterWeekNumber, Theme } from '../../services/curriculumService';
 
 const GuruDashboard = () => {
   const { currentUser } = useAuth();
@@ -70,7 +70,12 @@ const GuruDashboard = () => {
   // Tema yang paling baru dibuat untuk semester berjalan
   useEffect(() => {
     fetchThemes(getCurrentAcademicYear(), getCurrentSemester())
-      .then(list => setLatestTheme(list[list.length - 1] ?? null))
+      .then(list => {
+        // Prioritas: tema yang nomor minggunya = minggu berjalan; kalau tidak ada,
+        // pakai tema terakhir yang diinput.
+        const thisWeek = findCurrentWeekTheme(list, getSemesterWeekNumber());
+        setLatestTheme(thisWeek ?? list[list.length - 1] ?? null);
+      })
       .catch(console.error);
   }, []);
 
@@ -135,9 +140,14 @@ const GuruDashboard = () => {
             <div className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-accent-100 text-accent-700">
               <BookOpenText className="h-5 w-5" />
             </div>
-            <p className="mt-3 text-sm font-semibold text-slate-800">Tema Berjalan</p>
+            <p className="mt-3 text-sm font-semibold text-slate-800">Tema Minggu Ini</p>
             {latestTheme ? (
-              <p className="mt-1 text-sm font-medium text-accent-800">{latestTheme.name}</p>
+              <>
+                <p className="mt-1 text-sm font-medium text-accent-800">{latestTheme.name}</p>
+                {latestTheme.subTheme && (
+                  <p className="text-xs text-slate-500">Sub tema: {latestTheme.subTheme}</p>
+                )}
+              </>
             ) : (
               <>
                 <p className="mt-1 text-xs text-slate-500">Belum ada tema diinput semester ini</p>

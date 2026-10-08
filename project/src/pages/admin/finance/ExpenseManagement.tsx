@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { PlusCircle, Search, Download, Edit2, Trash2, TrendingDown, Calendar, FileText, Filter } from 'lucide-react';
 import { useToast } from '../../../contexts/ToastContext';
 import ExpenseModal from '../../../components/admin/ExpenseModal';
+import { exportToCSV } from '../../../utils/csv';
+import dayjs from 'dayjs';
 
 interface Expense {
   id: string;
@@ -146,7 +148,22 @@ const ExpenseManagement = () => {
 
 
   const handleExport = () => {
-    showToast('info', 'Mengunduh data pengeluaran...');
+    if (filteredExpenses.length === 0) {
+      showToast('error', 'Tidak ada data pengeluaran untuk diekspor');
+      return;
+    }
+    exportToCSV(
+      filteredExpenses.map(expense => ({
+        Tanggal: dayjs(expense.date).format('DD/MM/YYYY'),
+        Kategori: expense.category,
+        Deskripsi: expense.description,
+        Jumlah: expense.amount,
+        Status: expense.status,
+        Catatan: expense.notes ?? '',
+      })),
+      `Pengeluaran_${dayjs().format('YYYY-MM-DD')}`
+    );
+    showToast('success', `${filteredExpenses.length} data pengeluaran berhasil diunduh`);
   };
 
   return (

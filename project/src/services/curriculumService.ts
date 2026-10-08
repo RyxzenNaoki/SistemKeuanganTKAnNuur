@@ -1,7 +1,5 @@
 import {
   collection,
-  query,
-  orderBy,
   getDocs,
   addDoc,
   updateDoc,
@@ -49,12 +47,28 @@ export interface ThemeInput {
   weekNumber?: number;
 }
 
+// Catatan: sengaja TANPA orderBy('weekNumber') di query. Firestore membuang
+// dokumen yang tidak punya field yang dipakai orderBy, sehingga tema tanpa
+// nomor minggu (mis. yang ditambah guru lewat Rekap Asesmen) ikut hilang dari
+// hasil. Diurutkan di kode: yang punya nomor minggu dulu, sisanya menurut waktu dibuat.
 export const fetchThemes = async (academicYear?: string, semester?: Semester): Promise<Theme[]> => {
-  const snap = await getDocs(query(collection(db, 'themes'), orderBy('weekNumber', 'asc')));
+  const snap = await getDocs(collection(db, 'themes'));
   let themes = snap.docs.map(d => mapThemeDoc(d.id, d.data()));
   if (academicYear) themes = themes.filter(t => t.academicYear === academicYear);
   if (semester) themes = themes.filter(t => t.semester === semester);
-  return themes;
+  return themes.sort((a, b) => {
+    const wa = a.weekNumber ?? Number.MAX_SAFE_INTEGER;
+    const wb = b.weekNumber ?? Number.MAX_SAFE_INTEGER;
+    if (wa !== wb) return wa - wb;
+    return (a.createdAt?.getTime() ?? 0) - (b.createdAt?.getTime() ?? 0);
+  });
+};
+
+// Perkiraan nomor minggu dalam semester berjalan (Ganjil mulai 1 Juli, Genap mulai 1 Januari).
+// Admin mengisi weekNumber di Tema Pembelajaran mengikuti penomoran ini.
+export const getSemesterWeekNumber = (date: Date = new Date()): number => {
+  const start = new Date(date.getFullYear(), date.getMonth() >= 6 ? 6 : 0, 1);
+  return Math.floor((date.getTime() - start.getTime()) / (7 * 24 * 60 * 60 * 1000)) + 1;
 };
 
 export const createTheme = async (input: ThemeInput): Promise<void> => {

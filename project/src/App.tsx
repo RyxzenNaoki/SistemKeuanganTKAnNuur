@@ -22,6 +22,7 @@ const AdminDashboard = lazy(() => import('./pages/admin/Dashboard'));
 const StudentManagement = lazy(() => import('./pages/admin/students/StudentManagement'));
 const ClassManagement = lazy(() => import('./pages/admin/classes/ClassManagement'));
 const UserManagement = lazy(() => import('./pages/admin/users/UserManagement'));
+const ThemeManagement = lazy(() => import('./pages/admin/themes/ThemeManagement'));
 const PaymentSchedule = lazy(() => import('./pages/admin/payments/PaymentSchedule'));
 const IncomeManagement = lazy(() => import('./pages/admin/finance/IncomeManagement'));
 const ExpenseManagement = lazy(() => import('./pages/admin/finance/ExpenseManagement'));
@@ -77,6 +78,7 @@ function App() {
           <Route path="students" element={<StudentManagement />} />
           <Route path="classes" element={<ClassManagement />} />
           <Route path="users" element={<UserManagement />} />
+          <Route path="themes" element={<ThemeManagement />} />
           <Route path="schedule" element={<PaymentSchedule />} />
           <Route path="income" element={<IncomeManagement />} />
           <Route path="expenses" element={<ExpenseManagement />} />

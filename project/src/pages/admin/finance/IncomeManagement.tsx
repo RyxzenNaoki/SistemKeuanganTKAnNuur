@@ -12,6 +12,8 @@ import { useState, useEffect } from 'react';
 import { PlusCircle, Search, Edit2, Trash2, FileText, Download } from 'lucide-react';
 import { useToast } from '../../../contexts/ToastContext';
 import IncomeModal from '../../../components/admin/IncomeModal';
+import { exportToCSV } from '../../../utils/csv';
+import dayjs from 'dayjs';
 
 interface Income {
   id: string;
@@ -25,6 +27,15 @@ interface Income {
   receiptNumber: string;
   notes?: string;
 }
+
+const INCOME_CATEGORY_LABEL: Record<Income['category'], string> = {
+  spp: 'SPP Bulanan',
+  registration: 'Uang Pangkal',
+  activity: 'Uang Kegiatan',
+  uniform: 'Uang Seragam',
+  book: 'Uang Buku',
+  other: 'Lainnya',
+};
 
 const IncomeManagement = () => {
   const { showToast } = useToast();
@@ -156,7 +167,24 @@ const IncomeManagement = () => {
 
 
   const handleExportData = () => {
-    showToast('info', 'Mengunduh data pemasukan...');
+    if (filteredIncomes.length === 0) {
+      showToast('error', 'Tidak ada data pemasukan untuk diekspor');
+      return;
+    }
+    exportToCSV(
+      filteredIncomes.map(income => ({
+        Tanggal: dayjs(income.date).format('DD/MM/YYYY'),
+        Kategori: INCOME_CATEGORY_LABEL[income.category] ?? income.category,
+        Deskripsi: income.description,
+        Siswa: income.student,
+        Jumlah: income.amount,
+        'Metode Pembayaran': income.paymentMethod === 'transfer' ? 'Transfer Bank' : 'Tunai',
+        Status: income.status,
+        'No. Kwitansi': income.receiptNumber,
+      })),
+      `Pemasukan_${dayjs().format('YYYY-MM-DD')}`
+    );
+    showToast('success', `${filteredIncomes.length} data pemasukan berhasil diunduh`);
   };
 
   const totalIncome = filteredIncomes.reduce((sum, income) => sum + income.amount, 0);
