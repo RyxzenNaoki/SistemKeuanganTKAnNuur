@@ -42,6 +42,11 @@ const AuthLayout = () => {
         </div>
 
         <p className="mt-6 text-center text-xs text-slate-400">{APP_COPYRIGHT}</p>
+        <p className="mt-1 text-center text-xs">
+          <Link to="/privacy-policy" className="text-slate-500 underline hover:text-primary-600">
+            Kebijakan Privasi
+          </Link>
+        </p>
       </div>
     </div>
   );

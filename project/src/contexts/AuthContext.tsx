@@ -18,7 +18,7 @@ import {
 } from 'firebase/firestore';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { auth, db } from '../firebase/config';
-import { ROLE_HOME, UserRole, AccountStatus, isUserRole, toAccountStatus } from '../config/roles';
+import { ROLE_HOME, UserRole, AccountStatus, isUserRole, toAccountStatus, isPublicPath } from '../config/roles';
 
 interface AuthContextType {
   currentUser: User | null;
@@ -68,7 +68,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             setUserStatus(toAccountStatus(userDoc.data().status));
 
             // 🔁 Auto-redirect ke halaman sesuai role
-            if (role && !location.pathname.startsWith(ROLE_HOME[role])) {
+            if (role && !isPublicPath(location.pathname) && !location.pathname.startsWith(ROLE_HOME[role])) {
               navigate(ROLE_HOME[role]);
             }
           } else {

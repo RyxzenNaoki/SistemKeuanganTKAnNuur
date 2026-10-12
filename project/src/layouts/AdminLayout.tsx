@@ -1,6 +1,6 @@
 import { APP_COPYRIGHT } from '../config/branding';
 import { useState } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, Link } from 'react-router-dom';
 import AdminSidebar from '../components/admin/AdminSidebar';
 import AdminHeader from '../components/admin/AdminHeader';
 
@@ -24,6 +24,11 @@ const AdminLayout = () => {
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <p className="text-center text-sm text-slate-500">
               {APP_COPYRIGHT}
+            </p>
+            <p className="mt-1 text-center text-xs">
+              <Link to="/privacy-policy" className="text-slate-400 underline hover:text-primary-600">
+                Kebijakan Privasi
+              </Link>
             </p>
           </div>
         </footer>

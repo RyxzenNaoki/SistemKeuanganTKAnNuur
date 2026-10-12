@@ -8,6 +8,7 @@ import { ROLE_HOME } from './config/roles';
 // Layouts
 const AdminLayout = lazy(() => import('./layouts/AdminLayout'));
 const ParentLayout = lazy(() => import('./layouts/ParentLayout'));
+const PrivacyPolicyPage = lazy(() => import('./pages/auth/PrivacyPolicyPage'));
 const GuruLayout = lazy(() => import('./layouts/GuruLayout'));
 const AuthLayout = lazy(() => import('./layouts/AuthLayout'));
 
@@ -61,6 +62,9 @@ function App() {
   return (
     <Suspense fallback={<LoadingScreen />}>
       <Routes>
+        {/* Halaman publik: bisa dibuka tanpa login */}
+        <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
+
         {/* Auth Routes */}
         <Route element={<AuthLayout />}>
           <Route path="/login" element={<LoginPage />} />

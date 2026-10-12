@@ -41,3 +41,9 @@ export const ROLES_REQUIRING_APPROVAL: UserRole[] = ['guru'];
 
 export const initialStatusFor = (role: UserRole): AccountStatus =>
   ROLES_REQUIRING_APPROVAL.includes(role) ? 'pending' : 'active';
+
+// Halaman yang boleh dibuka siapa saja (termasuk yang sudah login) tanpa
+// dialihkan otomatis ke halaman role-nya.
+export const PUBLIC_PATHS = ['/privacy-policy'];
+
+export const isPublicPath = (pathname: string): boolean => PUBLIC_PATHS.includes(pathname);

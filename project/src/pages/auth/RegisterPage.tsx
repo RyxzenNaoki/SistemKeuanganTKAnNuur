@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../../firebase/config';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useToast } from '../../contexts/ToastContext';
 import { linkParentToStudent } from '../../services/studentService';
 import { Loader2, UserPlus, Baby } from 'lucide-react';
@@ -251,6 +251,14 @@ const RegisterPage = () => {
                         placeholder="••••••••"
                     />
                 </div>
+
+                <p className="mb-4 text-xs text-slate-500 text-center">
+                    Dengan mendaftar, Anda menyetujui{' '}
+                    <Link to="/privacy-policy" target="_blank" className="text-primary-600 underline hover:text-primary-700">
+                        Kebijakan Privasi
+                    </Link>{' '}
+                    SINAU, termasuk pengelolaan data anak Anda oleh sekolah.
+                </p>
 
                 <button
                     type="submit"
