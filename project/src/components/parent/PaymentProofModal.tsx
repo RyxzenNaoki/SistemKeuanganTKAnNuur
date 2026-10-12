@@ -1,465 +1,268 @@
-import { useState, useRef } from 'react';
-import { X, Upload, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import dayjs from 'dayjs';
+import { X, Upload, Loader2, FileCheck2 } from 'lucide-react';
 import { useToast } from '../../contexts/ToastContext';
-import { addDoc, collection } from 'firebase/firestore';
-import { db } from '../../firebase/config';
 import { useAuth } from '../../contexts/AuthContext';
+import { PAYMENT_TYPES, Payment, submitPaymentProof } from '../../services/paymentService';
+import { uploadToDrive, UPLOAD_ACCEPT } from '../../utils/upload';
 
 interface PaymentProofModalProps {
   isOpen: boolean;
   onClose: () => void;
-  loading?: boolean;
-  payment?: PaymentHistoryItem;
+  onSubmitted: () => void;
+  unpaidPayments: Payment[]; // tagihan milik ortu yang belum lunas
+  pendingPaymentIds: string[]; // tagihan yang buktinya sedang menunggu verifikasi
 }
 
+const BANK_ACCOUNTS = ['BNI - 0795834521 a.n Rita Ayu Bulan Trisna'];
+const NO_INVOICE = '__other__';
 
-interface PaymentProofData {
-  student: string;
-  paymentType: string;
-  amount: number;
-  paymentDate: Date;
-  bankAccount: string;
-  referenceNumber: string;
-  notes: string;
-  proofFile: File | null;
-}
+const formatCurrency = (amount: number) =>
+  new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(amount);
 
-interface PaymentHistoryItem {
-  id: string;
-  amount: number;
-  paymentType: string;
-  date: Date;
-  notes?: string;
-  receiptUrl?: string;
-}
-
-const PaymentProofModal = ({ isOpen, onClose, loading = false }: PaymentProofModalProps) => {
+const PaymentProofModal = ({ isOpen, onClose, onSubmitted, unpaidPayments, pendingPaymentIds }: PaymentProofModalProps) => {
   const { showToast } = useToast();
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const { currentUser } = useAuth();
-  if (!currentUser) {
-    console.error("User belum login");
-    return;
-  }
 
-  const [formData, setFormData] = useState<PaymentProofData>({
-    student: currentUser.uid,
-    paymentType: 'SPP Bulanan',
-    amount: 0,
-    paymentDate: new Date(),
-    bankAccount: '',
-    referenceNumber: '',
-    notes: '',
-    proofFile: null,
-  });
-
+  const [selectedPaymentId, setSelectedPaymentId] = useState<string>(NO_INVOICE);
+  const [paymentType, setPaymentType] = useState<string>(PAYMENT_TYPES[0]);
+  const [amount, setAmount] = useState(0);
+  const [paymentDate, setPaymentDate] = useState(dayjs().format('YYYY-MM-DD'));
+  const [bankAccount, setBankAccount] = useState(BANK_ACCOUNTS[0]);
+  const [referenceNumber, setReferenceNumber] = useState('');
+  const [notes, setNotes] = useState('');
+  const [proofFile, setProofFile] = useState<File | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [submitting, setSubmitting] = useState(false);
   const [dragActive, setDragActive] = useState(false);
 
-  const paymentTypes = [
-    'SPP Bulanan',
-    'Formulir',
-    'Uang Kegiatan, Alat, Bahan',
-    'Uang Seragam',
-    'Uang Sarana',
-    'Lainnya',
-  ];
+  const selectablePayments = unpaidPayments.filter(p => !pendingPaymentIds.includes(p.id));
+  const linkedPayment = unpaidPayments.find(p => p.id === selectedPaymentId);
 
-  const bankAccounts = [
-    'BNI - 0795834521 a.n Rita Ayu Bulan Trisna',
-  ];
+  const resetForm = () => {
+    setSelectedPaymentId(NO_INVOICE);
+    setPaymentType(PAYMENT_TYPES[0]);
+    setAmount(0);
+    setPaymentDate(dayjs().format('YYYY-MM-DD'));
+    setBankAccount(BANK_ACCOUNTS[0]);
+    setReferenceNumber('');
+    setNotes('');
+    setProofFile(null);
+    setErrors({});
+  };
 
-  const validateForm = () => {
-    const newErrors: Record<string, string> = {};
+  // Saat modal dibuka, otomatis pilih tagihan pertama yang belum dibayar
+  useEffect(() => {
+    if (!isOpen) return;
+    resetForm();
+    if (selectablePayments.length > 0) {
+      const first = selectablePayments[0];
+      setSelectedPaymentId(first.id);
+      setPaymentType(first.type);
+      setAmount(first.amount);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
 
-    if (!formData.paymentType) newErrors.paymentType = 'Jenis pembayaran wajib dipilih';
-    if (formData.amount <= 0) newErrors.amount = 'Jumlah pembayaran harus lebih dari 0';
-    if (!formData.bankAccount) newErrors.bankAccount = 'Rekening tujuan wajib dipilih';
-    if (!formData.referenceNumber.trim()) newErrors.referenceNumber = 'Nomor referensi wajib diisi';
-    if (!formData.proofFile) newErrors.proofFile = 'Bukti pembayaran wajib diupload';
+  const handleSelectPayment = (id: string) => {
+    setSelectedPaymentId(id);
+    const payment = unpaidPayments.find(p => p.id === id);
+    if (payment) {
+      setPaymentType(payment.type);
+      setAmount(payment.amount);
+    }
+  };
 
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+  const validate = () => {
+    const next: Record<string, string> = {};
+    if (amount <= 0) next.amount = 'Jumlah pembayaran harus lebih dari 0';
+    if (!paymentDate) next.paymentDate = 'Tanggal transfer wajib diisi';
+    if (!referenceNumber.trim()) next.referenceNumber = 'Nomor referensi wajib diisi';
+    if (!proofFile) next.proofFile = 'Bukti pembayaran wajib diupload';
+    setErrors(next);
+    return Object.keys(next).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!currentUser || !validate() || !proofFile) return;
 
-    if (!validateForm()) return;
-
-    if (!formData.proofFile) {
-      alert('Mohon upload bukti pembayaran');
-      return;
-    }
-
+    setSubmitting(true);
     try {
-      const uploadForm = new FormData();
-      uploadForm.append('file', formData.proofFile);
-
-      const uploadRes = await fetch('/api/upload', {
-        method: 'POST',
-        body: uploadForm,
-      });
-
-      if (!uploadRes.ok) {
-        throw new Error('Upload ke Google Drive gagal');
-      }
-
-      const uploadData = await uploadRes.json();
-
-      if (!uploadData?.fileId) {
-        throw new Error("Upload berhasil tapi fileId tidak ditemukan.");
-      }
-
-      console.log('uploadData:', uploadData);
-
-      await addDoc(collection(db, 'payment_proofs'), {
+      const uploaded = await uploadToDrive(proofFile, 'payment-proof');
+      await submitPaymentProof({
         student: currentUser.uid,
-        paymentType: formData.paymentType,
-        amount: formData.amount,
-        paymentDate: formData.paymentDate,
-        bankAccount: formData.bankAccount,
-        referenceNumber: formData.referenceNumber,
-        notes: formData.notes || '',
-        fileId: uploadData.fileId, // <- hanya fileId
-        uploadedAt: new Date(),
+        paymentId: linkedPayment?.id,
+        paymentType,
+        amount,
+        paymentDate: new Date(paymentDate),
+        bankAccount,
+        referenceNumber: referenceNumber.trim(),
+        notes: notes.trim() || undefined,
+        fileId: uploaded.fileId,
+        fileName: uploaded.fileName,
       });
-
-
-      alert('Bukti pembayaran berhasil diupload!');
-      handleReset();
+      showToast('success', 'Bukti pembayaran terkirim. Menunggu verifikasi admin.');
+      onSubmitted();
       onClose();
     } catch (err) {
       console.error(err);
-      alert('Terjadi kesalahan saat mengupload.');
+      showToast('error', err instanceof Error ? err.message : 'Terjadi kesalahan saat mengupload.');
+    } finally {
+      setSubmitting(false);
     }
-  };
-
-
-  const handleReset = () => {
-    setFormData({
-      student: currentUser.uid,
-      paymentType: 'SPP Bulanan',
-      amount: 0,
-      paymentDate: new Date(),
-      bankAccount: '',
-      referenceNumber: '',
-      notes: '',
-      proofFile: null,
-    });
-    setErrors({});
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-  };
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: name === 'amount' ? parseFloat(value) || 0 :
-        name === 'paymentDate' ? new Date(value) : value
-    }));
-
-    if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: '' }));
-    }
-  };
-
-  const handleFileSelect = (file: File) => {
-    const maxSize = 10 * 1024 * 1024; // 10MB
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
-
-    if (!allowedTypes.includes(file.type)) {
-      showToast('error', 'Format file tidak didukung. Gunakan JPG, PNG, atau PDF');
-      return;
-    }
-
-    if (file.size > maxSize) {
-      showToast('error', 'Ukuran file terlalu besar. Maksimal 10MB');
-      return;
-    }
-
-    setFormData(prev => ({ ...prev, proofFile: file }));
-    if (errors.proofFile) {
-      setErrors(prev => ({ ...prev, proofFile: '' }));
-    }
-  };
-
-  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      handleFileSelect(file);
-    }
-  };
-
-  const handleDrag = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (e.type === 'dragenter' || e.type === 'dragover') {
-      setDragActive(true);
-    } else if (e.type === 'dragleave') {
-      setDragActive(false);
-    }
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragActive(false);
-
-    const file = e.dataTransfer.files?.[0];
-    if (file) {
-      handleFileSelect(file);
-    }
-  };
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
-      minimumFractionDigits: 0,
-    }).format(amount);
   };
 
   if (!isOpen) return null;
 
+  const label = 'block text-sm font-medium text-slate-700 mb-1';
+
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
-      <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-        <div className="fixed inset-0 bg-slate-500 bg-opacity-75 transition-opacity" onClick={onClose} />
+      <div className="flex items-center justify-center min-h-screen px-4 py-8">
+        <div className="fixed inset-0 bg-slate-500 bg-opacity-75" onClick={() => !submitting && onClose()} />
 
-        <div className="inline-block align-bottom bg-white rounded-xl text-left overflow-hidden shadow-soft-lg transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
-          <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-medium text-slate-900">
-                Upload Bukti Pembayaran
-              </h3>
-              <button
-                onClick={onClose}
-                className="text-slate-400 hover:text-slate-600 transition-colors"
-              >
-                <X className="h-6 w-6" />
-              </button>
+        <div className="relative bg-white rounded-2xl shadow-soft-lg w-full max-w-lg p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-slate-900">Upload Bukti Pembayaran</h3>
+            <button onClick={onClose} disabled={submitting} className="text-slate-400 hover:text-slate-600">
+              <X className="h-6 w-6" />
+            </button>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className={label}>Tagihan yang dibayar</label>
+              <select className="input" value={selectedPaymentId} onChange={e => handleSelectPayment(e.target.value)}>
+                {selectablePayments.map(p => (
+                  <option key={p.id} value={p.id}>
+                    {p.type} — {formatCurrency(p.amount)} (jatuh tempo {dayjs(p.dueDate).format('DD MMM YYYY')})
+                  </option>
+                ))}
+                <option value={NO_INVOICE}>Pembayaran lainnya (tanpa tagihan)</option>
+              </select>
+              {pendingPaymentIds.length > 0 && (
+                <p className="mt-1 text-xs text-slate-400">
+                  Tagihan yang buktinya sedang diverifikasi tidak ditampilkan.
+                </p>
+              )}
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Payment Details */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Payment Type */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Jenis Pembayaran *
-                  </label>
-                  <select
-                    name="paymentType"
-                    value={formData.paymentType}
-                    onChange={handleInputChange}
-                    className={`input ${errors.paymentType ? 'border-error-500' : ''}`}
-                  >
-                    {paymentTypes.map(type => (
-                      <option key={type} value={type}>{type}</option>
-                    ))}
-                  </select>
-                  {errors.paymentType && <p className="text-error-600 text-xs mt-1">{errors.paymentType}</p>}
-                </div>
-
-                {/* Amount */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Jumlah Pembayaran *
-                  </label>
-                  <input
-                    type="number"
-                    name="amount"
-                    value={formData.amount}
-                    onChange={handleInputChange}
-                    min="0"
-                    step="1000"
-                    className={`input ${errors.amount ? 'border-error-500' : ''}`}
-                    placeholder="500000"
-                  />
-                  {errors.amount && <p className="text-error-600 text-xs mt-1">{errors.amount}</p>}
-                  {formData.amount > 0 && (
-                    <p className="text-xs text-slate-500 mt-1">{formatCurrency(formData.amount)}</p>
-                  )}
-                </div>
-
-                {/* Payment Date */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Tanggal Pembayaran *
-                  </label>
-                  <input
-                    type="date"
-                    name="paymentDate"
-                    value={formData.paymentDate.toISOString().split('T')[0]}
-                    onChange={handleInputChange}
-                    className="input"
-                  />
-                </div>
-
-                {/* Bank Account */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Rekening Tujuan *
-                  </label>
-                  <select
-                    name="bankAccount"
-                    value={formData.bankAccount}
-                    onChange={handleInputChange}
-                    className={`input ${errors.bankAccount ? 'border-error-500' : ''}`}
-                  >
-                    <option value="">Pilih Rekening Tujuan</option>
-                    {bankAccounts.map(account => (
-                      <option key={account} value={account}>{account}</option>
-                    ))}
-                  </select>
-                  {errors.bankAccount && <p className="text-error-600 text-xs mt-1">{errors.bankAccount}</p>}
-                </div>
-              </div>
-
-              {/* Reference Number */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Nomor Referensi/Transaksi *
-                </label>
+                <label className={label}>Jenis Pembayaran</label>
+                <select
+                  className="input"
+                  value={paymentType}
+                  onChange={e => setPaymentType(e.target.value)}
+                  disabled={!!linkedPayment}
+                >
+                  {PAYMENT_TYPES.map(t => (
+                    <option key={t} value={t}>{t}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className={label}>Jumlah Dibayar (Rp)</label>
                 <input
-                  type="text"
-                  name="referenceNumber"
-                  value={formData.referenceNumber}
-                  onChange={handleInputChange}
+                  type="number"
+                  min="0"
+                  step="1000"
+                  className={`input ${errors.amount ? 'border-error-500' : ''}`}
+                  value={amount}
+                  onChange={e => setAmount(parseFloat(e.target.value) || 0)}
+                />
+                {errors.amount && <p className="text-error-600 text-xs mt-1">{errors.amount}</p>}
+              </div>
+              <div>
+                <label className={label}>Tanggal Transfer</label>
+                <input
+                  type="date"
+                  className={`input ${errors.paymentDate ? 'border-error-500' : ''}`}
+                  value={paymentDate}
+                  max={dayjs().format('YYYY-MM-DD')}
+                  onChange={e => setPaymentDate(e.target.value)}
+                />
+                {errors.paymentDate && <p className="text-error-600 text-xs mt-1">{errors.paymentDate}</p>}
+              </div>
+              <div>
+                <label className={label}>Nomor Referensi</label>
+                <input
                   className={`input ${errors.referenceNumber ? 'border-error-500' : ''}`}
-                  placeholder="Nomor referensi dari bank"
+                  value={referenceNumber}
+                  onChange={e => setReferenceNumber(e.target.value)}
+                  placeholder="No. referensi transfer"
                 />
                 {errors.referenceNumber && <p className="text-error-600 text-xs mt-1">{errors.referenceNumber}</p>}
               </div>
+            </div>
 
-              {/* File Upload */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Bukti Pembayaran *
-                </label>
-                <div
-                  className={`border-2 border-dashed rounded-xl p-6 text-center transition-colors ${dragActive ? 'border-primary-500 bg-primary-50' :
-                    formData.proofFile ? 'border-success-500 bg-success-50' :
-                      errors.proofFile ? 'border-error-500 bg-error-50' :
-                        'border-slate-300 hover:border-slate-400'
-                    }`}
-                  onDragEnter={handleDrag}
-                  onDragLeave={handleDrag}
-                  onDragOver={handleDrag}
-                  onDrop={handleDrop}
-                >
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*,.pdf"
-                    onChange={handleFileInputChange}
-                    className="hidden"
-                  />
+            <div>
+              <label className={label}>Rekening Tujuan</label>
+              <select className="input" value={bankAccount} onChange={e => setBankAccount(e.target.value)}>
+                {BANK_ACCOUNTS.map(b => (
+                  <option key={b} value={b}>{b}</option>
+                ))}
+              </select>
+            </div>
 
-                  {formData.proofFile ? (
-                    <div className="space-y-2">
-                      <CheckCircle className="h-12 w-12 text-success-600 mx-auto" />
-                      <div>
-                        <p className="text-sm font-medium text-success-800">{formData.proofFile.name}</p>
-                        <p className="text-xs text-success-600">
-                          {(formData.proofFile.size / 1024 / 1024).toFixed(2)} MB
-                        </p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => fileInputRef.current?.click()}
-                        className="text-sm text-primary-600 hover:text-primary-500"
-                      >
-                        Ganti File
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      <Upload className="h-12 w-12 text-slate-400 mx-auto" />
-                      <div>
-                        <button
-                          type="button"
-                          onClick={() => fileInputRef.current?.click()}
-                          className="text-primary-600 hover:text-primary-500 font-medium"
-                        >
-                          Klik untuk upload
-                        </button>
-                        <span className="text-slate-500"> atau drag & drop</span>
-                      </div>
-                      <p className="text-xs text-slate-500">
-                        PNG, JPG, PDF maksimal 10MB
-                      </p>
-                    </div>
-                  )}
-                </div>
-                {errors.proofFile && <p className="text-error-600 text-xs mt-1">{errors.proofFile}</p>}
-              </div>
-
-              {/* Notes */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Catatan Tambahan
-                </label>
-                <textarea
-                  name="notes"
-                  value={formData.notes}
-                  onChange={handleInputChange}
-                  rows={3}
-                  className="input"
-                  placeholder="Keterangan Bukti Transfer"
+            <div>
+              <label className={label}>Bukti Transfer (gambar/PDF, maks. 4 MB)</label>
+              <label
+                onDragEnter={e => { e.preventDefault(); setDragActive(true); }}
+                onDragOver={e => e.preventDefault()}
+                onDragLeave={() => setDragActive(false)}
+                onDrop={e => {
+                  e.preventDefault();
+                  setDragActive(false);
+                  const dropped = e.dataTransfer.files?.[0];
+                  if (dropped) setProofFile(dropped);
+                }}
+                className={`flex flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed p-5 cursor-pointer transition-colors ${
+                  dragActive ? 'border-primary-400 bg-primary-50' : errors.proofFile ? 'border-error-300' : 'border-slate-200 hover:bg-slate-50'
+                }`}
+              >
+                {proofFile ? (
+                  <>
+                    <FileCheck2 className="h-6 w-6 text-success-600" />
+                    <span className="text-sm text-slate-700">{proofFile.name}</span>
+                    <span className="text-xs text-slate-400">Klik untuk mengganti file</span>
+                  </>
+                ) : (
+                  <>
+                    <Upload className="h-6 w-6 text-slate-400" />
+                    <span className="text-sm text-slate-500">Klik atau tarik file ke sini</span>
+                  </>
+                )}
+                <input
+                  type="file"
+                  accept={UPLOAD_ACCEPT['payment-proof']}
+                  className="hidden"
+                  onChange={e => setProofFile(e.target.files?.[0] ?? null)}
                 />
-              </div>
+              </label>
+              {errors.proofFile && <p className="text-error-600 text-xs mt-1">{errors.proofFile}</p>}
+            </div>
 
-              {/* Important Notes */}
-              <div className="bg-primary-50 border border-primary-200 rounded-xl p-4">
-                <div className="flex items-start space-x-3">
-                  <AlertCircle className="h-5 w-5 text-primary-600 mt-0.5" />
-                  <div>
-                    <h4 className="text-sm font-medium text-primary-900">Catatan Penting</h4>
-                    <ul className="mt-2 text-sm text-primary-800 space-y-1">
-                      <li>• Pastikan bukti pembayaran jelas dan dapat dibaca</li>
-                      <li>• Sertakan detail transaksi seperti tanggal, jumlah, dan nomor referensi</li>
-                      <li>• Verifikasi Upload Pembayaran ke Admin / Bendahara</li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
+            <div>
+              <label className={label}>Catatan (opsional)</label>
+              <textarea className="input" rows={2} value={notes} onChange={e => setNotes(e.target.value)} />
+            </div>
 
-              {/* Form Actions */}
-              <div className="flex justify-end space-x-3 pt-4">
-                <button
-                  type="button"
-                  onClick={() => {
-                    handleReset();
-                    onClose();
-                  }}
-                  className="btn btn-secondary"
-                  disabled={loading}
-                >
-                  Batal
-                </button>
-                <button
-                  type="submit"
-                  className="btn btn-primary flex items-center"
-                  disabled={loading}
-                >
-                  {loading ? (
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  ) : (
-                    <Upload className="h-4 w-4 mr-2" />
-                  )}
-                  Upload Bukti Pembayaran
-                </button>
-              </div>
-            </form>
-          </div>
+            <div className="flex justify-end gap-3 pt-2">
+              <button type="button" onClick={onClose} disabled={submitting} className="btn btn-secondary">
+                Batal
+              </button>
+              <button type="submit" disabled={submitting} className="btn btn-primary flex items-center gap-2">
+                {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                Kirim Bukti
+              </button>
+            </div>
+          </form>
         </div>
       </div>
     </div>
   );
 };
 
-export default PaymentProofModal;
+export default PaymentProofModal;

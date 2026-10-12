@@ -140,6 +140,11 @@ const Payment = () => {
                   </div>
                   <p className="mt-2 text-sm font-semibold text-slate-800">{formatCurrency(proof.amount)}</p>
                   {proof.notes && <p className="text-xs text-slate-400 italic mt-1">Catatan: {proof.notes}</p>}
+                  {proof.status === 'rejected' && proof.rejectionReason && (
+                    <p className="mt-2 rounded-lg bg-error-50 border border-error-100 px-2.5 py-1.5 text-xs text-error-700">
+                      Alasan ditolak: {proof.rejectionReason}. Silakan upload ulang bukti yang benar.
+                    </p>
+                  )}
                 </div>
               ))}
             </div>
@@ -171,7 +176,10 @@ const Payment = () => {
 
       <UploadPaymentModal
         isOpen={showModal}
-        onClose={() => { setShowModal(false); loadData(); }}
+        onClose={() => setShowModal(false)}
+        onSubmitted={loadData}
+        unpaidPayments={payments.filter(p => p.status !== 'paid')}
+        pendingPaymentIds={proofs.filter(p => p.status === 'pending' && p.paymentId).map(p => p.paymentId as string)}
       />
     </div>
   );

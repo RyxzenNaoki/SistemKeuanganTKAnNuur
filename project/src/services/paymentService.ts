@@ -7,6 +7,7 @@ import {
   addDoc,
   updateDoc,
   deleteDoc,
+  deleteField,
   doc,
   Timestamp,
 } from 'firebase/firestore';
@@ -147,7 +148,10 @@ export interface PaymentProof {
   referenceNumber: string;
   notes?: string;
   fileId?: string;
+  fileName?: string;
   status: 'pending' | 'verified' | 'rejected';
+  rejectionReason?: string;
+  verifiedAt?: Date;
   uploadedAt: Date;
 }
 
@@ -162,7 +166,10 @@ const mapProofDoc = (id: string, data: Record<string, any>): PaymentProof => ({
   referenceNumber: data.referenceNumber ?? '',
   notes: data.notes,
   fileId: data.fileId,
+  fileName: data.fileName,
   status: data.status ?? 'pending',
+  rejectionReason: data.rejectionReason,
+  verifiedAt: data.verifiedAt?.toDate?.(),
   uploadedAt: data.uploadedAt?.toDate?.() ?? data.uploadedAt ?? new Date(),
 });
 
@@ -171,4 +178,102 @@ export const fetchPaymentProofsByParent = async (uid: string): Promise<PaymentPr
   return snap.docs
     .map(d => mapProofDoc(d.id, d.data()))
     .sort((a, b) => b.paymentDate.getTime() - a.paymentDate.getTime());
+};
+
+
+// ---------------------------------------------------------------------------
+// Sisi Ortu: kirim bukti pembayaran baru (status awal selalu "pending")
+// ---------------------------------------------------------------------------
+
+export interface SubmitPaymentProofInput {
+  student: string; // uid ortu
+  paymentId?: string;
+  paymentType: string;
+  amount: number;
+  paymentDate: Date;
+  bankAccount: string;
+  referenceNumber: string;
+  notes?: string;
+  fileId: string;
+  fileName: string;
+}
+
+export const submitPaymentProof = async (input: SubmitPaymentProofInput): Promise<void> => {
+  await addDoc(collection(db, 'payment_proofs'), {
+    ...stripUndefined(input),
+    paymentDate: Timestamp.fromDate(input.paymentDate),
+    status: 'pending',
+    uploadedAt: Timestamp.now(),
+  });
+};
+
+// ---------------------------------------------------------------------------
+// Sisi Admin: lihat, verifikasi, dan tolak bukti pembayaran
+// ---------------------------------------------------------------------------
+
+// Semua bukti pembayaran (Admin). Rules mengizinkan admin membaca semuanya.
+export const fetchAllPaymentProofs = async (): Promise<PaymentProof[]> => {
+  const snap = await getDocs(collection(db, 'payment_proofs'));
+  return snap.docs
+    .map(d => mapProofDoc(d.id, d.data()))
+    .sort((a, b) => b.uploadedAt.getTime() - a.uploadedAt.getTime());
+};
+
+// Jenis tagihan (label admin) -> kategori pemasukan di Manajemen Keuangan
+const INCOME_CATEGORY_BY_PAYMENT_TYPE: Record<string, string> = {
+  'SPP Bulanan': 'spp',
+  'Uang Pangkal': 'registration',
+  'Uang Kegiatan': 'activity',
+  'Uang Seragam': 'uniform',
+  'Uang Buku': 'book',
+};
+
+export interface VerifyPaymentProofOptions {
+  proof: PaymentProof;
+  studentName: string; // nama murid untuk deskripsi pemasukan
+  recordAsIncome: boolean;
+}
+
+// Admin menyetujui bukti pembayaran:
+// 1) status bukti -> verified
+// 2) tagihan yang ditautkan (kalau ada) -> paid, sehingga di akun ortu jadi "Lunas"
+// 3) opsional: dicatat otomatis sebagai Pemasukan (tanpa duplikat: dicek lewat proofId)
+export const verifyPaymentProof = async ({ proof, studentName, recordAsIncome }: VerifyPaymentProofOptions): Promise<void> => {
+  if (proof.status === 'verified') return;
+
+  await updateDoc(doc(db, 'payment_proofs', proof.id), {
+    status: 'verified',
+    verifiedAt: Timestamp.now(),
+    rejectionReason: deleteField(),
+  });
+
+  if (proof.paymentId) {
+    await updatePayment(proof.paymentId, { status: 'paid' });
+  }
+
+  if (recordAsIncome) {
+    const existing = await getDocs(query(collection(db, 'incomes'), where('proofId', '==', proof.id)));
+    if (existing.empty) {
+      await addDoc(collection(db, 'incomes'), {
+        date: Timestamp.fromDate(proof.paymentDate),
+        category: INCOME_CATEGORY_BY_PAYMENT_TYPE[proof.paymentType] ?? 'other',
+        description: `${proof.paymentType} - ${studentName}`,
+        amount: proof.amount,
+        student: studentName,
+        paymentMethod: 'transfer',
+        status: 'verified',
+        receiptNumber: `BKT-${proof.id.slice(0, 6).toUpperCase()}`,
+        notes: proof.referenceNumber ? `Ref: ${proof.referenceNumber}` : '',
+        proofId: proof.id,
+      });
+    }
+  }
+};
+
+export const rejectPaymentProof = async (proofId: string, reason: string): Promise<void> => {
+  await updateDoc(doc(db, 'payment_proofs', proofId), {
+    status: 'rejected',
+    rejectionReason: reason,
+    verifiedAt: Timestamp.now(),
+  });
 };

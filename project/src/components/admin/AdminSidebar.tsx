@@ -10,7 +10,11 @@ import {
   TrendingUp, 
   TrendingDown, 
   FileText,
-  GraduationCap
+  GraduationCap,
+  CalendarClock,
+  FolderOpen,
+  ReceiptText,
+  Bell
 } from 'lucide-react';
 import { APP_NAME, SCHOOL_NAME } from '../../config/branding';
 
@@ -105,12 +109,35 @@ const AdminSidebar = ({ isOpen, setIsOpen }: AdminSidebarProps) => {
               <span>Data Pengguna</span>
             </Link>
 
+            {/* Akademik */}
+            <div className="mt-6 mb-2 px-4">
+              <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                Akademik
+              </h3>
+            </div>
+
             <Link
               to="/admin/themes"
               className={`sidebar-menu-item ${isActive('/admin/themes') ? 'active' : ''}`}
             >
               <BookOpenText className="h-5 w-5" />
               <span>Tema Pembelajaran</span>
+            </Link>
+
+            <Link
+              to="/admin/learning-schedule"
+              className={`sidebar-menu-item ${isActive('/admin/learning-schedule') ? 'active' : ''}`}
+            >
+              <CalendarClock className="h-5 w-5" />
+              <span>Jadwal Pembelajaran</span>
+            </Link>
+
+            <Link
+              to="/admin/teaching-docs"
+              className={`sidebar-menu-item ${isActive('/admin/teaching-docs') ? 'active' : ''}`}
+            >
+              <FolderOpen className="h-5 w-5" />
+              <span>Prosem & Dokumen Guru</span>
             </Link>
 
             {/* Financial Management */}
@@ -152,11 +179,19 @@ const AdminSidebar = ({ isOpen, setIsOpen }: AdminSidebarProps) => {
               <span>Jadwal Pembayaran</span>
             </Link>
 
+            <Link
+              to="/admin/payment-proofs"
+              className={`sidebar-menu-item ${isActive('/admin/payment-proofs') ? 'active' : ''}`}
+            >
+              <ReceiptText className="h-5 w-5" />
+              <span>Verifikasi Pembayaran</span>
+            </Link>
+
              <Link
               to="/admin/notifications"
               className={`sidebar-menu-item ${isActive('/admin/notifications') ? 'active' : ''}`}
             >
-              <Calendar className="h-5 w-5" />
+              <Bell className="h-5 w-5" />
               <span>Pemberitahuan</span>
             </Link>
           </nav>

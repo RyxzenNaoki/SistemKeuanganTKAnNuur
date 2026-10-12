@@ -11,6 +11,7 @@ import { getCurrentAcademicYear, getCurrentSemester } from '../../services/stude
 import { CLASS_OPTIONS } from '../../config/classes';
 import { fetchAttendanceSession, calculateAttendancePercentage } from '../../services/attendanceService';
 import { fetchThemes, findCurrentWeekTheme, getSemesterWeekNumber, Theme } from '../../services/curriculumService';
+import { ScheduleItem, fetchSchedules, getDaySchedule, getTodayNumber } from '../../services/scheduleService';
 
 const GuruDashboard = () => {
   const { currentUser } = useAuth();
@@ -20,6 +21,8 @@ const GuruDashboard = () => {
   const [attendancePct, setAttendancePct] = useState<number | null>(null);
   const [attendanceFilled, setAttendanceFilled] = useState(0);
   const [latestTheme, setLatestTheme] = useState<Theme | null>(null);
+  const [schedules, setSchedules] = useState<ScheduleItem[]>([]);
+  const [scheduleClass, setScheduleClass] = useState<string>(CLASS_OPTIONS[0]);
 
   useEffect(() => {
     const loadName = async () => {
@@ -67,6 +70,10 @@ const GuruDashboard = () => {
     loadAttendance();
   }, []);
 
+  useEffect(() => {
+    fetchSchedules().then(setSchedules).catch(console.error);
+  }, []);
+
   // Tema yang paling baru dibuat untuk semester berjalan
   useEffect(() => {
     fetchThemes(getCurrentAcademicYear(), getCurrentSemester())
@@ -78,6 +85,12 @@ const GuruDashboard = () => {
       })
       .catch(console.error);
   }, []);
+
+  const todayNumber = getTodayNumber();
+  const isSchoolDay = todayNumber >= 1 && todayNumber <= 5;
+  const todaySchedule = isSchoolDay ? getDaySchedule(schedules, scheduleClass, todayNumber) : [];
+  const nowHHmm = dayjs().format('HH:mm');
+  const nextActivity = todaySchedule.find(item => item.endTime > nowHHmm);
 
   return (
     <div className="page-transition">
@@ -125,15 +138,25 @@ const GuruDashboard = () => {
             )}
           </Link>
 
-          {/* Jadwal Pembelajaran — belum ada modul jadwal, tetap kerangka */}
-          <div className="rounded-2xl p-4 shadow-soft stat-card-pink">
+          {/* Jadwal Pembelajaran — kegiatan sekarang / berikutnya */}
+          <a href="#jadwal-hari-ini" className="rounded-2xl p-4 shadow-soft stat-card-pink hover:shadow-soft-lg transition-shadow">
             <div className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-secondary-100 text-secondary-600">
               <CalendarDays className="h-5 w-5" />
             </div>
-            <p className="mt-3 text-sm font-semibold text-slate-800">Jadwal Pembelajaran</p>
-            <p className="mt-1 text-xs text-slate-500">Hari/tanggal dan jadwal kegiatan</p>
-            <span className="mt-3 inline-block badge bg-white text-slate-500">Segera hadir</span>
-          </div>
+            <p className="mt-3 text-sm font-semibold text-slate-800">Jadwal Hari Ini</p>
+            {!isSchoolDay ? (
+              <p className="mt-1 text-xs text-slate-500">Hari ini bukan hari efektif sekolah</p>
+            ) : nextActivity ? (
+              <>
+                <p className="mt-1 text-sm font-medium text-secondary-700">{nextActivity.activity}</p>
+                <p className="text-xs text-slate-500">{nextActivity.startTime} – {nextActivity.endTime}</p>
+              </>
+            ) : (
+              <p className="mt-1 text-xs text-slate-500">
+                {todaySchedule.length === 0 ? 'Belum ada jadwal diinput admin' : 'Semua kegiatan hari ini selesai'}
+              </p>
+            )}
+          </a>
 
           {/* Tema — menampilkan tema terbaru yang diinput lewat Rekap Asesmen */}
           <Link to="/guru/assessment" className="rounded-2xl p-4 shadow-soft stat-card-yellow hover:shadow-soft-lg transition-shadow">
@@ -156,6 +179,46 @@ const GuruDashboard = () => {
             )}
           </Link>
         </div>
+      </div>
+
+      {/* Jadwal lengkap hari ini */}
+      <div id="jadwal-hari-ini" className="card p-5 mt-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+          <div>
+            <h2 className="font-semibold text-slate-900">Jadwal Pembelajaran Hari Ini</h2>
+            <p className="text-xs text-slate-400">{today.format('dddd, DD MMMM YYYY')}</p>
+          </div>
+          <select className="input sm:w-56" value={scheduleClass} onChange={e => setScheduleClass(e.target.value)}>
+            {CLASS_OPTIONS.map(c => <option key={c} value={c}>{c}</option>)}
+          </select>
+        </div>
+
+        {!isSchoolDay ? (
+          <p className="text-sm text-slate-400 text-center py-6">Libur akhir pekan — tidak ada kegiatan belajar.</p>
+        ) : todaySchedule.length === 0 ? (
+          <p className="text-sm text-slate-400 text-center py-6">Belum ada jadwal untuk kelas ini hari ini.</p>
+        ) : (
+          <div className="space-y-2">
+            {todaySchedule.map(item => {
+              const isNow = item.startTime <= nowHHmm && nowHHmm < item.endTime;
+              return (
+                <div
+                  key={item.id}
+                  className={`flex items-center gap-3 rounded-xl border p-3 ${isNow ? 'border-secondary-300 bg-secondary-50' : 'border-slate-100'}`}
+                >
+                  <span className="shrink-0 rounded-lg bg-primary-100 px-2.5 py-1.5 text-xs font-semibold text-primary-700">
+                    {item.startTime} – {item.endTime}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-slate-900">{item.activity}</p>
+                    {item.notes && <p className="text-xs text-slate-400">{item.notes}</p>}
+                  </div>
+                  {isNow && <span className="badge badge-secondary shrink-0">Sedang berlangsung</span>}
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );

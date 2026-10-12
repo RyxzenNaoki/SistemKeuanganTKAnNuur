@@ -17,6 +17,7 @@ import {
   addTeacherReply,
 } from '../../services/assessmentService';
 import { getDriveImageUrl, getDriveDownloadUrl } from '../../utils/drive';
+import { uploadToDrive, UPLOAD_ACCEPT } from '../../utils/upload';
 import {
   ReportCard,
   fetchReportCardsByStudent,
@@ -131,19 +132,10 @@ const GuruAssessment = () => {
       showToast('error', 'Pilih file PDF rapor terlebih dahulu');
       return;
     }
-    if (reportFile.type !== 'application/pdf') {
-      showToast('error', 'File harus berformat PDF');
-      return;
-    }
 
     setSubmitting(true);
     try {
-      const form = new FormData();
-      form.append('file', reportFile);
-      const res = await fetch('/api/upload', { method: 'POST', body: form });
-      if (!res.ok) throw new Error('Upload gagal');
-      const data = await res.json();
-      if (!data?.fileId) throw new Error('Upload berhasil tapi fileId tidak ditemukan');
+      const uploaded = await uploadToDrive(reportFile, 'report-card');
 
       await createReportCard({
         studentId: selectedStudent.id ?? '',
@@ -152,8 +144,8 @@ const GuruAssessment = () => {
         class: selectedStudent.class,
         semester: reportSemester,
         academicYear: reportYear,
-        fileId: data.fileId,
-        fileName: data.fileName || reportFile.name,
+        fileId: uploaded.fileId,
+        fileName: uploaded.fileName,
         uploadedByName: teacherName || currentUser.email || 'Guru',
       });
 
@@ -162,7 +154,7 @@ const GuruAssessment = () => {
       loadReportCards();
     } catch (err) {
       console.error(err);
-      showToast('error', 'Gagal mengunggah rapor');
+      showToast('error', err instanceof Error ? err.message : 'Gagal mengunggah rapor');
     } finally {
       setSubmitting(false);
     }
@@ -218,13 +210,12 @@ const GuruAssessment = () => {
     try {
       let photoFileId: string | undefined;
       if (photoFile) {
-        const form = new FormData();
-        form.append('file', photoFile);
-        const res = await fetch('/api/upload', { method: 'POST', body: form });
-        if (!res.ok) throw new Error('Upload foto gagal');
-        const data = await res.json();
-        if (!data?.fileId) throw new Error('Upload berhasil tapi fileId tidak ditemukan');
-        photoFileId = data.fileId;
+        // Hasil Karya & Kegiatan masuk ke folder Drive yang berbeda
+        const uploaded = await uploadToDrive(
+          photoFile,
+          activeCategory === 'karya' ? 'assessment-karya' : 'assessment-kegiatan'
+        );
+        photoFileId = uploaded.fileId;
       }
 
       let theme: string | undefined;
@@ -255,7 +246,7 @@ const GuruAssessment = () => {
       loadHistory();
     } catch (err) {
       console.error(err);
-      showToast('error', 'Gagal menyimpan asesmen');
+      showToast('error', err instanceof Error ? err.message : 'Gagal menyimpan asesmen');
     } finally {
       setSubmitting(false);
     }
@@ -322,7 +313,7 @@ const GuruAssessment = () => {
                   <span className="text-sm text-slate-500">{reportFile ? reportFile.name : 'Klik untuk pilih file PDF'}</span>
                   <input
                     type="file"
-                    accept="application/pdf"
+                    accept={UPLOAD_ACCEPT['report-card']}
                     className="hidden"
                     onChange={e => setReportFile(e.target.files?.[0] ?? null)}
                   />
@@ -372,7 +363,7 @@ const GuruAssessment = () => {
                   <label className="flex items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-200 p-4 cursor-pointer hover:bg-slate-50">
                     <Upload className="h-5 w-5 text-slate-400" />
                     <span className="text-sm text-slate-500">{photoFile ? photoFile.name : 'Klik untuk pilih foto'}</span>
-                    <input type="file" accept="image/*" className="hidden" onChange={e => setPhotoFile(e.target.files?.[0] ?? null)} />
+                    <input type="file" accept={UPLOAD_ACCEPT['assessment-karya']} className="hidden" onChange={e => setPhotoFile(e.target.files?.[0] ?? null)} />
                   </label>
                 </div>
               )}

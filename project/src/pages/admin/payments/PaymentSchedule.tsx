@@ -87,6 +87,19 @@ const PaymentSchedule = () => {
     }
   };
 
+  // Untuk pembayaran tunai di sekolah (tidak lewat upload bukti)
+  const handleMarkPaid = async (payment: Payment) => {
+    if (!window.confirm(`Tandai "${payment.description}" milik ${payment.studentName} sebagai LUNAS?`)) return;
+    try {
+      await updatePayment(payment.id, { status: 'paid' });
+      showToast('success', 'Tagihan ditandai lunas');
+      await loadPayments();
+    } catch (err) {
+      console.error('Failed to mark paid:', err);
+      showToast('error', 'Gagal menandai lunas');
+    }
+  };
+
   const upcomingCount = payments.filter(p => p.status === 'upcoming').length;
   const overdueCount = payments.filter(p => p.status === 'overdue').length;
   const paidCount = payments.filter(p => p.status === 'paid').length;
@@ -192,6 +205,15 @@ const PaymentSchedule = () => {
                   <td>{getStatusBadge(payment.status)}</td>
                   <td>
                     <div className="flex items-center space-x-2">
+                      {payment.status !== 'paid' && (
+                        <button
+                          onClick={() => handleMarkPaid(payment)}
+                          className="p-1 text-slate-500 hover:text-success-600 transition-colors"
+                          title="Tandai lunas (bayar tunai)"
+                        >
+                          <CheckCircle className="h-4 w-4" />
+                        </button>
+                      )}
                       <button
                         onClick={() => { setSelectedPayment(payment); setShowModal(true); }}
                         className="p-1 text-slate-500 hover:text-primary-600 transition-colors"

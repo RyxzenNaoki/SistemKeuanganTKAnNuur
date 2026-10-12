@@ -23,6 +23,9 @@ const StudentManagement = lazy(() => import('./pages/admin/students/StudentManag
 const ClassManagement = lazy(() => import('./pages/admin/classes/ClassManagement'));
 const UserManagement = lazy(() => import('./pages/admin/users/UserManagement'));
 const ThemeManagement = lazy(() => import('./pages/admin/themes/ThemeManagement'));
+const LearningSchedule = lazy(() => import('./pages/admin/academic/LearningSchedule'));
+const TeachingDocsManagement = lazy(() => import('./pages/admin/academic/TeachingDocsManagement'));
+const PaymentVerification = lazy(() => import('./pages/admin/payments/PaymentVerification'));
 const PaymentSchedule = lazy(() => import('./pages/admin/payments/PaymentSchedule'));
 const IncomeManagement = lazy(() => import('./pages/admin/finance/IncomeManagement'));
 const ExpenseManagement = lazy(() => import('./pages/admin/finance/ExpenseManagement'));
@@ -79,6 +82,9 @@ function App() {
           <Route path="classes" element={<ClassManagement />} />
           <Route path="users" element={<UserManagement />} />
           <Route path="themes" element={<ThemeManagement />} />
+          <Route path="learning-schedule" element={<LearningSchedule />} />
+          <Route path="teaching-docs" element={<TeachingDocsManagement />} />
+          <Route path="payment-proofs" element={<PaymentVerification />} />
           <Route path="schedule" element={<PaymentSchedule />} />
           <Route path="income" element={<IncomeManagement />} />
           <Route path="expenses" element={<ExpenseManagement />} />

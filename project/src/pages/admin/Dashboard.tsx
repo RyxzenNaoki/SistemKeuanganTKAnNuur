@@ -13,7 +13,7 @@ import {
   Bar,
 } from 'recharts';
 import { Link } from 'react-router-dom';
-import { Loader2, Wallet, TrendingUp, TrendingDown, Users, Bell, UserCheck } from 'lucide-react';
+import { Loader2, Wallet, TrendingUp, TrendingDown, Users, Bell, UserCheck, ReceiptText } from 'lucide-react';
 import dayjs from 'dayjs';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../../firebase/config';
@@ -83,6 +83,7 @@ const AdminDashboard = () => {
   const [monthlyExpense, setMonthlyExpense] = useState(0);
   const [activeStudents, setActiveStudents] = useState(0);
   const [pendingAccounts, setPendingAccounts] = useState(0);
+  const [pendingProofs, setPendingProofs] = useState(0);
 
   const [monthlyFinanceData, setMonthlyFinanceData] = useState<ChartData[]>([]);
   const [incomeSourceData, setIncomeSourceData] = useState<PieData[]>([]);
@@ -91,14 +92,22 @@ const AdminDashboard = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [incomeSnap, expenseSnap, studentSnap, notifSnap, pendingSnap] = await Promise.all([
+        const [incomeSnap, expenseSnap, studentSnap, notifSnap, pendingSnap, proofSnap] = await Promise.all([
           getDocs(collection(db, 'incomes')),
           getDocs(collection(db, 'expenses')),
           getDocs(collection(db, 'students')),
           getDocs(collection(db, 'notifications')),
           getDocs(query(collection(db, 'users'), where('status', '==', 'pending'))),
+          getDocs(collection(db, 'payment_proofs')),
         ]);
         setPendingAccounts(pendingSnap.size);
+        // Bukti lama tanpa field status juga dianggap menunggu verifikasi
+        setPendingProofs(
+          proofSnap.docs.filter(d => {
+            const status = d.data().status;
+            return status !== 'verified' && status !== 'rejected';
+          }).length
+        );
 
         const incomes = incomeSnap.docs.map(d => d.data() as Income);
         const expenses = expenseSnap.docs.map(d => d.data() as Expense);
@@ -198,6 +207,24 @@ const AdminDashboard = () => {
         <h1 className="text-2xl font-bold">Beranda</h1>
         <p className="text-sm text-slate-500">{APP_DESCRIPTION}</p>
       </div>
+
+      {pendingProofs > 0 && (
+        <Link
+          to="/admin/payment-proofs"
+          className="mb-4 flex items-center gap-3 rounded-2xl border border-primary-200 bg-primary-50 p-4 shadow-soft hover:bg-primary-100 transition-colors"
+        >
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-200 text-primary-800">
+            <ReceiptText className="h-5 w-5" />
+          </div>
+          <div className="flex-1">
+            <p className="text-sm font-semibold text-slate-900">
+              {pendingProofs} bukti pembayaran menunggu verifikasi
+            </p>
+            <p className="text-xs text-slate-500">Periksa bukti transfer dari orang tua lalu setujui atau tolak.</p>
+          </div>
+          <span className="text-sm font-medium text-primary-800">Periksa</span>
+        </Link>
+      )}
 
       {pendingAccounts > 0 && (
         <Link
