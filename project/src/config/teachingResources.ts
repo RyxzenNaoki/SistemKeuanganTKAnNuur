@@ -5,7 +5,7 @@
 // CATATAN: ganti DRIVE_FOLDER_URL di bawah ini dengan link folder Google
 // Drive sekolah yang berisi template RPPM, Modul Ajar, dan berkas pendukung.
 
-export const DRIVE_FOLDER_URL = 'https://drive.google.com/drive/folders/GANTI_DENGAN_ID_FOLDER_ANDA';
+export const DRIVE_FOLDER_URL = 'https://drive.google.com/drive/folders/1aR12oGeSx09GJ5U8waxUPskfmVZZsDhq';
 
 // Langkah-langkah ini mengikuti gambar tutorial "5 Langkah Mudah Buat Modul Ajar dari RPPM"
 // (src/assets/tutorial-modul-ajar.jpg), ditambah langkah penyerahan ke admin.
