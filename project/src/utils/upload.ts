@@ -9,6 +9,7 @@ export type UploadCategory =
   | 'assessment-kegiatan'
   | 'report-card'
   | 'prosem'
+  | 'modul-ajar'
   | 'tutorial';
 
 export interface UploadResult {
@@ -21,6 +22,7 @@ export const MAX_UPLOAD_BYTES = 4 * 1024 * 1024;
 
 const IMAGE_ACCEPT = 'image/jpeg,image/png,image/webp';
 const PDF_ACCEPT = 'application/pdf';
+const DOCX_MIME = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
 const DOC_ACCEPT =
   'application/pdf,.doc,.docx,.xls,.xlsx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
 
@@ -31,6 +33,7 @@ export const UPLOAD_ACCEPT: Record<UploadCategory, string> = {
   'assessment-kegiatan': IMAGE_ACCEPT,
   'report-card': PDF_ACCEPT,
   prosem: DOC_ACCEPT,
+  'modul-ajar': `.docx,${DOCX_MIME}`,
   tutorial: IMAGE_ACCEPT,
 };
 
@@ -40,6 +43,7 @@ const ALLOWED_PREFIX: Record<UploadCategory, string[]> = {
   'assessment-kegiatan': ['image/'],
   'report-card': ['application/pdf'],
   prosem: ['image/', 'application/pdf', 'application/msword', 'application/vnd.'],
+  'modul-ajar': [DOCX_MIME],
   tutorial: ['image/'],
 };
 
@@ -49,8 +53,30 @@ const TYPE_HINT: Record<UploadCategory, string> = {
   'assessment-kegiatan': 'gambar (JPG/PNG)',
   'report-card': 'PDF',
   prosem: 'PDF, Word, Excel, atau gambar',
+  'modul-ajar': 'dokumen Word (.docx)',
   tutorial: 'gambar (JPG/PNG)',
 };
+
+// Membuat teks aman untuk nama file: tanpa aksen/spasi/simbol ("Budi Santoso" -> "Budi-Santoso")
+export const fileSlug = (text: string): string =>
+  text
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^A-Za-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+
+// Awalan nama file di Google Drive, mis. "TKA-REG_KARYA_2026-10-13_Budi".
+// Kode kelas di depan membuat file gampang disortir per kelas di Drive.
+export const buildFilePrefix = (parts: (string | undefined | null)[]): string =>
+  parts
+    .map(p => fileSlug(p ?? ''))
+    .filter(Boolean)
+    .join('_')
+    .slice(0, 90);
+
+export interface UploadOptions {
+  namePrefix?: string;
+}
 
 const mb = (bytes: number) => `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 
@@ -79,12 +105,22 @@ const compressImage = async (file: File): Promise<File> => {
   }
 };
 
-export const uploadToDrive = async (file: File, category: UploadCategory): Promise<UploadResult> => {
-  if (!ALLOWED_PREFIX[category].some(prefix => file.type.startsWith(prefix))) {
+export const uploadToDrive = async (
+  file: File,
+  category: UploadCategory,
+  options: UploadOptions = {}
+): Promise<UploadResult> => {
+  // Beberapa browser/PC melaporkan tipe .docx kosong -> pulihkan dari ekstensi
+  let source = file;
+  if (category === 'modul-ajar' && !file.type && /\.docx$/i.test(file.name)) {
+    source = new File([file], file.name, { type: DOCX_MIME });
+  }
+
+  if (!ALLOWED_PREFIX[category].some(prefix => source.type.startsWith(prefix))) {
     throw new Error(`Jenis file tidak sesuai. Gunakan ${TYPE_HINT[category]}.`);
   }
 
-  const prepared = await compressImage(file);
+  const prepared = await compressImage(source);
 
   if (prepared.size > MAX_UPLOAD_BYTES) {
     throw new Error(
@@ -93,7 +129,9 @@ export const uploadToDrive = async (file: File, category: UploadCategory): Promi
   }
 
   const form = new FormData();
-  form.append('category', category); // harus sebelum file supaya terbaca server
+  // Field teks harus dikirim SEBELUM file supaya terbaca server
+  form.append('category', category);
+  if (options.namePrefix) form.append('namePrefix', options.namePrefix);
   form.append('file', prepared);
 
   let res: Response;

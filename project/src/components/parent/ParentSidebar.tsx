@@ -11,6 +11,7 @@ import {
   Sparkles,
   NotebookPen,
   FileText,
+  BookOpen,
 } from 'lucide-react';
 import { APP_NAME, SCHOOL_NAME } from '../../config/branding';
 
@@ -23,6 +24,7 @@ const REPORT_TABS = [
   { key: 'karya', label: 'Foto Hasil Karya', icon: Sparkles },
   { key: 'kegiatan', label: 'Foto Kegiatan', icon: ImageIcon },
   { key: 'catatan', label: 'Catatan Guru', icon: NotebookPen },
+  { key: 'mengaji', label: 'Rapor Mengaji', icon: BookOpen },
   { key: 'pdf', label: 'File PDF Rapor', icon: FileText },
 ];
 

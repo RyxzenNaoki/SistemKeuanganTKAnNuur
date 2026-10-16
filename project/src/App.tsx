@@ -24,7 +24,7 @@ const StudentManagement = lazy(() => import('./pages/admin/students/StudentManag
 const ClassManagement = lazy(() => import('./pages/admin/classes/ClassManagement'));
 const UserManagement = lazy(() => import('./pages/admin/users/UserManagement'));
 const ThemeManagement = lazy(() => import('./pages/admin/themes/ThemeManagement'));
-const LearningSchedule = lazy(() => import('./pages/admin/academic/LearningSchedule'));
+const WeeklyPlans = lazy(() => import('./pages/admin/academic/WeeklyPlans'));
 const TeachingDocsManagement = lazy(() => import('./pages/admin/academic/TeachingDocsManagement'));
 const PaymentVerification = lazy(() => import('./pages/admin/payments/PaymentVerification'));
 const PaymentSchedule = lazy(() => import('./pages/admin/payments/PaymentSchedule'));
@@ -45,6 +45,7 @@ const GuruAttendance = lazy(() => import('./pages/guru/Attendance'));
 const GuruAssessment = lazy(() => import('./pages/guru/Assessment'));
 const GuruStudents = lazy(() => import('./pages/guru/Students'));
 const GuruTeachingDocs = lazy(() => import('./pages/guru/TeachingDocs'));
+const GuruMengaji = lazy(() => import('./pages/guru/Mengaji'));
 
 function App() {
   const { currentUser, userRole, loading } = useAuth();
@@ -86,7 +87,7 @@ function App() {
           <Route path="classes" element={<ClassManagement />} />
           <Route path="users" element={<UserManagement />} />
           <Route path="themes" element={<ThemeManagement />} />
-          <Route path="learning-schedule" element={<LearningSchedule />} />
+          <Route path="weekly-plans" element={<WeeklyPlans />} />
           <Route path="teaching-docs" element={<TeachingDocsManagement />} />
           <Route path="payment-proofs" element={<PaymentVerification />} />
           <Route path="schedule" element={<PaymentSchedule />} />
@@ -125,6 +126,7 @@ function App() {
           <Route path="attendance" element={<GuruAttendance />} />
           <Route path="assessment" element={<GuruAssessment />} />
           <Route path="students" element={<GuruStudents />} />
+          <Route path="mengaji" element={<GuruMengaji />} />
           <Route path="teaching-docs" element={<GuruTeachingDocs />} />
         </Route>
 

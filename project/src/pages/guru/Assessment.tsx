@@ -17,7 +17,9 @@ import {
   addTeacherReply,
 } from '../../services/assessmentService';
 import { getDriveImageUrl, getDriveDownloadUrl } from '../../utils/drive';
-import { uploadToDrive, UPLOAD_ACCEPT } from '../../utils/upload';
+import { uploadToDrive, UPLOAD_ACCEPT, buildFilePrefix } from '../../utils/upload';
+import { getClassCode } from '../../config/classes';
+import { toDateKey } from '../../services/weeklyPlanService';
 import {
   ReportCard,
   fetchReportCardsByStudent,
@@ -135,7 +137,14 @@ const GuruAssessment = () => {
 
     setSubmitting(true);
     try {
-      const uploaded = await uploadToDrive(reportFile, 'report-card');
+      const uploaded = await uploadToDrive(reportFile, 'report-card', {
+        namePrefix: buildFilePrefix([
+          getClassCode(selectedStudent.class),
+          'RAPOR',
+          `${reportSemester}-${reportYear}`,
+          selectedStudent.nickname || selectedStudent.name,
+        ]),
+      });
 
       await createReportCard({
         studentId: selectedStudent.id ?? '',
@@ -211,9 +220,19 @@ const GuruAssessment = () => {
       let photoFileId: string | undefined;
       if (photoFile) {
         // Hasil Karya & Kegiatan masuk ke folder Drive yang berbeda
+        // Awalan nama file = kode kelas murid + jenis + tanggal + nama panggilan,
+        // mis. "TKA-REG_KARYA_2026-10-13_Budi", supaya mudah disortir di Drive
         const uploaded = await uploadToDrive(
           photoFile,
-          activeCategory === 'karya' ? 'assessment-karya' : 'assessment-kegiatan'
+          activeCategory === 'karya' ? 'assessment-karya' : 'assessment-kegiatan',
+          {
+            namePrefix: buildFilePrefix([
+              getClassCode(selectedStudent.class),
+              activeCategory === 'karya' ? 'KARYA' : 'KEGIATAN',
+              toDateKey(),
+              selectedStudent.nickname || selectedStudent.name,
+            ]),
+          }
         );
         photoFileId = uploaded.fileId;
       }

@@ -23,7 +23,8 @@ const FOLDER_ENV_BY_CATEGORY = {
   'assessment-karya': 'GOOGLE_FOLDER_ID_KARYA', // foto hasil karya murid
   'assessment-kegiatan': 'GOOGLE_FOLDER_ID_KEGIATAN', // foto kegiatan murid
   'report-card': 'GOOGLE_FOLDER_ID_RAPOR', // PDF rapor
-  prosem: 'GOOGLE_FOLDER_ID_PROSEM', // prosem + gambar tutorial dari admin
+  prosem: 'GOOGLE_FOLDER_ID_PROSEM', // prosem + modul ajar + gambar tutorial dari admin
+  'modul-ajar': 'GOOGLE_FOLDER_ID_PROSEM',
   tutorial: 'GOOGLE_FOLDER_ID_PROSEM',
 };
 
@@ -104,7 +105,12 @@ export default async function handler(req, res) {
       // nama dengan huruf non-ASCII tidak rusak, lalu beri awalan unik.
       const decodedName = Buffer.from(originalname, 'latin1').toString('utf8');
       const safeName = decodedName.replace(/[^\w.\- ()]/g, '_');
-      const driveName = `${category || 'file'}_${Date.now()}_${safeName}`;
+      // Awalan dari aplikasi (mis. "TKA-REG_KARYA_2026-10-13_Budi") supaya file
+      // gampang disortir per kelas di Drive. Dibersihkan: hanya huruf, angka, - dan _.
+      const prefix = String(req.body?.namePrefix || '')
+        .replace(/[^A-Za-z0-9_-]+/g, '-')
+        .slice(0, 90);
+      const driveName = `${prefix || category || 'file'}_${Date.now()}_${safeName}`;
 
       const response = await drive.files.create({
         requestBody: { name: driveName, parents: [folderId] },

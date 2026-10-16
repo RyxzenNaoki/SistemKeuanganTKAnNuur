@@ -5,6 +5,7 @@ import {
   Sparkles,
   NotebookPen,
   FileText,
+  BookOpen,
   Loader2,
   Send,
   Download,
@@ -20,14 +21,17 @@ import {
   AssessmentCategory,
 } from '../../services/assessmentService';
 import { fetchReportCardsByParent, ReportCard } from '../../services/reportCardService';
+import { fetchMengajiReportsByParent, MengajiReport } from '../../services/mengajiService';
+import MengajiReportView from '../../components/parent/MengajiReportView';
 import { getDriveImageUrl, getDrivePreviewUrl, getDriveDownloadUrl } from '../../utils/drive';
 
-type TabKey = 'karya' | 'kegiatan' | 'catatan' | 'pdf';
+type TabKey = 'karya' | 'kegiatan' | 'catatan' | 'mengaji' | 'pdf';
 
 const TABS: { key: TabKey; label: string; icon: typeof ImageIcon; desc: string }[] = [
   { key: 'karya', label: 'Foto Progress Hasil Karya', icon: Sparkles, desc: 'Dikelompokkan per tema pembelajaran & semester' },
   { key: 'kegiatan', label: 'Foto Kegiatan Sekolah', icon: ImageIcon, desc: 'Dokumentasi kegiatan anak di sekolah' },
   { key: 'catatan', label: 'Catatan Guru', icon: NotebookPen, desc: 'Catatan selama proses pembelajaran, bisa dibalas' },
+  { key: 'mengaji', label: 'Rapor Mengaji', icon: BookOpen, desc: 'Target hafalan, progress jilid & halaman, catatan guru' },
   { key: 'pdf', label: 'File PDF Rapor', icon: FileText, desc: 'Rapor resmi per semester' },
 ];
 
@@ -35,13 +39,14 @@ const DigitalReport = () => {
   const { student, loading: studentLoading } = useParentStudents();
   const { showToast } = useToast();
   const params = useParams<{ tab?: string }>();
-  const activeTab: TabKey = (['karya', 'kegiatan', 'catatan', 'pdf'] as TabKey[]).includes(params.tab as TabKey)
+  const activeTab: TabKey = (['karya', 'kegiatan', 'catatan', 'mengaji', 'pdf'] as TabKey[]).includes(params.tab as TabKey)
     ? (params.tab as TabKey)
     : 'karya';
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [allEntries, setAllEntries] = useState<AssessmentEntry[]>([]);
   const [reportCards, setReportCards] = useState<ReportCard[]>([]);
+  const [mengajiReports, setMengajiReports] = useState<MengajiReport[]>([]);
   const [loading, setLoading] = useState(true);
   const [feedbackDraft, setFeedbackDraft] = useState<Record<string, string>>({});
   const [sendingFeedback, setSendingFeedback] = useState<string | null>(null);
@@ -61,12 +66,14 @@ const DigitalReport = () => {
       }
       setLoading(true);
       try {
-        const [entries, cards] = await Promise.all([
+        const [entries, cards, mengaji] = await Promise.all([
           fetchAssessmentsByParent(student.parentUid),
           fetchReportCardsByParent(student.parentUid),
+          fetchMengajiReportsByParent(student.parentUid),
         ]);
         setAllEntries(entries);
         setReportCards(cards);
+        setMengajiReports(mengaji);
       } catch (err) {
         console.error('Gagal memuat Rapor Digital:', err);
         showToast('error', 'Gagal memuat data Rapor Digital. Coba refresh halaman ini.');
@@ -269,6 +276,8 @@ const DigitalReport = () => {
             ))}
           </div>
         )
+      ) : activeTab === 'mengaji' ? (
+        <MengajiReportView reports={mengajiReports} />
       ) : reportCards.length === 0 ? (
         <EmptyState text="Belum ada file rapor PDF yang diupload." />
       ) : (

@@ -15,3 +15,20 @@ export type ClassOption = (typeof CLASS_OPTIONS)[number];
 
 export const isClassOption = (value: unknown): value is ClassOption =>
   typeof value === 'string' && (CLASS_OPTIONS as readonly string[]).includes(value);
+
+// Kode singkat kelas untuk AWALAN NAMA FILE yang diupload ke Google Drive
+// (foto karya, foto kegiatan, rapor, bukti bayar, modul ajar), supaya file di
+// Drive mudah disortir per kelas. Ubah kodenya di sini kalau mau penamaan lain.
+export const CLASS_CODES: Record<ClassOption, string> = {
+  'TK A - REGULER': 'TKA-REG',
+  'TK A - FULLDAY': 'TKA-FD',
+  'TK B - REGULER': 'TKB-REG',
+  'TK B - FULLDAY': 'TKB-FD',
+};
+
+// Kode untuk satu kelas; kelas di luar daftar (data lama) dikembalikan versi aman-nama-file
+export const getClassCode = (className?: string): string => {
+  if (!className) return 'UMUM';
+  if (isClassOption(className)) return CLASS_CODES[className];
+  return className.replace(/[^A-Za-z0-9]+/g, '-').replace(/^-|-$/g, '').toUpperCase() || 'UMUM';
+};

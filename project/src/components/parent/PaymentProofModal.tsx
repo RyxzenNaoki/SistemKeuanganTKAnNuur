@@ -4,7 +4,9 @@ import { X, Upload, Loader2, FileCheck2 } from 'lucide-react';
 import { useToast } from '../../contexts/ToastContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { PAYMENT_TYPES, Payment, submitPaymentProof } from '../../services/paymentService';
-import { uploadToDrive, UPLOAD_ACCEPT } from '../../utils/upload';
+import { uploadToDrive, UPLOAD_ACCEPT, buildFilePrefix } from '../../utils/upload';
+import { useParentStudents } from '../../hooks/useStudents';
+import { getClassCode } from '../../config/classes';
 
 interface PaymentProofModalProps {
   isOpen: boolean;
@@ -23,6 +25,7 @@ const formatCurrency = (amount: number) =>
 const PaymentProofModal = ({ isOpen, onClose, onSubmitted, unpaidPayments, pendingPaymentIds }: PaymentProofModalProps) => {
   const { showToast } = useToast();
   const { currentUser } = useAuth();
+  const { student } = useParentStudents();
 
   const [selectedPaymentId, setSelectedPaymentId] = useState<string>(NO_INVOICE);
   const [paymentType, setPaymentType] = useState<string>(PAYMENT_TYPES[0]);
@@ -89,7 +92,14 @@ const PaymentProofModal = ({ isOpen, onClose, onSubmitted, unpaidPayments, pendi
 
     setSubmitting(true);
     try {
-      const uploaded = await uploadToDrive(proofFile, 'payment-proof');
+      const uploaded = await uploadToDrive(proofFile, 'payment-proof', {
+        namePrefix: buildFilePrefix([
+          getClassCode(linkedPayment?.class ?? student?.class),
+          'BAYAR',
+          paymentDate,
+          linkedPayment?.studentName ?? student?.nickname ?? student?.name,
+        ]),
+      });
       await submitPaymentProof({
         student: currentUser.uid,
         paymentId: linkedPayment?.id,

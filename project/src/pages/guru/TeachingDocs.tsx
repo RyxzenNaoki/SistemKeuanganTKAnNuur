@@ -5,6 +5,7 @@ import { DRIVE_FOLDER_URL, TUTORIAL_STEPS } from '../../config/teachingResources
 import { getCurrentAcademicYear, getCurrentSemester } from '../../services/studentService';
 import { Prosem, TeachingResources, fetchProsem, fetchTeachingResources } from '../../services/prosemService';
 import { getDriveImageUrl, getDriveDownloadUrl } from '../../utils/drive';
+import defaultTutorialImage from '../../assets/tutorial-modul-ajar.jpg';
 
 const GuruTeachingDocs = () => {
   const [resources, setResources] = useState<TeachingResources>({});
@@ -98,13 +99,21 @@ const GuruTeachingDocs = () => {
       {/* Tutorial */}
       <div className="card p-6">
         <h2 className="font-semibold text-slate-900 mb-4">Cara Upload</h2>
-        {resources.tutorialImageFileId && (
+        {/* Gambar tutorial: yang diunggah admin diprioritaskan, kalau belum ada pakai gambar bawaan */}
+        <a
+          href={resources.tutorialImageFileId ? getDriveImageUrl(resources.tutorialImageFileId) : defaultTutorialImage}
+          target="_blank"
+          rel="noreferrer"
+          className="mb-5 block mx-auto max-w-md"
+          title="Klik untuk memperbesar"
+        >
           <img
-            src={getDriveImageUrl(resources.tutorialImageFileId)}
-            alt="Tutorial upload RPPM dan Modul Ajar"
-            className="mb-5 w-full max-h-96 rounded-xl border border-slate-100 object-contain bg-slate-50"
+            src={resources.tutorialImageFileId ? getDriveImageUrl(resources.tutorialImageFileId) : defaultTutorialImage}
+            alt="Tutorial membuat Modul Ajar dari RPPM"
+            className="w-full rounded-xl border border-slate-100 bg-slate-50"
           />
-        )}
+          <span className="mt-1 block text-center text-xs text-slate-400">Klik gambar untuk memperbesar</span>
+        </a>
         <ol className="space-y-4">
           {TUTORIAL_STEPS.map((step, idx) => (
             <li key={step.title} className="flex gap-4">

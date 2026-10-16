@@ -14,7 +14,7 @@ import {
   fetchTeachingResources,
   saveTeachingResources,
 } from '../../../services/prosemService';
-import { uploadToDrive, UPLOAD_ACCEPT } from '../../../utils/upload';
+import { uploadToDrive, UPLOAD_ACCEPT, buildFilePrefix } from '../../../utils/upload';
 import { getDriveImageUrl, getDriveDownloadUrl } from '../../../utils/drive';
 import { DRIVE_FOLDER_URL } from '../../../config/teachingResources';
 
@@ -83,7 +83,9 @@ const TeachingDocsManagement = () => {
     }
     setUploadingProsem(true);
     try {
-      const uploaded = await uploadToDrive(prosemFile, 'prosem');
+      const uploaded = await uploadToDrive(prosemFile, 'prosem', {
+        namePrefix: buildFilePrefix(['PROSEM', `${semester}-${academicYear}`, title]),
+      });
       await createProsem({
         title: title.trim(),
         semester,
@@ -126,7 +128,7 @@ const TeachingDocsManagement = () => {
     try {
       let imageId = tutorialFileId;
       if (tutorialFile) {
-        imageId = (await uploadToDrive(tutorialFile, 'tutorial')).fileId;
+        imageId = (await uploadToDrive(tutorialFile, 'tutorial', { namePrefix: 'TUTORIAL-RPPM' })).fileId;
       }
       await saveTeachingResources({ driveFolderUrl: trimmed || undefined, tutorialImageFileId: imageId });
       setTutorialFileId(imageId);

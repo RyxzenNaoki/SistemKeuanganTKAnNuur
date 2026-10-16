@@ -6,6 +6,7 @@ import {
   ClipboardList,
   Users,
   FolderUp,
+  BookOpen,
   GraduationCap,
 } from 'lucide-react';
 import { APP_NAME, SCHOOL_NAME } from '../../config/branding';
@@ -19,6 +20,7 @@ const MENU = [
   { to: '/guru', label: 'Beranda', icon: Home, exact: true },
   { to: '/guru/attendance', label: 'Rekap Absensi', icon: ClipboardCheck },
   { to: '/guru/assessment', label: 'Rekap Asesmen', icon: ClipboardList },
+  { to: '/guru/mengaji', label: 'Rapor Mengaji', icon: BookOpen },
   { to: '/guru/students', label: 'Data Siswa Semester Ini', icon: Users },
   { to: '/guru/teaching-docs', label: 'Upload RPPM & Modul Ajar', icon: FolderUp },
 ];
