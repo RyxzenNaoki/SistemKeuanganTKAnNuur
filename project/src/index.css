@@ -218,13 +218,13 @@
 
 /* Kartu ringkasan dashboard bergaya pastel bergradasi lembut */
 .stat-card-blue {
-  @apply bg-gradient-to-br from-primary-50 to-white border border-primary-100;
+  @apply bg-linear-to-br from-primary-50 to-white border border-primary-100;
 }
 
 .stat-card-pink {
-  @apply bg-gradient-to-br from-secondary-50 to-white border border-secondary-100;
+  @apply bg-linear-to-br from-secondary-50 to-white border border-secondary-100;
 }
 
 .stat-card-yellow {
-  @apply bg-gradient-to-br from-accent-50 to-white border border-accent-100;
+  @apply bg-linear-to-br from-accent-50 to-white border border-accent-100;
 }
