@@ -99,7 +99,7 @@ const AdminHeader = ({ onMenuButtonClick }: AdminHeaderProps) => {
                 onClick={() => setUserMenuOpen(!userMenuOpen)}
                 className="flex items-center space-x-2 focus:outline-none"
               >
-                <div className="h-8 w-8 rounded-full bg-gradient-to-br from-primary-400 to-secondary-400 flex items-center justify-center">
+                <div className="h-8 w-8 rounded-full bg-linear-to-br from-primary-400 to-secondary-400 flex items-center justify-center">
                   <span className="text-sm font-medium text-white">
                     {currentUser?.email?.[0].toUpperCase() || 'A'}
                   </span>
@@ -148,4 +148,4 @@ const AdminHeader = ({ onMenuButtonClick }: AdminHeaderProps) => {
   );
 };
 
-export default AdminHeader;
+export default AdminHeader;
