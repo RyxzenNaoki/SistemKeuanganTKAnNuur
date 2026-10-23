@@ -3,14 +3,30 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { LogIn, Loader2 } from 'lucide-react';
+import GoogleButton, { googleAuthErrorMessage } from '../../components/auth/GoogleButton';
 
 const LoginPage = () => {
   // const navigate = useNavigate();
-  const { signIn } = useAuth();
+  const { signIn, signInWithGoogle } = useAuth();
   const { showToast } = useToast();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
+
+  const handleGoogle = async () => {
+    setGoogleLoading(true);
+    try {
+      await signInWithGoogle();
+      // AuthContext mengalihkan: ke beranda sesuai role, atau ke "Lengkapi Pendaftaran" untuk pengguna baru
+    } catch (error) {
+      console.error('Google login error:', error);
+      const message = googleAuthErrorMessage(error);
+      if (message) showToast('error', message);
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -102,6 +118,10 @@ const LoginPage = () => {
           <div className="relative flex justify-center text-sm">
             <span className="px-2 bg-white text-slate-500">Atau</span>
           </div>
+        </div>
+
+        <div className="mt-6">
+          <GoogleButton label="Masuk dengan Google" onClick={handleGoogle} loading={googleLoading} />
         </div>
 
         <div className="mt-6 text-center">

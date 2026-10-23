@@ -74,13 +74,12 @@ const GuruStudents = () => {
                 <th>Kelas</th>
                 <th>Tahun Ajaran</th>
                 <th>Orang Tua</th>
-                <th>Status Data</th>
               </tr>
             </thead>
             <tbody>
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="text-center text-slate-400 py-8">
+                  <td colSpan={4} className="text-center text-slate-400 py-8">
                     Tidak ada murid yang cocok
                   </td>
                 </tr>
@@ -96,13 +95,6 @@ const GuruStudents = () => {
                     <td><span className="badge badge-primary">{s.class}</span></td>
                     <td>{s.academicYear}</td>
                     <td>{s.parentName || '-'}</td>
-                    <td>
-                      {s.verified === false ? (
-                        <span className="badge badge-accent">Belum diverifikasi</span>
-                      ) : (
-                        <span className="badge badge-success">Terverifikasi</span>
-                      )}
-                    </td>
                   </tr>
                 ))
               )}

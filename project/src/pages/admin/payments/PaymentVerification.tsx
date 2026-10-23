@@ -20,6 +20,7 @@ import {
   rejectPaymentProof,
 } from '../../../services/paymentService';
 import { getDriveImageUrl } from '../../../utils/drive';
+import { sendPush } from '../../../services/pushClient';
 
 type Filter = 'pending' | 'verified' | 'rejected' | 'all';
 
@@ -118,6 +119,7 @@ const PaymentVerification = () => {
         await rejectPaymentProof(proof.id, rejectReason.trim());
         showToast('success', 'Bukti ditolak, ortu akan melihat alasannya');
       }
+      void sendPush({ event: 'proof-reviewed', payload: { proofId: proof.id } });
       setDecision(null);
       await load();
     } catch (err) {

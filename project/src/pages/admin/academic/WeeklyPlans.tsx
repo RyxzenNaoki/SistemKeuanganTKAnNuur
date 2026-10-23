@@ -13,6 +13,8 @@ import {
   ExternalLink,
   CalendarRange,
   Info,
+  Pencil,
+  X,
 } from 'lucide-react';
 import { db } from '../../../firebase/config';
 import { useAuth } from '../../../contexts/AuthContext';
@@ -29,6 +31,7 @@ import {
 import { parseModulAjar, ParsedModulAjar } from '../../../utils/modulAjarParser';
 import { uploadToDrive, UPLOAD_ACCEPT, buildFilePrefix } from '../../../utils/upload';
 import { getDomainBadgeClass } from '../../../utils/domainStyle';
+import PlanEditor, { EditablePlan } from '../../../components/admin/PlanEditor';
 
 const formatDate = (key: string) => dayjs(key).locale('id').format('dddd, DD MMM YYYY');
 const formatShort = (key: string) => dayjs(key).locale('id').format('DD MMM YYYY');
@@ -82,6 +85,9 @@ const WeeklyPlans = () => {
   const [semester, setSemester] = useState<Semester>(getCurrentSemester());
   const [academicYear, setAcademicYear] = useState(getCurrentAcademicYear());
   const [saving, setSaving] = useState(false);
+  // Bagian yang bisa diedit admin (hasil bacaan file ATAU modul tersimpan yang sedang diedit)
+  const [draft, setDraft] = useState<EditablePlan | null>(null);
+  const [editTarget, setEditTarget] = useState<WeeklyPlan | null>(null);
 
   useEffect(() => {
     const loadName = async () => {
@@ -114,6 +120,22 @@ const WeeklyPlans = () => {
     setParsed(null);
     setParseError('');
     setSelectedClasses([]);
+    setDraft(null);
+    setEditTarget(null);
+  };
+
+  const startEdit = (plan: WeeklyPlan) => {
+    resetUpload();
+    setEditTarget(plan);
+    setSemester(plan.semester);
+    setAcademicYear(plan.academicYear);
+    setDraft({
+      tema: plan.tema,
+      subTema: plan.subTema,
+      weekNumber: plan.weekNumber,
+      days: JSON.parse(JSON.stringify(plan.days)),
+    });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleFileChosen = async (chosen: File | null) => {
@@ -124,6 +146,12 @@ const WeeklyPlans = () => {
     try {
       const result = await parseModulAjar(await chosen.arrayBuffer());
       setParsed(result);
+      setDraft({
+        tema: result.tema,
+        subTema: result.subTema,
+        weekNumber: result.weekNumber,
+        days: JSON.parse(JSON.stringify(result.days)),
+      });
       if (result.semester) setSemester(result.semester);
       if (result.academicYear) setAcademicYear(result.academicYear);
       // Saran kelas dari isi dokumen: "Kelompok A" + "reguler"/"fullday"
@@ -143,48 +171,93 @@ const WeeklyPlans = () => {
   const toggleClass = (className: string) =>
     setSelectedClasses(prev => (prev.includes(className) ? prev.filter(c => c !== className) : [...prev, className]));
 
+  // Rapikan hasil edit: buang kegiatan kosong, validasi jam inti
+  const buildCleanDays = (): WeeklyPlanDay[] | null => {
+    if (!draft) return null;
+    const days: WeeklyPlanDay[] = [];
+    for (const day of draft.days) {
+      const start = day.intiStart?.trim() || undefined;
+      const end = day.intiEnd?.trim() || undefined;
+      if (start && end && start >= end) {
+        showToast('error', `Jam inti hari ${day.dayName} tidak valid: jam selesai harus setelah jam mulai`);
+        return null;
+      }
+      days.push({
+        ...day,
+        subSubTheme: day.subSubTheme?.trim() || undefined,
+        intiStart: start,
+        intiEnd: end,
+        activities: day.activities
+          .map(a => ({ domain: a.domain.trim() || 'Kegiatan', text: a.text.trim() }))
+          .filter(a => a.text),
+      });
+    }
+    return days;
+  };
+
   const handleSave = async () => {
-    if (!parsed || !file) return;
-    if (selectedClasses.length === 0) {
-      showToast('error', 'Pilih minimal satu kelas');
+    if (!draft || (!parsed && !editTarget)) return;
+    if (!draft.tema.trim()) {
+      showToast('error', 'Tema wajib diisi');
       return;
     }
     if (!/^\d{4}\/\d{4}$/.test(academicYear.trim())) {
       showToast('error', 'Tahun ajaran harus berformat 2026/2027');
       return;
     }
+    const classNames = editTarget ? [editTarget.className] : selectedClasses;
+    if (classNames.length === 0) {
+      showToast('error', 'Pilih minimal satu kelas');
+      return;
+    }
+    const cleanDays = buildCleanDays();
+    if (!cleanDays) return;
+
+    const payload: ParsedModulAjar = {
+      ...(parsed ?? {
+        startDate: editTarget!.startDate,
+        endDate: editTarget!.endDate,
+        warnings: [],
+      }),
+      tema: draft.tema.trim(),
+      subTema: draft.subTema.trim(),
+      weekNumber: draft.weekNumber,
+      days: cleanDays,
+    } as ParsedModulAjar;
 
     setSaving(true);
     try {
-      // 1) Arsipkan file asli ke Google Drive (opsional: kegagalan tidak membatalkan jadwal)
-      let fileId: string | undefined;
-      let fileName: string | undefined;
+      let fileId = editTarget?.fileId;
+      let fileName = editTarget?.fileName;
       let archiveError = '';
-      try {
-        const uploaded = await uploadToDrive(file, 'modul-ajar', {
-          namePrefix: buildFilePrefix([...selectedClasses.map(getClassCode), 'MODULAJAR', parsed.startDate]),
-        });
-        fileId = uploaded.fileId;
-        fileName = uploaded.fileName;
-      } catch (err) {
-        archiveError = err instanceof Error ? err.message : 'Upload ke Drive gagal';
+
+      // Unggahan baru: arsipkan file asli ke Drive (kegagalan tidak membatalkan jadwal)
+      if (!editTarget && file) {
+        try {
+          const uploaded = await uploadToDrive(file, 'modul-ajar', {
+            namePrefix: buildFilePrefix([...classNames.map(getClassCode), 'MODULAJAR', payload.startDate]),
+          });
+          fileId = uploaded.fileId;
+          fileName = uploaded.fileName;
+        } catch (err) {
+          archiveError = err instanceof Error ? err.message : 'Upload ke Drive gagal';
+        }
       }
 
-      // 2) Simpan hasil bacaan (inilah yang dipakai Beranda Guru)
       await saveWeeklyPlans({
-        parsed,
-        classNames: selectedClasses,
+        parsed: payload,
+        classNames,
         semester,
         academicYear: academicYear.trim(),
         fileId,
         fileName,
-        uploadedByName: adminName || currentUser?.email || 'Admin',
+        uploadedByName: editTarget?.uploadedByName || adminName || currentUser?.email || 'Admin',
       });
 
       if (archiveError) {
         showToast('info', `Kegiatan inti tersimpan, tetapi file asli belum terarsip di Drive: ${archiveError}`);
       } else {
-        showToast('success', 'Modul ajar tersimpan. Kegiatan inti otomatis tampil di Beranda Guru.');
+        showToast('success', editTarget ? 'Perubahan modul ajar tersimpan' : 'Modul ajar tersimpan. Kegiatan inti otomatis tampil di Beranda Guru.');
       }
       resetUpload();
       await loadPlans();
@@ -221,7 +294,7 @@ const WeeklyPlans = () => {
       <div>
         <h1 className="text-2xl font-bold">Modul Ajar Mingguan</h1>
         <p className="text-sm text-slate-500">
-          Unggah Modul Ajar (.docx), kegiatan inti tiap hari terbaca otomatis dan tampil di Beranda Guru
+          Unggah Modul Ajar (.docx), kegiatan inti tiap hari terbaca otomatis, bisa diedit, lalu tampil di Beranda Guru
         </p>
       </div>
 
@@ -256,34 +329,45 @@ const WeeklyPlans = () => {
           </div>
         )}
 
-        {parsed && (
-          <div className="mt-5 space-y-5">
-            {/* Ringkasan hasil bacaan */}
-            <div className="rounded-xl bg-primary-50 border border-primary-100 p-4">
-              <p className="text-xs font-semibold uppercase tracking-wide text-primary-700 mb-1">Hasil bacaan otomatis</p>
-              <p className="text-base font-semibold text-slate-900">{parsed.tema || '(tema tidak terbaca)'}</p>
-              {parsed.subTema && <p className="text-sm text-slate-600">Sub tema: {parsed.subTema}</p>}
+      </div>
+
+      {/* ============ EDITOR (hasil bacaan file baru ATAU modul tersimpan yang diedit) ============ */}
+      {draft && (parsed || editTarget) && (
+        <div className="card p-5">
+          <div className="flex items-start justify-between gap-3 mb-4">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-primary-700">
+                {editTarget ? 'Edit modul ajar tersimpan' : 'Hasil bacaan otomatis — periksa dan edit bila perlu'}
+              </p>
               <p className="text-xs text-slate-500 mt-1">
-                {parsed.weekNumber ? `Minggu ke-${parsed.weekNumber} · ` : ''}
-                {formatShort(parsed.startDate)} – {formatShort(parsed.endDate)} · {parsed.days.length} hari
+                {editTarget ? `${editTarget.className} · ` : ''}
+                {formatShort(parsed?.startDate ?? editTarget!.startDate)} – {formatShort(parsed?.endDate ?? editTarget!.endDate)}
+                {' · '}{draft.days.length} hari
               </p>
             </div>
+            <button onClick={resetUpload} disabled={saving} className="p-1.5 text-slate-400 hover:text-slate-600" title="Batal">
+              <X className="h-5 w-5" />
+            </button>
+          </div>
 
-            {parsed.warnings.length > 0 && (
-              <div className="rounded-xl border border-accent-200 bg-accent-50 p-3">
-                <p className="flex items-center gap-1.5 text-sm font-semibold text-accent-800 mb-1">
-                  <AlertTriangle className="h-4 w-4" /> Perlu dicek
-                </p>
-                <ul className="list-disc pl-5 text-xs text-accent-800 space-y-0.5">
-                  {parsed.warnings.map((w, i) => <li key={i}>{w}</li>)}
-                </ul>
-              </div>
-            )}
+          {parsed && parsed.warnings.length > 0 && (
+            <div className="mb-4 rounded-xl border border-accent-200 bg-accent-50 p-3">
+              <p className="flex items-center gap-1.5 text-sm font-semibold text-accent-800 mb-1">
+                <AlertTriangle className="h-4 w-4" /> Perlu dicek
+              </p>
+              <ul className="list-disc pl-5 text-xs text-accent-800 space-y-0.5">
+                {parsed.warnings.map((w, i) => <li key={i}>{w}</li>)}
+              </ul>
+            </div>
+          )}
 
-            {/* Kelas, semester, tahun ajaran */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="md:col-span-1">
-                <p className="block text-sm font-medium text-slate-700 mb-1">Berlaku untuk kelas *</p>
+          {/* Kelas, semester, tahun ajaran */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-5">
+            <div>
+              <p className="block text-sm font-medium text-slate-700 mb-1">{editTarget ? 'Kelas' : 'Berlaku untuk kelas *'}</p>
+              {editTarget ? (
+                <span className="badge badge-primary">{editTarget.className}</span>
+              ) : (
                 <div className="space-y-1.5">
                   {CLASS_OPTIONS.map(c => (
                     <label key={c} className="flex items-center gap-2 text-sm text-slate-700">
@@ -291,46 +375,43 @@ const WeeklyPlans = () => {
                       {c}
                     </label>
                   ))}
+                  {parsed && !parsed.group && (
+                    <p className="text-xs text-slate-400">Kelompok tidak terbaca dari dokumen, pilih manual.</p>
+                  )}
                 </div>
-                {!parsed.group && (
-                  <p className="mt-1 text-xs text-slate-400">Kelompok tidak terbaca dari dokumen, pilih manual.</p>
-                )}
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Semester</label>
-                <select className="input" value={semester} onChange={e => setSemester(e.target.value as Semester)}>
-                  <option value="Ganjil">Ganjil</option>
-                  <option value="Genap">Genap</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Tahun Ajaran</label>
-                <input className="input" value={academicYear} onChange={e => setAcademicYear(e.target.value)} placeholder="2026/2027" />
-              </div>
+              )}
             </div>
-
             <div>
-              <p className="text-sm font-medium text-slate-700 mb-2">Kegiatan inti per hari (ini yang akan tampil di Guru)</p>
-              <DaysPreview days={parsed.days} />
+              <label className="block text-sm font-medium text-slate-700 mb-1">Semester</label>
+              <select className="input" value={semester} onChange={e => setSemester(e.target.value as Semester)}>
+                <option value="Ganjil">Ganjil</option>
+                <option value="Genap">Genap</option>
+              </select>
             </div>
-
-            {hasPlanOverlap.length > 0 && (
-              <p className="flex items-start gap-1.5 text-xs text-accent-800">
-                <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
-                Minggu ini sudah ada untuk {hasPlanOverlap.join(', ')}; menyimpan akan menimpanya.
-              </p>
-            )}
-
-            <div className="flex gap-3">
-              <button onClick={handleSave} disabled={saving} className="btn btn-primary flex items-center gap-2">
-                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                Simpan & Tampilkan di Guru
-              </button>
-              <button onClick={resetUpload} disabled={saving} className="btn btn-secondary">Batal</button>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Tahun Ajaran</label>
+              <input className="input" value={academicYear} onChange={e => setAcademicYear(e.target.value)} placeholder="2026/2027" />
             </div>
           </div>
-        )}
-      </div>
+
+          <PlanEditor value={draft} onChange={setDraft} />
+
+          {hasPlanOverlap.length > 0 && (
+            <p className="mt-4 flex items-start gap-1.5 text-xs text-accent-800">
+              <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+              Minggu ini sudah ada untuk {hasPlanOverlap.join(', ')}; menyimpan akan menimpanya.
+            </p>
+          )}
+
+          <div className="flex gap-3 mt-5">
+            <button onClick={handleSave} disabled={saving} className="btn btn-primary flex items-center gap-2">
+              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+              {editTarget ? 'Simpan Perubahan' : 'Simpan & Tampilkan di Guru'}
+            </button>
+            <button onClick={resetUpload} disabled={saving} className="btn btn-secondary">Batal</button>
+          </div>
+        </div>
+      )}
 
       {/* ============ DAFTAR TERSIMPAN ============ */}
       <div className="card p-5">
@@ -364,6 +445,9 @@ const WeeklyPlans = () => {
                       <ExternalLink className="h-4 w-4" />
                     </a>
                   )}
+                  <button onClick={() => startEdit(plan)} className="p-1.5 text-slate-400 hover:text-primary-600" title="Edit">
+                    <Pencil className="h-4 w-4" />
+                  </button>
                   <button onClick={() => handleDelete(plan)} className="p-1.5 text-slate-400 hover:text-error-600" title="Hapus">
                     <Trash2 className="h-4 w-4" />
                   </button>

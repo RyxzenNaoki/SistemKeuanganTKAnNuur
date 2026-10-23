@@ -1,6 +1,7 @@
 import { APP_COPYRIGHT } from '../config/branding';
 import { useState } from 'react';
 import { Outlet, Link } from 'react-router-dom';
+import PushNotificationManager from '../components/common/PushNotificationManager';
 import AdminSidebar from '../components/admin/AdminSidebar';
 import AdminHeader from '../components/admin/AdminHeader';
 
@@ -16,6 +17,7 @@ const AdminLayout = () => {
         
         <main className="flex-1 pb-10 pt-8">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <PushNotificationManager />
             <Outlet />
           </div>
         </main>

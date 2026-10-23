@@ -5,7 +5,6 @@ import {
   Home,
   Upload,
   MessageSquare,
-  GraduationCap,
   ChevronDown,
   Image as ImageIcon,
   Sparkles,
@@ -13,6 +12,7 @@ import {
   FileText,
   BookOpen,
 } from 'lucide-react';
+import Logo from '../common/Logo';
 import { APP_NAME, SCHOOL_NAME } from '../../config/branding';
 
 interface ParentSidebarProps {
@@ -55,9 +55,7 @@ const ParentSidebar = ({ isOpen, setIsOpen }: ParentSidebarProps) => {
         {/* Sidebar header */}
         <div className="h-16 flex items-center justify-between px-4 border-b border-slate-100">
           <div className="flex items-center space-x-2.5">
-            <div className="bg-gradient-to-br from-primary-400 to-secondary-400 p-1.5 rounded-xl shadow-soft">
-              <GraduationCap className="h-6 w-6 text-white" />
-            </div>
+            <Logo className="h-10 w-auto" />
             <div className="leading-tight">
               <p className="font-bold text-base text-slate-900">{APP_NAME}</p>
               <p className="text-[11px] text-slate-400">{SCHOOL_NAME}</p>

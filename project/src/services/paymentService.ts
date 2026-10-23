@@ -107,14 +107,15 @@ export interface AssignPaymentInput {
 }
 
 // Admin meng-assign tagihan ke satu siswa -> otomatis muncul di akun ortu terkait
-export const assignPayment = async (input: AssignPaymentInput): Promise<void> => {
-  await addDoc(collection(db, 'payments'), {
+export const assignPayment = async (input: AssignPaymentInput): Promise<string> => {
+  const ref = await addDoc(collection(db, 'payments'), {
     ...stripUndefined(input),
     status: 'upcoming' as PaymentStatus,
     dueDate: Timestamp.fromDate(input.dueDate),
     createdAt: Timestamp.now(),
     updatedAt: Timestamp.now(),
-  });
+  })
+  return ref.id;
 };
 
 export const updatePayment = async (id: string, input: Partial<AssignPaymentInput> & { status?: PaymentStatus }): Promise<void> => {
@@ -198,13 +199,14 @@ export interface SubmitPaymentProofInput {
   fileName: string;
 }
 
-export const submitPaymentProof = async (input: SubmitPaymentProofInput): Promise<void> => {
-  await addDoc(collection(db, 'payment_proofs'), {
+export const submitPaymentProof = async (input: SubmitPaymentProofInput): Promise<string> => {
+  const ref = await addDoc(collection(db, 'payment_proofs'), {
     ...stripUndefined(input),
     paymentDate: Timestamp.fromDate(input.paymentDate),
     status: 'pending',
     uploadedAt: Timestamp.now(),
-  });
+  })
+  return ref.id;
 };
 
 // ---------------------------------------------------------------------------

@@ -1,17 +1,20 @@
 import { useState } from 'react';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { auth, db } from '../../firebase/config';
+import { auth } from '../../firebase/config';
 import { useNavigate, Link } from 'react-router-dom';
 import { useToast } from '../../contexts/ToastContext';
-import { linkParentToStudent } from '../../services/studentService';
+import { createUserProfile } from '../../services/registrationService';
+import { useAuth } from '../../contexts/AuthContext';
+import GoogleButton, { googleAuthErrorMessage } from '../../components/auth/GoogleButton';
 import { Loader2, UserPlus, Baby } from 'lucide-react';
-import { ROLE_LABEL, SELF_REGISTER_ROLES, UserRole, initialStatusFor } from '../../config/roles';
+import { ROLE_LABEL, SELF_REGISTER_ROLES, UserRole } from '../../config/roles';
 import { CLASS_OPTIONS } from '../../config/classes';
 
 const RegisterPage = () => {
     const navigate = useNavigate();
     const { showToast } = useToast();
+    const { signInWithGoogle } = useAuth();
+    const [googleLoading, setGoogleLoading] = useState(false);
 
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
@@ -22,6 +25,20 @@ const RegisterPage = () => {
     const [studentNickname, setStudentNickname] = useState('');
     const [studentClass, setStudentClass] = useState('');
     const [loading, setLoading] = useState(false);
+
+    // Daftar dengan Google: pilih akun, lalu lengkapi data (peran & data anak) di halaman berikutnya
+    const handleGoogle = async () => {
+        setGoogleLoading(true);
+        try {
+            await signInWithGoogle();
+        } catch (error) {
+            console.error('Google register error:', error);
+            const message = googleAuthErrorMessage(error);
+            if (message) showToast('error', message);
+        } finally {
+            setGoogleLoading(false);
+        }
+    };
 
     const handleRegister = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -44,39 +61,15 @@ const RegisterPage = () => {
             const cleanEmail = email.trim().toLowerCase();
             const userCred = await createUserWithEmailAndPassword(auth, cleanEmail, password);
 
-            const userData: Record<string, unknown> = {
+            await createUserProfile({
+                uid: userCred.user.uid,
                 email: cleanEmail,
-                role,
-                // Guru harus disetujui admin dulu; orang tua langsung aktif
-                status: initialStatusFor(role as UserRole),
-                name: name.trim(),
-                createdAt: serverTimestamp(),
-            };
-
-            if (role === 'parent') {
-                userData.studentName = studentName.trim();
-                userData.studentNickname = studentNickname.trim();
-                userData.studentClass = studentClass;
-            }
-
-            await setDoc(doc(db, 'users', userCred.user.uid), userData);
-
-            // Tautkan akun ortu ke data siswa (dipakai Admin & Guru)
-            if (role === 'parent') {
-                try {
-                    const { studentId } = await linkParentToStudent({
-                        uid: userCred.user.uid,
-                        email: cleanEmail,
-                        parentName: name.trim(),
-                        studentName: studentName.trim(),
-                        studentNickname: studentNickname.trim(),
-                        studentClass,
-                    });
-                    await setDoc(doc(db, 'users', userCred.user.uid), { studentId }, { merge: true });
-                } catch (linkError) {
-                    console.warn('Gagal menautkan siswa, admin dapat menautkan manual:', linkError);
-                }
-            }
+                role: role as Exclude<UserRole, 'admin'>,
+                name,
+                studentName,
+                studentNickname,
+                studentClass,
+            });
 
             showToast(
                 'success',
@@ -112,6 +105,16 @@ const RegisterPage = () => {
         <div>
             <h2 className="text-2xl font-bold text-center text-slate-900 mb-1">Daftar Akun</h2>
             <p className="text-center text-sm text-slate-400 mb-6">Buat akun untuk mengakses SINAU</p>
+
+            <GoogleButton label="Daftar dengan Google" onClick={handleGoogle} loading={googleLoading} />
+            <div className="relative my-5">
+                <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-slate-200" />
+                </div>
+                <div className="relative flex justify-center text-xs">
+                    <span className="px-2 bg-white text-slate-400">atau daftar dengan email</span>
+                </div>
+            </div>
 
             <form onSubmit={handleRegister}>
                 <div className="mb-4">

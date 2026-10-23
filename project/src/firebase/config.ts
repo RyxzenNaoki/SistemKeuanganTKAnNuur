@@ -5,7 +5,7 @@ import { getStorage } from 'firebase/storage';
 
 // Firebase configuration
 // Replace these with your actual Firebase project configuration
-const firebaseConfig = {
+export const firebaseConfig = {
   apiKey: "AIzaSyBzchwSwCQidWKe0vUEHJmcfUx74GWi4VU",
   authDomain: "sistemkeuangantkannuur.firebaseapp.com",
   projectId: "sistemkeuangantkannuur",
@@ -23,4 +23,4 @@ export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const storage = getStorage(app);
 
-export default app;
+export default app;

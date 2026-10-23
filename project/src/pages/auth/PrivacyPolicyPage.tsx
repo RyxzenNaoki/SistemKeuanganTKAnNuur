@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { GraduationCap, ArrowLeft, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, ShieldCheck } from 'lucide-react';
+import Logo from '../../components/common/Logo';
 import { useAuth } from '../../contexts/AuthContext';
 import { ROLE_HOME } from '../../config/roles';
 import { APP_NAME, APP_FULL_NAME, SCHOOL_NAME, APP_DESCRIPTION } from '../../config/branding';
@@ -47,6 +48,7 @@ const SECTIONS: Section[] = [
           <Bullets
             items={[
               'Nama lengkap, alamat email, dan peran akun (orang tua, guru, atau admin).',
+              'Jika Anda masuk dengan Google, kami menerima nama dan alamat email akun Google tersebut. Kami tidak menerima kata sandi Google Anda.',
               'Kata sandi dikelola oleh layanan Firebase Authentication dalam bentuk terenkripsi. Admin dan pihak Sekolah tidak dapat melihat kata sandi Anda.',
             ]}
           />
@@ -88,7 +90,7 @@ const SECTIONS: Section[] = [
           <p>
             Agar Anda tetap masuk ke akun, browser menyimpan data sesi login pada penyimpanan lokal perangkat Anda.
             Penyedia hosting kami juga dapat mencatat log teknis standar (misalnya alamat IP dan waktu akses) untuk
-            menjaga keamanan dan kestabilan layanan. Kami tidak memakai pelacak iklan.
+            menjaga keamanan dan kestabilan layanan. Jika Anda mengaktifkan notifikasi, kami menyimpan token perangkat (kode teknis dari browser) agar notifikasi dapat dikirim ke perangkat tersebut. Kami tidak memakai pelacak iklan.
           </p>
         </div>
       </div>
@@ -145,8 +147,8 @@ const SECTIONS: Section[] = [
         <Bullets
           items={[
             <>
-              <strong>Google Firebase</strong> (Authentication dan Cloud Firestore) untuk login dan penyimpanan data
-              aplikasi.
+              <strong>Google Firebase</strong> (Authentication, Cloud Firestore, dan Cloud Messaging) untuk login (termasuk
+              masuk dengan Google), penyimpanan data aplikasi, dan pengiriman notifikasi.
             </>,
             <>
               <strong>Google Drive</strong> untuk menyimpan berkas yang diunggah (foto, PDF rapor, bukti pembayaran,
@@ -174,7 +176,7 @@ const SECTIONS: Section[] = [
         </p>
         <Bullets
           items={[
-            'Pengguna aplikasi (orang tua, guru, admin) tidak diminta login dengan Google dan tidak memberikan akses ke akun Google atau Google Drive pribadi mereka.',
+            'Pengguna aplikasi tidak memberikan akses ke Google Drive pribadi mereka. Fitur masuk dengan Google (opsional) hanya dipakai untuk masuk ke SINAU dan hanya menerima nama serta email dasar akun; SINAU tidak membaca Drive, Gmail, atau data Google lain milik pengguna.',
             'Akses ke Google Drive hanya dipakai untuk membuat berkas di folder penyimpanan milik Sekolah dan mengatur izin lihat berkas tersebut. Kami tidak membaca, memindai, atau menggunakan berkas lain di Drive.',
             'Berkas yang diunggah dapat dibuka oleh siapa pun yang memegang tautannya. Tautan tidak dipublikasikan dan hanya ditampilkan di dalam aplikasi kepada pengguna yang berhak. Jangan membagikan tautan berkas kepada pihak yang tidak berkepentingan.',
           ]}
@@ -290,9 +292,7 @@ const PrivacyPolicyPage = () => {
       <div className="mx-auto max-w-3xl">
         <div className="mb-6 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="bg-gradient-to-br from-primary-400 to-secondary-400 p-2 rounded-xl shadow-soft">
-              <GraduationCap className="h-6 w-6 text-white" />
-            </div>
+            <Logo className="h-10 w-auto" />
             <div className="leading-tight">
               <p className="font-bold text-slate-900">{APP_NAME}</p>
               <p className="text-[11px] text-slate-400">{APP_DESCRIPTION}</p>

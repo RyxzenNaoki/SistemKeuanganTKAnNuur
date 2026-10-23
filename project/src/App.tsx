@@ -9,6 +9,7 @@ import { ROLE_HOME } from './config/roles';
 const AdminLayout = lazy(() => import('./layouts/AdminLayout'));
 const ParentLayout = lazy(() => import('./layouts/ParentLayout'));
 const PrivacyPolicyPage = lazy(() => import('./pages/auth/PrivacyPolicyPage'));
+const CompleteRegistrationPage = lazy(() => import('./pages/auth/CompleteRegistrationPage'));
 const GuruLayout = lazy(() => import('./layouts/GuruLayout'));
 const AuthLayout = lazy(() => import('./layouts/AuthLayout'));
 
@@ -23,7 +24,6 @@ const AdminDashboard = lazy(() => import('./pages/admin/Dashboard'));
 const StudentManagement = lazy(() => import('./pages/admin/students/StudentManagement'));
 const ClassManagement = lazy(() => import('./pages/admin/classes/ClassManagement'));
 const UserManagement = lazy(() => import('./pages/admin/users/UserManagement'));
-const ThemeManagement = lazy(() => import('./pages/admin/themes/ThemeManagement'));
 const WeeklyPlans = lazy(() => import('./pages/admin/academic/WeeklyPlans'));
 const TeachingDocsManagement = lazy(() => import('./pages/admin/academic/TeachingDocsManagement'));
 const PaymentVerification = lazy(() => import('./pages/admin/payments/PaymentVerification'));
@@ -48,7 +48,7 @@ const GuruTeachingDocs = lazy(() => import('./pages/guru/TeachingDocs'));
 const GuruMengaji = lazy(() => import('./pages/guru/Mengaji'));
 
 function App() {
-  const { currentUser, userRole, loading } = useAuth();
+  const { currentUser, userRole, loading, needsOnboarding } = useAuth();
   const location = useLocation();
 
   useEffect(() => {
@@ -71,6 +71,7 @@ function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/complete-registration" element={<CompleteRegistrationPage />} />
         </Route>
 
         {/* Admin Routes */}
@@ -86,7 +87,6 @@ function App() {
           <Route path="students" element={<StudentManagement />} />
           <Route path="classes" element={<ClassManagement />} />
           <Route path="users" element={<UserManagement />} />
-          <Route path="themes" element={<ThemeManagement />} />
           <Route path="weekly-plans" element={<WeeklyPlans />} />
           <Route path="teaching-docs" element={<TeachingDocsManagement />} />
           <Route path="payment-proofs" element={<PaymentVerification />} />
@@ -134,7 +134,9 @@ function App() {
         <Route
           path="/"
           element={
-            currentUser && userRole ? (
+            currentUser && needsOnboarding ? (
+              <Navigate to="/complete-registration" replace />
+            ) : currentUser && userRole ? (
               <Navigate to={ROLE_HOME[userRole]} replace />
             ) : (
               <Navigate to="/login" replace />

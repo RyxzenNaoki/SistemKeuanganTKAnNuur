@@ -5,6 +5,7 @@ import { useToast } from '../../contexts/ToastContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { PAYMENT_TYPES, Payment, submitPaymentProof } from '../../services/paymentService';
 import { uploadToDrive, UPLOAD_ACCEPT, buildFilePrefix } from '../../utils/upload';
+import { sendPush } from '../../services/pushClient';
 import { useParentStudents } from '../../hooks/useStudents';
 import { getClassCode } from '../../config/classes';
 
@@ -100,7 +101,7 @@ const PaymentProofModal = ({ isOpen, onClose, onSubmitted, unpaidPayments, pendi
           linkedPayment?.studentName ?? student?.nickname ?? student?.name,
         ]),
       });
-      await submitPaymentProof({
+      const proofId = await submitPaymentProof({
         student: currentUser.uid,
         paymentId: linkedPayment?.id,
         paymentType,
@@ -112,6 +113,7 @@ const PaymentProofModal = ({ isOpen, onClose, onSubmitted, unpaidPayments, pendi
         fileId: uploaded.fileId,
         fileName: uploaded.fileName,
       });
+      void sendPush({ event: 'proof-submitted', payload: { proofId } });
       showToast('success', 'Bukti pembayaran terkirim. Menunggu verifikasi admin.');
       onSubmitted();
       onClose();

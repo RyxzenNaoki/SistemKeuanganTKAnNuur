@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Outlet, Link } from 'react-router-dom';
+import PushNotificationManager from '../components/common/PushNotificationManager';
 import GuruSidebar from '../components/guru/GuruSidebar';
 import GuruHeader from '../components/guru/GuruHeader';
 import { APP_COPYRIGHT } from '../config/branding';
@@ -16,6 +17,7 @@ const GuruLayout = () => {
 
         <main className="flex-1 pb-10 pt-8">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <PushNotificationManager />
             <Outlet />
           </div>
         </main>

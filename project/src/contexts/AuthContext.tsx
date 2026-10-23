@@ -11,6 +11,8 @@ import {
   signOut as firebaseSignOut,
   onAuthStateChanged,
   sendPasswordResetEmail,
+  GoogleAuthProvider,
+  signInWithPopup,
 } from 'firebase/auth';
 import {
   doc,
@@ -24,9 +26,12 @@ interface AuthContextType {
   currentUser: User | null;
   userRole: UserRole | null;
   userStatus: AccountStatus;
+  // true = sudah login dengan Google tetapi belum melengkapi pendaftaran (belum punya profil)
+  needsOnboarding: boolean;
   loading: boolean;
   refreshProfile: () => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
+  signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
 }
@@ -49,6 +54,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [userRole, setUserRole] = useState<UserRole | null>(null);
   const [userStatus, setUserStatus] = useState<AccountStatus>('active');
+  const [needsOnboarding, setNeedsOnboarding] = useState(false);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
@@ -66,6 +72,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             const role: UserRole | null = isUserRole(rawRole) ? rawRole : null;
             setUserRole(role);
             setUserStatus(toAccountStatus(userDoc.data().status));
+            setNeedsOnboarding(false);
 
             // 🔁 Auto-redirect ke halaman sesuai role
             if (role && !isPublicPath(location.pathname) && !location.pathname.startsWith(ROLE_HOME[role])) {
@@ -74,6 +81,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           } else {
             console.warn('User document not found');
             setUserRole(null);
+            // Pengguna Google yang baru pertama masuk belum punya profil -> arahkan melengkapi pendaftaran.
+            // (Pendaftar email/password tidak dialihkan: mereka membuat profilnya sendiri saat mendaftar.)
+            const isGoogleUser = user.providerData.some(p => p.providerId === 'google.com');
+            setNeedsOnboarding(isGoogleUser);
+            if (isGoogleUser && location.pathname !== '/complete-registration') {
+              navigate('/complete-registration');
+            }
           }
         } catch (err) {
           console.error('Error fetching user role:', err);
@@ -81,6 +95,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         }
       } else {
         setUserRole(null);
+        setNeedsOnboarding(false);
       }
 
       setLoading(false);
@@ -94,6 +109,14 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     // 🔁 jangan redirect di sini — tunggu dari useEffect
   };
 
+  // Masuk / daftar dengan akun Google (popup). Pengguna baru diarahkan ke
+  // halaman "Lengkapi Pendaftaran" oleh listener onAuthStateChanged di atas.
+  const signInWithGoogle = async () => {
+    const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: 'select_account' });
+    await signInWithPopup(auth, provider);
+  };
+
   // Muat ulang role & status (dipakai layar "menunggu persetujuan")
   const refreshProfile = async () => {
     const user = auth.currentUser;
@@ -103,6 +126,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       const data = snap.data();
       setUserRole(isUserRole(data.role) ? data.role : null);
       setUserStatus(toAccountStatus(data.status));
+      setNeedsOnboarding(false);
     }
   };
 
@@ -110,6 +134,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     await firebaseSignOut(auth);
     setUserRole(null);
     setUserStatus('active');
+    setNeedsOnboarding(false);
     navigate('/login');
   };
 
@@ -121,9 +146,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     currentUser,
     userRole,
     userStatus,
+    needsOnboarding,
     loading,
     refreshProfile,
     signIn,
+    signInWithGoogle,
     signOut,
     resetPassword,
   };

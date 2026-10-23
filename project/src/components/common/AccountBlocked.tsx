@@ -3,6 +3,7 @@ import { Clock, XCircle, Loader2, RefreshCw, LogOut } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { AccountStatus, ROLE_LABEL } from '../../config/roles';
 import { APP_NAME, APP_DESCRIPTION } from '../../config/branding';
+import Logo from './Logo';
 
 interface AccountBlockedProps {
   status: AccountStatus;
@@ -27,6 +28,7 @@ const AccountBlocked = ({ status }: AccountBlockedProps) => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-secondary-50 flex items-center justify-center px-4">
       <div className="w-full max-w-md rounded-2xl border border-slate-100 bg-white p-8 text-center shadow-soft-lg">
+        <Logo className="mx-auto mb-5 h-14 w-auto" />
         <div
           className={`mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl ${
             isRejected ? 'bg-error-100 text-error-600' : 'bg-accent-100 text-accent-700'

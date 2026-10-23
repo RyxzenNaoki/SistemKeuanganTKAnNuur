@@ -1,0 +1,15 @@
+{
+  "name": "SINAU - TK An Nuur Rumah Cahaya",
+  "short_name": "SINAU",
+  "description": "Digital Management System - TK An Nuur Rumah Cahaya",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#4a9df2",
+  "lang": "id",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}

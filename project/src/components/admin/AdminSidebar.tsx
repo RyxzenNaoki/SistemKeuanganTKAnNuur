@@ -11,7 +11,6 @@ import {
   TrendingUp,
   TrendingDown,
   FileText,
-  GraduationCap,
   CalendarRange,
   FolderOpen,
   ReceiptText,
@@ -20,6 +19,7 @@ import {
   ChevronDown,
   Database,
 } from 'lucide-react';
+import Logo from '../common/Logo';
 import { APP_NAME, SCHOOL_NAME } from '../../config/branding';
 
 interface AdminSidebarProps {
@@ -58,7 +58,6 @@ const NAV_GROUPS: NavGroup[] = [
     label: 'Akademik',
     icon: BookOpenText,
     items: [
-      { to: '/admin/themes', label: 'Tema Pembelajaran', icon: BookOpenText },
       { to: '/admin/weekly-plans', label: 'Modul Ajar Mingguan', icon: CalendarRange },
       { to: '/admin/teaching-docs', label: 'Prosem & Dokumen Guru', icon: FolderOpen },
     ],
@@ -117,9 +116,7 @@ const AdminSidebar = ({ isOpen, setIsOpen }: AdminSidebarProps) => {
         {/* Sidebar header */}
         <div className="h-16 flex items-center justify-between px-4 border-b border-slate-100">
           <div className="flex items-center space-x-2.5">
-            <div className="bg-gradient-to-br from-primary-400 to-secondary-400 p-1.5 rounded-xl shadow-soft">
-              <GraduationCap className="h-6 w-6 text-white" />
-            </div>
+            <Logo className="h-10 w-auto" />
             <div className="leading-tight">
               <p className="font-bold text-base text-slate-900">{APP_NAME}</p>
               <p className="text-[11px] text-slate-400">{SCHOOL_NAME}</p>

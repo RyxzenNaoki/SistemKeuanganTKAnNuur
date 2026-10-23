@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { sendPush } from '../../services/pushClient';
 import { db } from '../../firebase/config';
 import { useToast } from '../../contexts/ToastContext';
 
@@ -26,6 +27,8 @@ const NotificationModal = ({ isOpen, onClose, onAdded }: NotificationFormProps) 
         message,
         createdAt: serverTimestamp(),
       });
+      // Kirim juga sebagai notifikasi push ke perangkat pengguna (tidak menunggu hasilnya)
+      void sendPush({ event: 'announcement', payload: { title, message } });
       showToast('success', 'Pemberitahuan berhasil ditambahkan');
       onAdded();
       onClose();

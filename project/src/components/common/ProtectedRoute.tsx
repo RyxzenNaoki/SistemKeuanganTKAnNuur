@@ -14,7 +14,12 @@ interface ProtectedRouteProps {
 // - akun belum aktif (menunggu persetujuan / ditolak) -> layar informasi
 // - login tapi role tidak sesuai -> dikembalikan ke halaman role miliknya
 const ProtectedRoute = ({ allow, children }: ProtectedRouteProps) => {
-  const { currentUser, userRole, userStatus } = useAuth();
+  const { currentUser, userRole, userStatus, needsOnboarding } = useAuth();
+
+  // Login Google yang belum melengkapi pendaftaran
+  if (currentUser && needsOnboarding) {
+    return <Navigate to="/complete-registration" replace />;
+  }
 
   if (!currentUser || !userRole) {
     return <Navigate to="/login" replace />;

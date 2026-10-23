@@ -3,6 +3,7 @@ import dayjs from 'dayjs';
 import { PlusCircle, Search, Edit2, Trash2, Calendar, AlertCircle, CheckCircle, Clock } from 'lucide-react';
 import { useToast } from '../../../contexts/ToastContext';
 import PaymentScheduleModal from '../../../components/admin/PaymentScheduleModal';
+import { sendPush } from '../../../services/pushClient';
 import {
   Payment,
   fetchAllPayments,
@@ -62,7 +63,8 @@ const PaymentSchedule = () => {
         await updatePayment(selectedPayment.id, data);
         showToast('success', 'Jadwal pembayaran diperbarui');
       } else {
-        await assignPayment(data);
+        const newPaymentId = await assignPayment(data);
+        void sendPush({ event: 'payment-assigned', payload: { paymentId: newPaymentId } });
         showToast('success', `Tagihan ditambahkan untuk ${data.studentName}`);
       }
       setShowModal(false);

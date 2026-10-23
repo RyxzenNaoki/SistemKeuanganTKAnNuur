@@ -1,18 +1,16 @@
+import Logo from '../components/common/Logo';
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { GraduationCap } from 'lucide-react';
 import { APP_NAME, APP_FULL_NAME, APP_DESCRIPTION, APP_COPYRIGHT } from '../config/branding';
 
 const AuthLayout = () => {
   const location = useLocation();
-  const isOnRegister = location.pathname === '/register';
+  const isOnRegister = location.pathname === '/register' || location.pathname === '/complete-registration';
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-secondary-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="flex justify-center">
-          <div className="bg-gradient-to-br from-primary-400 to-secondary-400 p-3.5 rounded-2xl shadow-soft-lg">
-            <GraduationCap className="h-9 w-9 text-white" />
-          </div>
+          <Logo className="h-20 w-auto" />
         </div>
         <h1 className="mt-5 text-center text-3xl font-extrabold text-slate-900 tracking-tight">
           {APP_NAME}
