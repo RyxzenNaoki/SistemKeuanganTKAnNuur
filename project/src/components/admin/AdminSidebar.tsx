@@ -152,7 +152,7 @@ const AdminSidebar = ({ isOpen, setIsOpen }: AdminSidebarProps) => {
                     onClick={() => toggleGroup(group.key)}
                     aria-expanded={open}
                     className={`sidebar-menu-item w-full justify-between ${
-                      hasActive && !open ? 'active' : hasActive ? '!text-primary-700' : ''
+                      hasActive && !open ? 'active' : hasActive ? '!text-primary-700!' : ''
                     }`}
                   >
                     <span className="flex items-center gap-3">
