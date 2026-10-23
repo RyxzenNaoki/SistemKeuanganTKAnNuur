@@ -35,7 +35,7 @@ const GuruSidebar = ({ isOpen, setIsOpen }: GuruSidebarProps) => {
     <>
       {isOpen && (
         <div
-          className="fixed inset-0 z-40 bg-slate-600 bg-opacity-75 lg:hidden"
+          className="fixed inset-0 z-40 bg-slate-600/75 lg:hidden"
           onClick={() => setIsOpen(false)}
         />
       )}

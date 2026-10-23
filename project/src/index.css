@@ -73,7 +73,7 @@
   --color-error-900: #7f1d1d;
   --color-error-950: #450a0a;
 
-  --font-sans: "Inter var", sans-serif;
+  --font-sans: "Inter var", "Inter", ui-sans-serif, system-ui, sans-serif;
 
   --shadow-soft: 0 1px 3px 0 rgba(30, 41, 59, 0.06),
     0 1px 2px -1px rgba(30, 41, 59, 0.06);
@@ -88,12 +88,10 @@
     from { opacity: 0; }
     to { opacity: 1; }
   }
-
   @keyframes slideUp {
     from { transform: translateY(20px); opacity: 0; }
     to { transform: translateY(0); opacity: 1; }
   }
-
   @keyframes slideDown {
     from { transform: translateY(-20px); opacity: 0; }
     to { transform: translateY(0); opacity: 1; }
@@ -104,13 +102,19 @@
   html {
     scroll-behavior: smooth;
   }
-  
+
   body {
     @apply bg-[#F7F9FC] text-slate-800 font-sans;
   }
-  
+
   h1, h2, h3, h4, h5, h6 {
     @apply font-semibold text-slate-900;
+  }
+
+  /* Tailwind v4 tidak lagi memberi cursor pointer pada button */
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
   }
 }
 
@@ -118,113 +122,82 @@
   .btn {
     @apply px-4 py-2.5 rounded-xl font-medium text-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2;
   }
-  
   .btn-primary {
     @apply bg-primary-500 text-white hover:bg-primary-600 focus:ring-primary-400 shadow-soft;
   }
-  
   .btn-secondary {
     @apply bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 focus:ring-primary-400;
   }
-  
   .btn-accent {
     @apply bg-accent-400 text-slate-900 hover:bg-accent-500 focus:ring-accent-300 shadow-soft;
   }
-  
   .btn-success {
     @apply bg-success-500 text-white hover:bg-success-600 focus:ring-success-400 shadow-soft;
   }
-  
   .btn-error {
     @apply bg-error-500 text-white hover:bg-error-600 focus:ring-error-400 shadow-soft;
   }
-  
+
   .input {
     @apply w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-300 focus:border-primary-400 transition-colors;
   }
-  
+
   .card {
     @apply bg-white rounded-2xl shadow-soft border border-slate-100 overflow-hidden animate-fade-in;
   }
-  
+
   .table-container {
     @apply overflow-x-auto rounded-2xl shadow-soft border border-slate-100;
   }
-  
   .table {
     @apply w-full text-left text-sm;
   }
-  
   .table thead {
     @apply bg-slate-50;
   }
-  
   .table th {
     @apply px-6 py-3 font-medium text-slate-500 text-xs uppercase tracking-wide;
   }
-  
   .table td {
     @apply px-6 py-4 border-t border-slate-100;
   }
-  
+
   .badge {
     @apply px-2.5 py-1 text-xs font-medium rounded-full;
   }
-  
-  .badge-primary {
-    @apply bg-primary-100 text-primary-700;
+  .badge-primary   { @apply bg-primary-100 text-primary-700; }
+  .badge-secondary { @apply bg-secondary-100 text-secondary-700; }
+  .badge-accent    { @apply bg-accent-100 text-accent-800; }
+  .badge-success   { @apply bg-success-100 text-success-700; }
+  .badge-warning   { @apply bg-warning-100 text-warning-700; }
+  .badge-error     { @apply bg-error-100 text-error-700; }
+
+  /* Sebelumnya di luar layer, sekarang dipindah ke sini */
+  .sidebar-menu-item {
+    @apply flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-xl transition-all;
   }
-  
-  .badge-secondary {
-    @apply bg-secondary-100 text-secondary-700;
+  .sidebar-menu-item.active {
+    @apply bg-primary-50 text-primary-700;
   }
-  
-  .badge-accent {
-    @apply bg-accent-100 text-accent-800;
+  .sidebar-menu-item:not(.active) {
+    @apply text-slate-500 hover:bg-slate-50 hover:text-slate-700;
   }
-  
-  .badge-success {
-    @apply bg-success-100 text-success-700;
+
+  .page-transition {
+    @apply animate-fade-in;
   }
-  
-  .badge-warning {
-    @apply bg-warning-100 text-warning-700;
+
+  .dropdown-menu {
+    @apply absolute right-0 mt-2 w-56 rounded-2xl shadow-soft-lg bg-white ring-1 ring-slate-100 py-1.5 z-50 animate-slide-down;
   }
-  
-  .badge-error {
-    @apply bg-error-100 text-error-700;
+
+  .stat-card-blue {
+    @apply bg-linear-to-br from-primary-50 to-white border border-primary-100;
   }
-}
-
-.sidebar-menu-item {
-  @apply flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-xl transition-all;
-}
-
-.sidebar-menu-item.active {
-  @apply bg-primary-50 text-primary-700;
-}
-
-.sidebar-menu-item:not(.active) {
-  @apply text-slate-500 hover:bg-slate-50 hover:text-slate-700;
-}
-
-.page-transition {
-  @apply animate-fade-in;
-}
-
-.dropdown-menu {
-  @apply absolute right-0 mt-2 w-56 rounded-2xl shadow-soft-lg bg-white ring-1 ring-slate-100 py-1.5 z-50 animate-slide-down;
-}
-
-/* Kartu ringkasan dashboard bergaya pastel bergradasi lembut */
-.stat-card-blue {
-  @apply bg-linear-to-br from-primary-50 to-white border border-primary-100;
-}
-
-.stat-card-pink {
-  @apply bg-linear-to-br from-secondary-50 to-white border border-secondary-100;
-}
-
-.stat-card-yellow {
-  @apply bg-linear-to-br from-accent-50 to-white border border-accent-100;
+  .stat-card-pink {
+    @apply bg-linear-to-br from-secondary-50 to-white border border-secondary-100;
+  }
+  .stat-card-yellow {
+    @apply bg-linear-to-br from-accent-50 to-white border border-accent-100;
+  }
 }

@@ -242,7 +242,7 @@ const PaymentVerification = () => {
       {/* Konfirmasi setuju / tolak */}
       {decision && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-          <div className="fixed inset-0 bg-slate-500 bg-opacity-75" onClick={() => !saving && setDecision(null)} />
+          <div className="fixed inset-0 bg-slate-500/75" onClick={() => !saving && setDecision(null)} />
           <div className="relative bg-white rounded-2xl shadow-soft-lg w-full max-w-md p-6">
             <h3 className="text-lg font-semibold text-slate-900 mb-1">
               {decision.mode === 'approve' ? 'Setujui bukti pembayaran?' : 'Tolak bukti pembayaran?'}
