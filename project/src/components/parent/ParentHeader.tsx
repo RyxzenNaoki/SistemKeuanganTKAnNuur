@@ -39,7 +39,7 @@ const ParentHeader = ({ onMenuButtonClick }: ParentHeaderProps) => {
             {/* Mobile menu button */}
             <button
               onClick={onMenuButtonClick}
-              className="lg:hidden -ml-0.5 -mt-0.5 h-12 w-12 inline-flex items-center justify-center rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-400"
+              className="lg:hidden -ml-0.5 -mt-0.5 h-12 w-12 inline-flex items-center justify-center rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-50 focus:outline-hidden focus:ring-2 focus:ring-inset focus:ring-primary-400"
             >
               <span className="sr-only">Open sidebar</span>
               <Menu className="h-6 w-6" aria-hidden="true" />
@@ -58,7 +58,7 @@ const ParentHeader = ({ onMenuButtonClick }: ParentHeaderProps) => {
             <div className="relative" ref={notificationsRef}>
               <button
                 onClick={() => setNotificationsOpen(!notificationsOpen)}
-                className="p-2 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-400"
+                className="p-2 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary-400"
               >
                 <span className="sr-only">View notifications</span>
                 <Bell className="h-6 w-6" />
@@ -97,7 +97,7 @@ const ParentHeader = ({ onMenuButtonClick }: ParentHeaderProps) => {
             <div className="relative ml-4" ref={userMenuRef}>
               <button
                 onClick={() => setUserMenuOpen(!userMenuOpen)}
-                className="flex items-center space-x-2 focus:outline-none"
+                className="flex items-center space-x-2 focus:outline-hidden"
               >
                 <div className="h-8 w-8 rounded-full bg-gradient-to-br from-secondary-400 to-accent-400 flex items-center justify-center">
                   <span className="text-sm font-medium text-white">
@@ -148,4 +148,4 @@ const ParentHeader = ({ onMenuButtonClick }: ParentHeaderProps) => {
   );
 };
 
-export default ParentHeader;
+export default ParentHeader;

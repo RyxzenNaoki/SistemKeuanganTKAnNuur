@@ -25,6 +25,7 @@ const FOLDER_ENV_BY_CATEGORY = {
   'report-card': 'GOOGLE_FOLDER_ID_RAPOR', // PDF rapor
   prosem: 'GOOGLE_FOLDER_ID_PROSEM', // prosem + modul ajar + gambar tutorial dari admin
   'modul-ajar': 'GOOGLE_FOLDER_ID_PROSEM',
+  'modul-ortu': 'GOOGLE_FOLDER_ID_PROSEM', // modul orang tua (kumpulan doa & hadits)
   tutorial: 'GOOGLE_FOLDER_ID_PROSEM',
 };
 

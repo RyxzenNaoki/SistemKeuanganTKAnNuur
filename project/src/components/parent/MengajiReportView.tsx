@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import dayjs from 'dayjs';
-import { BookOpen, Check, Clock, Circle, TrendingUp, NotebookPen } from 'lucide-react';
+import { BookOpen, Check, Clock, Circle, TrendingUp, NotebookPen, Download } from 'lucide-react';
 import {
   MengajiReport,
   HafalanTarget,
@@ -8,6 +8,7 @@ import {
   HAFALAN_LABEL,
   sortProgressNewestFirst,
 } from '../../services/mengajiService';
+import { MengajiModule, fetchMengajiModule, getMengajiModuleUrl } from '../../services/mengajiModuleService';
 
 const STATUS_BADGE: Record<HafalanStatus, string> = {
   belum: 'bg-slate-100 text-slate-500',
@@ -58,6 +59,27 @@ const TargetList = ({ title, items }: { title: string; items: HafalanTarget[] })
 // Rapor Mengaji untuk Orang Tua — hanya membaca; data diinput guru
 const MengajiReportView = ({ reports }: { reports: MengajiReport[] }) => {
   const [selectedId, setSelectedId] = useState('');
+  const [guideModule, setGuideModule] = useState<MengajiModule | null>(null);
+
+  // Modul orang tua (kumpulan doa & hadits) yang diunggah admin
+  useEffect(() => {
+    fetchMengajiModule().then(setGuideModule).catch(() => setGuideModule(null));
+  }, []);
+
+  const moduleCard = guideModule ? (
+    <div className="flex flex-col sm:flex-row sm:items-center gap-4 rounded-2xl border border-accent-200 bg-gradient-to-r from-accent-50 via-white to-primary-50 p-5 shadow-soft">
+      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-accent-200 text-accent-800">
+        <BookOpen className="h-6 w-6" />
+      </div>
+      <div className="flex-1">
+        <p className="font-semibold text-slate-900">Modul Orang Tua: Kumpulan Doa & Hadits</p>
+        <p className="text-xs text-slate-500">Panduan untuk mendampingi anak menghafal dan mengamalkan doa serta hadits di rumah.</p>
+      </div>
+      <a href={getMengajiModuleUrl(guideModule)} target="_blank" rel="noreferrer" className="btn btn-primary flex items-center justify-center gap-2 shrink-0">
+        <Download className="h-4 w-4" /> Download Modul
+      </a>
+    </div>
+  ) : null;
 
   useEffect(() => {
     if (reports.length > 0 && !reports.some(r => r.id === selectedId)) setSelectedId(reports[0].id);
@@ -65,9 +87,12 @@ const MengajiReportView = ({ reports }: { reports: MengajiReport[] }) => {
 
   if (reports.length === 0) {
     return (
-      <div className="card p-10 text-center">
-        <BookOpen className="mx-auto h-8 w-8 text-slate-300 mb-2" />
-        <p className="text-slate-500 text-sm">Belum ada rapor mengaji yang diinput guru.</p>
+      <div className="space-y-5">
+        {moduleCard}
+        <div className="card p-10 text-center">
+          <BookOpen className="mx-auto h-8 w-8 text-slate-300 mb-2" />
+          <p className="text-slate-500 text-sm">Belum ada rapor mengaji yang diinput guru.</p>
+        </div>
       </div>
     );
   }
@@ -79,6 +104,7 @@ const MengajiReportView = ({ reports }: { reports: MengajiReport[] }) => {
 
   return (
     <div className="space-y-5">
+      {moduleCard}
       {reports.length > 1 && (
         <select className="input max-w-xs" value={report.id} onChange={e => setSelectedId(e.target.value)}>
           {reports.map(r => (

@@ -282,7 +282,7 @@ const loadUsers = async () => {
                 <tr key={user.id}>
                   <td className="whitespace-nowrap">
                     <div className="flex items-center">
-                      <div className="h-10 w-10 flex-shrink-0 bg-primary-100 rounded-full flex items-center justify-center">
+                      <div className="h-10 w-10 shrink-0 bg-primary-100 rounded-full flex items-center justify-center">
                         <User className="h-5 w-5 text-primary-600" />
                       </div>
                       <div className="ml-4">
@@ -369,4 +369,4 @@ const loadUsers = async () => {
   );
 };
 
-export default UserManagement;
+export default UserManagement;

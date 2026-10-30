@@ -70,6 +70,7 @@ const SECTIONS: Section[] = [
               'Asesmen dari guru: foto hasil karya, foto kegiatan, dan catatan perkembangan, beserta tema pembelajaran dan tanggalnya.',
               'Umpan balik (feedback) dari orang tua dan balasan guru.',
               'Rapor mengaji: target hafalan surat dan hadits, progress jilid dan halaman, serta catatan guru.',
+              'Catatan anekdot dari guru (tanggal, detail kejadian, tempat, keterangan, dan foto bila dilampirkan), yang hanya dapat dilihat guru dan admin.',
               'Modul ajar yang diunggah admin, yang dibaca untuk menampilkan tema dan kegiatan inti harian kepada guru.',
               'File PDF rapor per semester.',
             ]}

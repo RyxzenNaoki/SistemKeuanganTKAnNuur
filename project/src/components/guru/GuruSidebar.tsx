@@ -55,7 +55,7 @@ const GuruSidebar = ({ isOpen, setIsOpen }: GuruSidebarProps) => {
           </div>
           <button
             onClick={() => setIsOpen(false)}
-            className="lg:hidden text-slate-400 hover:text-slate-600 focus:outline-none"
+            className="lg:hidden text-slate-400 hover:text-slate-600 focus:outline-hidden"
           >
             <X className="h-5 w-5" />
           </button>

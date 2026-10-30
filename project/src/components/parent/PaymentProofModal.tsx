@@ -132,7 +132,7 @@ const PaymentProofModal = ({ isOpen, onClose, onSubmitted, unpaidPayments, pendi
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <div className="flex items-center justify-center min-h-screen px-4 py-8">
-        <div className="fixed inset-0" onClick={() => !submitting && onClose()} />
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm transition-opacity" onClick={() => !submitting && onClose()} />
 
         <div className="relative bg-white rounded-2xl shadow-soft-lg w-full max-w-lg p-6">
           <div className="flex items-center justify-between mb-4">

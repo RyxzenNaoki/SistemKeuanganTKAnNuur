@@ -16,6 +16,13 @@ import {
 } from '../../../services/prosemService';
 import { uploadToDrive, UPLOAD_ACCEPT, buildFilePrefix } from '../../../utils/upload';
 import { getDriveImageUrl, getDriveDownloadUrl } from '../../../utils/drive';
+import {
+  MengajiModule,
+  fetchMengajiModule,
+  saveMengajiModule,
+  clearMengajiModule,
+  getMengajiModuleUrl,
+} from '../../../services/mengajiModuleService';
 import { DRIVE_FOLDER_URL } from '../../../config/teachingResources';
 
 const TeachingDocsManagement = () => {
@@ -38,6 +45,12 @@ const TeachingDocsManagement = () => {
   const [tutorialFile, setTutorialFile] = useState<File | null>(null);
   const [savingGuide, setSavingGuide] = useState(false);
 
+  // ---- Modul Orang Tua (doa & hadits) untuk Rapor Mengaji ----
+  const [moduleInfo, setModuleInfo] = useState<MengajiModule | null>(null);
+  const [moduleFile, setModuleFile] = useState<File | null>(null);
+  const [moduleLink, setModuleLink] = useState('');
+  const [savingModule, setSavingModule] = useState(false);
+
   useEffect(() => {
     const init = async () => {
       if (currentUser) {
@@ -54,6 +67,60 @@ const TeachingDocsManagement = () => {
     };
     init();
   }, [currentUser]);
+
+  useEffect(() => {
+    fetchMengajiModule()
+      .then(m => {
+        setModuleInfo(m);
+        setModuleLink(m?.externalUrl ?? '');
+      })
+      .catch(console.error);
+  }, []);
+
+  const handleSaveModule = async () => {
+    const link = moduleLink.trim();
+    if (!moduleFile && !link) {
+      showToast('error', 'Pilih file modul atau isi tautan Google Drive');
+      return;
+    }
+    if (!moduleFile && !/^https:\/\/(drive|docs)\.google\.com\//.test(link)) {
+      showToast('error', 'Tautan harus berupa link Google Drive (https://drive.google.com/...)');
+      return;
+    }
+    setSavingModule(true);
+    try {
+      if (moduleFile) {
+        const uploaded = await uploadToDrive(moduleFile, 'modul-ortu', {
+          namePrefix: buildFilePrefix(['MODUL-ORTU', 'DOA-HADITS']),
+        });
+        await saveMengajiModule({ fileId: uploaded.fileId, fileName: uploaded.fileName });
+      } else {
+        await saveMengajiModule({ externalUrl: link });
+      }
+      setModuleInfo(await fetchMengajiModule());
+      setModuleFile(null);
+      showToast('success', 'Modul orang tua tersimpan');
+    } catch (err) {
+      console.error(err);
+      showToast('error', err instanceof Error ? err.message : 'Gagal menyimpan modul');
+    } finally {
+      setSavingModule(false);
+    }
+  };
+
+  const handleClearModule = async () => {
+    if (!window.confirm('Hapus modul orang tua? Tombol download di Rapor Mengaji akan hilang.')) return;
+    try {
+      await clearMengajiModule();
+      setModuleInfo(null);
+      setModuleLink('');
+      setModuleFile(null);
+      showToast('success', 'Modul orang tua dihapus');
+    } catch (err) {
+      console.error(err);
+      showToast('error', 'Gagal menghapus modul');
+    }
+  };
 
   const loadProsem = async () => {
     setLoadingProsem(true);
@@ -243,6 +310,63 @@ const TeachingDocsManagement = () => {
         <button onClick={handleSaveGuide} disabled={savingGuide} className="btn btn-primary flex items-center gap-2">
           {savingGuide ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
           Simpan Panduan
+        </button>
+      </div>
+
+      {/* ============ MODUL ORANG TUA (RAPOR MENGAJI) ============ */}
+      <div className="card p-5">
+        <h2 className="font-semibold text-slate-900 mb-1">Modul Orang Tua — Kumpulan Doa & Hadits</h2>
+        <p className="text-xs text-slate-400 mb-4">
+          Muncul sebagai tombol download di tab Rapor Mengaji pada akun orang tua. Format PDF atau Word, maksimal 4 MB.
+        </p>
+
+        {moduleInfo ? (
+          <div className="mb-4 flex items-center gap-3 rounded-xl border border-success-200 bg-success-50 p-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-success-100 text-success-700"><FileText className="h-5 w-5" /></div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-slate-900 truncate">
+                {moduleInfo.fileName || 'Tautan Google Drive'}
+              </p>
+              <p className="text-xs text-slate-500">
+                {moduleInfo.updatedAt ? `Diperbarui ${dayjs(moduleInfo.updatedAt).format('DD MMM YYYY')}` : 'Modul aktif'}
+              </p>
+            </div>
+            <a href={getMengajiModuleUrl(moduleInfo)} target="_blank" rel="noreferrer" className="p-2 text-slate-500 hover:text-primary-600" title="Buka / unduh">
+              <Download className="h-4 w-4" />
+            </a>
+            <button onClick={handleClearModule} className="p-2 text-slate-400 hover:text-error-600" title="Hapus modul">
+              <Trash2 className="h-4 w-4" />
+            </button>
+          </div>
+        ) : (
+          <p className="mb-4 text-sm text-slate-400">Belum ada modul yang diunggah.</p>
+        )}
+
+        <label className="flex items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-200 p-4 cursor-pointer hover:bg-slate-50 mb-3">
+          {moduleFile ? <FileCheck2 className="h-5 w-5 text-success-600" /> : <Upload className="h-5 w-5 text-slate-400" />}
+          <span className="text-sm text-slate-500 truncate">
+            {moduleFile ? moduleFile.name : moduleInfo?.fileId ? 'Pilih file untuk mengganti modul' : 'Pilih file modul (PDF / Word)'}
+          </span>
+          <input type="file" accept={UPLOAD_ACCEPT['modul-ortu']} className="hidden" onChange={e => setModuleFile(e.target.files?.[0] ?? null)} />
+        </label>
+
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-slate-700 mb-1">
+            Atau tempel tautan Google Drive <span className="font-normal text-slate-400">(untuk file di atas 4 MB)</span>
+          </label>
+          <input
+            className="input"
+            value={moduleLink}
+            onChange={e => setModuleLink(e.target.value)}
+            placeholder="https://drive.google.com/file/d/..."
+            disabled={!!moduleFile}
+          />
+          <p className="mt-1 text-xs text-slate-400">Pastikan akses file di Drive: "Siapa saja yang memiliki link" agar orang tua bisa membukanya.</p>
+        </div>
+
+        <button onClick={handleSaveModule} disabled={savingModule} className="btn btn-primary flex items-center gap-2">
+          {savingModule ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+          Simpan Modul
         </button>
       </div>
     </div>

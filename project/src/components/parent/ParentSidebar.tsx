@@ -6,7 +6,6 @@ import {
   Upload,
   MessageSquare,
   ChevronDown,
-  Image as ImageIcon,
   Sparkles,
   NotebookPen,
   FileText,
@@ -22,7 +21,6 @@ interface ParentSidebarProps {
 
 const REPORT_TABS = [
   { key: 'karya', label: 'Foto Hasil Karya', icon: Sparkles },
-  { key: 'kegiatan', label: 'Foto Kegiatan', icon: ImageIcon },
   { key: 'catatan', label: 'Catatan Guru', icon: NotebookPen },
   { key: 'mengaji', label: 'Rapor Mengaji', icon: BookOpen },
   { key: 'pdf', label: 'File PDF Rapor', icon: FileText },
@@ -63,7 +61,7 @@ const ParentSidebar = ({ isOpen, setIsOpen }: ParentSidebarProps) => {
           </div>
           <button
             onClick={() => setIsOpen(false)}
-            className="lg:hidden text-slate-400 hover:text-slate-600 focus:outline-none"
+            className="lg:hidden text-slate-400 hover:text-slate-600 focus:outline-hidden"
           >
             <X className="h-5 w-5" />
           </button>

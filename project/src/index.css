@@ -99,6 +99,23 @@
 }
 
 @layer base {
+  /* Tailwind v4: warna border bawaan berubah dari abu-abu menjadi currentColor (hitam pekat).
+     Dikembalikan ke abu-abu lembut seperti v3 supaya border/divide tanpa warna tidak terlalu tebal. */
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-slate-200);
+  }
+
+  /* v4 memakai warna teks 50% untuk placeholder; kembalikan ke abu-abu seperti v3 */
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--color-slate-400);
+  }
+
+
   html {
     scroll-behavior: smooth;
   }
@@ -120,7 +137,7 @@
 
 @layer components {
   .btn {
-    @apply px-4 py-2.5 rounded-xl font-medium text-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2;
+    @apply px-4 py-2.5 rounded-xl font-medium text-sm transition-all duration-200 focus:outline-hidden focus:ring-2 focus:ring-offset-2;
   }
   .btn-primary {
     @apply bg-primary-500 text-white hover:bg-primary-600 focus:ring-primary-400 shadow-soft;
@@ -139,7 +156,7 @@
   }
 
   .input {
-    @apply w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-300 focus:border-primary-400 transition-colors;
+    @apply w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-primary-300 focus:border-primary-400 transition-colors;
   }
 
   .card {

@@ -25,11 +25,10 @@ import { fetchMengajiReportsByParent, MengajiReport } from '../../services/menga
 import MengajiReportView from '../../components/parent/MengajiReportView';
 import { getDriveImageUrl, getDrivePreviewUrl, getDriveDownloadUrl } from '../../utils/drive';
 
-type TabKey = 'karya' | 'kegiatan' | 'catatan' | 'mengaji' | 'pdf';
+type TabKey = 'karya' | 'catatan' | 'mengaji' | 'pdf';
 
 const TABS: { key: TabKey; label: string; icon: typeof ImageIcon; desc: string }[] = [
   { key: 'karya', label: 'Foto Progress Hasil Karya', icon: Sparkles, desc: 'Dikelompokkan per tema pembelajaran & semester' },
-  { key: 'kegiatan', label: 'Foto Kegiatan Sekolah', icon: ImageIcon, desc: 'Dokumentasi kegiatan anak di sekolah' },
   { key: 'catatan', label: 'Catatan Guru', icon: NotebookPen, desc: 'Catatan selama proses pembelajaran, bisa dibalas' },
   { key: 'mengaji', label: 'Rapor Mengaji', icon: BookOpen, desc: 'Target hafalan, progress jilid & halaman, catatan guru' },
   { key: 'pdf', label: 'File PDF Rapor', icon: FileText, desc: 'Rapor resmi per semester' },
@@ -39,7 +38,7 @@ const DigitalReport = () => {
   const { student, loading: studentLoading } = useParentStudents();
   const { showToast } = useToast();
   const params = useParams<{ tab?: string }>();
-  const activeTab: TabKey = (['karya', 'kegiatan', 'catatan', 'mengaji', 'pdf'] as TabKey[]).includes(params.tab as TabKey)
+  const activeTab: TabKey = (['karya', 'catatan', 'mengaji', 'pdf'] as TabKey[]).includes(params.tab as TabKey)
     ? (params.tab as TabKey)
     : 'karya';
 
@@ -211,14 +210,6 @@ const DigitalReport = () => {
                 <PhotoGrid items={items} />
               </div>
             ))}
-          </div>
-        )
-      ) : activeTab === 'kegiatan' ? (
-        entries.length === 0 ? (
-          <EmptyState text="Belum ada foto kegiatan yang diinput guru." />
-        ) : (
-          <div className="card p-5">
-            <PhotoGrid items={entries} />
           </div>
         )
       ) : activeTab === 'catatan' ? (

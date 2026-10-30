@@ -32,7 +32,7 @@ const Toast = ({ type, message, onClose }: ToastProps) => {
         <p className="font-medium">{message}</p>
         <button
           onClick={onClose}
-          className="ml-4 text-slate-500 hover:text-slate-700 focus:outline-none"
+          className="ml-4 text-slate-500 hover:text-slate-700 focus:outline-hidden"
           aria-label="Close"
         >
           <X className="h-4 w-4" />
@@ -42,4 +42,4 @@ const Toast = ({ type, message, onClose }: ToastProps) => {
   );
 };
 
-export default Toast;
+export default Toast;

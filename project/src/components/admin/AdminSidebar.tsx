@@ -124,7 +124,7 @@ const AdminSidebar = ({ isOpen, setIsOpen }: AdminSidebarProps) => {
           </div>
           <button
             onClick={() => setIsOpen(false)}
-            className="lg:hidden text-slate-400 hover:text-slate-600 focus:outline-none"
+            className="lg:hidden text-slate-400 hover:text-slate-600 focus:outline-hidden"
           >
             <X className="h-5 w-5" />
           </button>
@@ -152,7 +152,7 @@ const AdminSidebar = ({ isOpen, setIsOpen }: AdminSidebarProps) => {
                     onClick={() => toggleGroup(group.key)}
                     aria-expanded={open}
                     className={`sidebar-menu-item w-full justify-between ${
-                      hasActive && !open ? 'active' : hasActive ? '!text-primary-700!' : ''
+                      hasActive && !open ? 'active' : hasActive ? 'text-primary-700!' : ''
                     }`}
                   >
                     <span className="flex items-center gap-3">

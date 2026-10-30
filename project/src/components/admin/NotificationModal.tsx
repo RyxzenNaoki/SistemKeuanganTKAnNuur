@@ -43,8 +43,8 @@ const NotificationModal = ({ isOpen, onClose, onAdded }: NotificationFormProps) 
    if (!isOpen) return null;
 
   return (
-    <div className="modal-overlay fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="modal bg-white p-6 rounded shadow-soft w-full max-w-md">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+      <div className="bg-white p-6 rounded-2xl shadow-soft w-full max-w-md">
         <h2 className="text-lg font-semibold mb-4">Tambah Pemberitahuan</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>

@@ -343,7 +343,7 @@ const ParentDashboard = () => {
         <div className="card p-4">
           <h2 className="text-lg font-semibold text-slate-900 mb-4">Informasi Pembayaran</h2>
           <div className="border border-slate-200 rounded-xl p-4 mb-4">
-            <h3 className="text-md font-medium text-slate-900 mb-2">Transfer Bank</h3>
+            <h3 className="text-base font-medium text-slate-900 mb-2">Transfer Bank</h3>
             <div className="space-y-2">
               <div>
                 <p className="text-sm text-slate-600">Bank BNI</p>
@@ -353,7 +353,7 @@ const ParentDashboard = () => {
           </div>
           
           <div className="border border-slate-200 rounded-xl p-4">
-            <h3 className="text-md font-medium text-slate-900 mb-2">Panduan Pembayaran</h3>
+            <h3 className="text-base font-medium text-slate-900 mb-2">Panduan Pembayaran</h3>
             <ol className="list-decimal list-inside text-sm text-slate-600 space-y-1">
               <li>Transfer ke rekening di atas</li>
               <li>Simpan bukti pembayaran</li>
@@ -368,4 +368,4 @@ const ParentDashboard = () => {
   );
 };
 
-export default ParentDashboard;
+export default ParentDashboard;

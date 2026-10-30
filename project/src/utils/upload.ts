@@ -10,6 +10,7 @@ export type UploadCategory =
   | 'report-card'
   | 'prosem'
   | 'modul-ajar'
+  | 'modul-ortu'
   | 'tutorial';
 
 export interface UploadResult {
@@ -34,6 +35,7 @@ export const UPLOAD_ACCEPT: Record<UploadCategory, string> = {
   'report-card': PDF_ACCEPT,
   prosem: DOC_ACCEPT,
   'modul-ajar': `.docx,${DOCX_MIME}`,
+  'modul-ortu': `${PDF_ACCEPT},.doc,.docx,application/msword,${DOCX_MIME}`,
   tutorial: IMAGE_ACCEPT,
 };
 
@@ -44,6 +46,7 @@ const ALLOWED_PREFIX: Record<UploadCategory, string[]> = {
   'report-card': ['application/pdf'],
   prosem: ['image/', 'application/pdf', 'application/msword', 'application/vnd.'],
   'modul-ajar': [DOCX_MIME],
+  'modul-ortu': ['application/pdf', 'application/msword', DOCX_MIME],
   tutorial: ['image/'],
 };
 
@@ -54,6 +57,7 @@ const TYPE_HINT: Record<UploadCategory, string> = {
   'report-card': 'PDF',
   prosem: 'PDF, Word, Excel, atau gambar',
   'modul-ajar': 'dokumen Word (.docx)',
+  'modul-ortu': 'PDF atau dokumen Word',
   tutorial: 'gambar (JPG/PNG)',
 };
 
@@ -112,7 +116,7 @@ export const uploadToDrive = async (
 ): Promise<UploadResult> => {
   // Beberapa browser/PC melaporkan tipe .docx kosong -> pulihkan dari ekstensi
   let source = file;
-  if (category === 'modul-ajar' && !file.type && /\.docx$/i.test(file.name)) {
+  if ((category === 'modul-ajar' || category === 'modul-ortu') && !file.type && /\.docx$/i.test(file.name)) {
     source = new File([file], file.name, { type: DOCX_MIME });
   }
 

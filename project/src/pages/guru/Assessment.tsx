@@ -18,6 +18,7 @@ import {
 } from '../../services/assessmentService';
 import { getDriveImageUrl, getDriveDownloadUrl } from '../../utils/drive';
 import { uploadToDrive, UPLOAD_ACCEPT, buildFilePrefix } from '../../utils/upload';
+import AnecdotePanel from '../../components/guru/AnecdotePanel';
 import { getClassCode } from '../../config/classes';
 import { toDateKey } from '../../services/weeklyPlanService';
 import {
@@ -27,14 +28,17 @@ import {
   deleteReportCard,
 } from '../../services/reportCardService';
 
-type GuruTab = AssessmentCategory | 'pdf';
+// "Foto Berkegiatan" diganti "Anekdot" (data anekdot disimpan di koleksi tersendiri).
+// Kategori 'kegiatan' tetap ada di tipe hanya untuk data lama dan tidak lagi punya tab.
+type GuruTab = AssessmentCategory | 'anekdot' | 'pdf';
 
 const TAB_LABEL: Record<GuruTab, string> = {
   ...ASSESSMENT_CATEGORY_LABEL,
+  anekdot: 'Anekdot',
   pdf: 'File PDF Rapor',
 };
 
-const TABS: GuruTab[] = ['karya', 'kegiatan', 'catatan', 'pdf'];
+const TABS: GuruTab[] = ['karya', 'anekdot', 'catatan', 'pdf'];
 
 const GuruAssessment = () => {
   const { currentUser } = useAuth();
@@ -100,7 +104,7 @@ const GuruAssessment = () => {
   };
 
   const loadHistory = async () => {
-    if (!studentId || category === 'pdf') return;
+    if (!studentId || category === 'pdf' || category === 'anekdot') return;
     setHistoryLoading(true);
     try {
       setHistory(await fetchAssessmentsByStudent(studentId, category as AssessmentCategory));
@@ -203,7 +207,7 @@ const GuruAssessment = () => {
   };
 
   const handleSubmit = async () => {
-    if (!currentUser || !selectedStudent || category === 'pdf') return;
+    if (!currentUser || !selectedStudent || category === 'pdf' || category === 'anekdot') return;
     const activeCategory: AssessmentCategory = category;
 
     if (category === 'catatan' && !note.trim()) {
@@ -278,7 +282,7 @@ const GuruAssessment = () => {
         <p className="text-sm text-slate-500">Semester {semester} {academicYear}</p>
       </div>
 
-      <div className="mb-6 max-w-sm">
+      <div className={`mb-6 max-w-sm ${category === 'anekdot' ? 'hidden' : ''}`}>
         <label className="block text-sm font-medium text-slate-700 mb-1">Pilih Murid</label>
         <select className="input" value={studentId} onChange={e => setStudentId(e.target.value)} disabled={studentsLoading}>
           {students.map(s => (
@@ -304,6 +308,14 @@ const GuruAssessment = () => {
         ))}
       </div>
 
+      {category === 'anekdot' ? (
+        <AnecdotePanel
+          students={students}
+          studentId={studentId}
+          onStudentChange={setStudentId}
+          teacherName={teacherName}
+        />
+      ) : (
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Form input */}
         <div className="card p-5">
@@ -515,6 +527,7 @@ const GuruAssessment = () => {
           )}
         </div>
       </div>
+      )}
     </div>
   );
 };
